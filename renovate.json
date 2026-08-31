@@ -9,12 +9,13 @@
   "labels": ["dependencies"],
   "minimumReleaseAge": "7 days",
   "vulnerabilityAlerts": {
-    "labels": ["security"],
+    "addLabels": ["security"],
     "schedule": ["at any time"]
   },
   "packageRules": [
     {
-      "description": "Automerge patch updates",
+      "description": "Automerge patch updates (devDependencies only)",
+      "matchDepTypes": ["devDependencies"],
       "matchUpdateTypes": ["patch"],
       "automerge": true,
       "automergeType": "pr",
@@ -29,11 +30,17 @@
       "automergeStrategy": "squash"
     },
     {
-      "description": "Automerge linters",
+      "description": "Automerge linters (minor/patch only)",
       "matchPackageNames": ["/eslint/", "/prettier/", "/stylelint/"],
+      "matchUpdateTypes": ["minor", "patch"],
       "automerge": true,
       "automergeType": "pr",
       "automergeStrategy": "squash"
+    },
+    {
+      "description": "eslint-config-next must be updated in lockstep with next — never automerge",
+      "matchPackageNames": ["eslint-config-next"],
+      "automerge": false
     }
   ]
 }
