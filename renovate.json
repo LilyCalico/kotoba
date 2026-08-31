@@ -1,0 +1,39 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "",
+  "extends": ["config:recommended"],
+  "dependencyDashboard": true,
+  "mode": "full",
+  "timezone": "Europe/Stockholm",
+  "schedule": ["* 9-18 * * 1-5"],
+  "labels": ["dependencies"],
+  "minimumReleaseAge": "7 days",
+  "vulnerabilityAlerts": {
+    "labels": ["security"],
+    "schedule": ["at any time"]
+  },
+  "packageRules": [
+    {
+      "description": "Automerge patch updates",
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "squash"
+    },
+    {
+      "description": "Automerge @types/* for minor/patch updates",
+      "matchPackageNames": ["/^@types//"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "squash"
+    },
+    {
+      "description": "Automerge linters",
+      "matchPackageNames": ["/eslint/", "/prettier/", "/stylelint/"],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "squash"
+    }
+  ]
+}
