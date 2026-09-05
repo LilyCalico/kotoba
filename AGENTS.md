@@ -7,3 +7,43 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+# プロジェクト概要
+
+## セッション開始時の手順
+
+- Issue ベースの作業時は worktree を作成する
+- 命名は feat/{issue 番号}-{kebab-case 英語 max3 語} 形式にする
+
+## 文章・コメントの記述規約
+
+このリポジトリで生成するすべての文章（ドキュメント・PR 本文・コミットメッセージ）とコード内コメントに適用する。
+
+- 最終的な設計を「最初からそう計画したもの」として記述する。検討過程や試行錯誤の痕跡を残さない。
+- 読者は経緯を一切知らない新規参加者を想定する。経緯を知らないと意味が通じない文（「先ほどの」「元の実装では」「修正により」など）は書かない。
+- 既存の記述を更新する場合も、差分の説明ではなく、更新後の状態が完結した説明になるよう全体を書き直す。
+
+## 技術スタック
+
+| 領域                   | 技術                                                          |
+| ---------------------- | ------------------------------------------------------------- |
+| フロントエンド         | Next.js（App Router）/ TypeScript                             |
+| UI コンポーネント      | React Aria Components（ヘッドレス）+ 自作デザイントークン     |
+| アニメーション         | Motion（旧 Framer Motion）                                    |
+| バックエンド           | NestJS（REST API）/ TypeScript                                |
+| モノレポ管理           | pnpm + Turborepo                                              |
+| DB                     | PostgreSQL（Supabase）+ Prisma                                |
+| AI                     | Gemini API（はい/いいえ応答・解答判定: Flash 系の安価モデル） |
+| バリデーション・型共有 | zod（`packages/shared` でフロント・API 間共有）               |
+| テスト                 | ユニットテスト + Playwright（E2E）                            |
+| CI/CD                  | GitHub Actions                                                |
+| 依存関係更新           | Renovate                                                      |
+| ホスティング           | web: Vercel / api: Railway or Fly.io / DB+Auth: Supabase      |
+
+## 構成
+
+- モノレポ構成:
+  - `apps/web` — Next.js（App Router）
+  - `apps/api` — NestJS（REST）
+  - `packages/shared` — 型・zod スキーマ共有
+- NestJS から OpenAPI 仕様を自動生成 → フロントの型付きクライアントを生成
