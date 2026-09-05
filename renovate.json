@@ -4,8 +4,8 @@
   "extends": ["config:recommended"],
   "dependencyDashboard": true,
   "mode": "full",
-  "timezone": "Europe/Stockholm",
-  "schedule": ["* 9-18 * * 1-5"],
+  "timezone": "Asia/Tokyo",
+  "schedule": ["at any time"],
   "labels": ["dependencies"],
   "minimumReleaseAge": "7 days",
   "vulnerabilityAlerts": {
