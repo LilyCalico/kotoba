@@ -4,7 +4,7 @@
   "extends": ["config:recommended"],
   "dependencyDashboard": true,
   "mode": "full",
-  "timezone": "Asia/Tokyo",
+  "timezone": "Europe/Stockholm",
   "schedule": ["at any time"],
   "labels": ["dependencies"],
   "minimumReleaseAge": "7 days",
