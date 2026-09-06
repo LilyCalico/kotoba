@@ -25,20 +25,20 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## 技術スタック
 
-| 領域                   | 技術                                                          |
-| ---------------------- | ------------------------------------------------------------- |
-| フロントエンド         | Next.js（App Router）/ TypeScript                             |
-| UI コンポーネント      | React Aria Components（ヘッドレス）+ 自作デザイントークン     |
-| アニメーション         | Motion（旧 Framer Motion）                                    |
-| バックエンド           | NestJS（REST API）/ TypeScript                                |
-| モノレポ管理           | pnpm + Turborepo                                              |
-| DB                     | PostgreSQL（Supabase）+ Prisma                                |
-| AI                     | Gemini API（はい/いいえ応答・解答判定: Flash 系の安価モデル） |
-| バリデーション・型共有 | zod（`packages/shared` でフロント・API 間共有）               |
-| テスト                 | ユニットテスト + Playwright（E2E）                            |
-| CI/CD                  | GitHub Actions                                                |
-| 依存関係更新           | Renovate                                                      |
-| ホスティング           | web: Vercel / api: Railway or Fly.io / DB+Auth: Supabase      |
+| 領域                   | 技術                                                                     |
+| ---------------------- | ------------------------------------------------------------------------ |
+| フロントエンド         | Next.js（App Router）/ TypeScript                                        |
+| UI コンポーネント      | shadcn/ui（primitive base: React Aria Components）+ 自作デザイントークン |
+| アニメーション         | Motion（旧 Framer Motion）                                               |
+| バックエンド           | NestJS（REST API）/ TypeScript                                           |
+| モノレポ管理           | pnpm + Turborepo                                                         |
+| DB                     | PostgreSQL（Supabase）+ Prisma                                           |
+| AI                     | Gemini API（はい/いいえ応答・解答判定: Flash 系の安価モデル）            |
+| バリデーション・型共有 | zod（`packages/shared` でフロント・API 間共有）                          |
+| テスト                 | ユニットテスト + Playwright（E2E）                                       |
+| CI/CD                  | GitHub Actions                                                           |
+| 依存関係更新           | Renovate                                                                 |
+| ホスティング           | web: Vercel / api: Railway or Fly.io / DB+Auth: Supabase                 |
 
 ## 構成
 
@@ -47,3 +47,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   - `apps/api` — NestJS（REST）
   - `packages/shared` — 型・zod スキーマ共有
 - NestJS から OpenAPI 仕様を自動生成 → フロントの型付きクライアントを生成
+
+## コンポーネント実装規約
+
+UI を実装・変更するときは、デザインの詳細（トーン&マナー・デザイントークン・アニメーション方針）を `docs/specifications/ui-design.md` に従って決める。
