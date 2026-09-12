@@ -1,5 +1,9 @@
 ## 画面設計
 
+### figma 草案
+
+https://www.figma.com/design/mWFhHDTqPHFBKhIMrkKj9B/Kotoba?node-id=81-15835&t=neuwj2UIPBPtq3WG-4
+
 ### トーン&マナー / デザイントークン方針
 
 - 方向性: **北欧 × 和の温かミニマル**。フィーカ感のある暖色ニュートラル（生成り・木・グレージュ系）+ アクセント 1 色、余白多め、丸みのある字面
