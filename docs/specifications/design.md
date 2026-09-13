@@ -2,7 +2,7 @@
 
 ### figma 草案
 
-https://www.figma.com/design/mWFhHDTqPHFBKhIMrkKj9B/Kotoba?node-id=81-15835&t=neuwj2UIPBPtq3WG-4
+https://www.figma.com/design/mWFhHDTqPHFBKhIMrkKj9B/Kotoba?node-id=112-16215&t=neuwj2UIPBPtq3WG-4
 
 ### トーン&マナー / デザイントークン方針
 
