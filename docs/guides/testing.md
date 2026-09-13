@@ -7,7 +7,8 @@
 | 項目 | 値 | 理由 |
 | --- | --- | --- |
 | テストランナー | Vitest | 全ワークスペースで共通。`apps/api` が ESM のため |
-| テストファイル | `*.test.ts(x)` を実装の隣に置く | 対象と同じディレクトリにあるほうが追随漏れが起きにくい |
+| テストファイル | `*.test.ts` を実装の隣に置く | 対象と同じディレクトリにあるほうが追随漏れが起きにくい |
+| 描画の確認 | コンポーネント単体は Storybook、フローは E2E | `apps/web` には描画を伴うテストを置かない |
 | E2E | `e2e/tests/*.spec.ts` | `.spec` と `.test` で E2E とユニットを見分ける |
 | `test` スクリプト | `vitest run` | `vitest` 単体は監視モードに入り、CI が終わらない |
 
@@ -16,7 +17,7 @@
 ```bash
 pnpm --filter @kotoba/shared add -D vitest @vitest/coverage-v8
 pnpm --filter @kotoba/api add -D vitest @vitest/coverage-v8 unplugin-swc @swc/core @nestjs/testing supertest @types/supertest
-pnpm --filter @kotoba/web add -D vitest @vitest/coverage-v8 @vitejs/plugin-react jsdom @testing-library/react @testing-library/dom @testing-library/jest-dom
+pnpm --filter @kotoba/web add -D vitest @vitest/coverage-v8
 ```
 
 | パッケージ | 役割 |
@@ -24,7 +25,8 @@ pnpm --filter @kotoba/web add -D vitest @vitest/coverage-v8 @vitejs/plugin-react
 | `unplugin-swc` | Vitest のトランスパイラを SWC に差し替える。`apps/api` だけに要る |
 | `@nestjs/testing` | `Test.createTestingModule()` でモジュールを組み立て、プロバイダーを差し替える |
 | `supertest` | 起動した Nest アプリケーションに HTTP リクエストを投げる |
-| `@testing-library/jest-dom` | `toBeInTheDocument()` などの DOM 向けマッチャーを足す |
+
+`apps/web` にブラウザ環境の依存（`jsdom`、Testing Library）は入れない。コンポーネント単体の確認は Storybook、画面をまたぐフローは E2E が担い、`apps/web` の Vitest はコンポーネントの外に切り出したロジックだけを対象にする。判断の根拠は [ADR 0002](../adr/0002-vitest-and-playwright-for-testing.md) を参照する。
 
 `@swc/core` は `pnpm-workspace.yaml` の `ignoredBuiltDependencies` に入れる。ネイティブバインディングはプラットフォーム別の `optionalDependencies` として配られるため、`postinstall` を走らせなくても解決できる。
 
@@ -71,28 +73,21 @@ export default defineConfig({
 
 ```typescript
 // apps/web/vitest.config.mts
-import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-  plugins: [react()],
   resolve: { tsconfigPaths: true },
   test: {
-    environment: "jsdom",
-    setupFiles: ["./vitest.setup.ts"],
-    include: ["app/**/*.test.{ts,tsx}"],
+    environment: "node",
+    include: ["**/*.test.ts"],
+    exclude: ["node_modules/**", ".next/**"],
   },
 });
 ```
 
-```typescript
-// apps/web/vitest.setup.ts
-import "@testing-library/jest-dom/vitest";
-import { cleanup } from "@testing-library/react";
-import { afterEach } from "vitest";
+`environment` は `jsdom` ではなく `node` にする。対象が描画を伴わないロジックに限られるため、DOM の実装を読み込む必要がない。拡張子も `.ts` だけを拾い、`.tsx` は対象外にする。
 
-afterEach(cleanup);
-```
+`apps/web` にまだテストが 1 件もない間は、`test` スクリプトに `--passWithNoTests` を付ける。Vitest は対象 0 件を失敗として扱うため、これがないと CI が赤になる。最初のテストを置いた時点で外す。
 
 ## 3. テストをビルド成果物から除く
 
@@ -247,21 +242,13 @@ pnpm test:e2e       # E2E（web と api は Playwright が起動する）
 
 **対処**: `tsconfig.build.json` を置いて `src/**/*.test.ts` を `exclude` する。`nest build` は自動でそちらを使う。`tsc` を直接呼ぶワークスペースは `-p tsconfig.build.json` を付ける。
 
-### DOM が前のテストの内容を持ち越す
+### `apps/web` の Vitest がテストを 1 件も見つけずに落ちる
 
-**症状**: 単体では通るのに、複数のテストを並べると要素が重複して `getByRole` が失敗する。
+**症状**: `No test files found` で `pnpm test` が失敗する。
 
-**原因**: Testing Library の自動クリーンアップは、グローバルな `afterEach` が存在する場合にのみ登録される。Vitest の `globals` を有効にしていないため働かない。
+**原因**: Vitest は対象 0 件を失敗として扱う。`apps/web` はコンポーネントの外に切り出したロジックだけを対象にするため、その関数が生まれるまでテストが存在しない。
 
-**対処**: `vitest.setup.ts` で `afterEach(cleanup)` を明示的に呼ぶ。
-
-### vite-tsconfig-paths の警告が出る
-
-**症状**: `The plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively` と表示される。
-
-**原因**: Next.js 公式のセットアップ手順は `vite-tsconfig-paths` の導入を案内しているが、Vite 本体が同等機能を取り込んだ。
-
-**対処**: プラグインを外し、`resolve: { tsconfigPaths: true }` を設定する。
+**対処**: `test` スクリプトに `--passWithNoTests` を付ける。最初のテストを置いた時点で外す。
 
 ### Playwright の webServer が api の起動を待てない
 
