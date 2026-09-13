@@ -100,30 +100,38 @@ Onboarding PR には検出した依存と、初回に作られる予定の PR �
 
 ## 5. 対象ブランチを確認する
 
-Renovate は既定でリポジトリのデフォルトブランチに対して PR を作る。このリポジトリのデフォルトブランチは `main` だが、開発は `develop` で進める。`develop` を対象にする場合は明示する。
+Renovate は既定でリポジトリのデフォルトブランチに対して PR を作る。このリポジトリのデフォルトブランチは `main` だが、開発は `develop` で進めるため、対象を明示する。
 
 ```json
-"baseBranches": ["develop"]
+"baseBranchPatterns": ["develop"]
 ```
+
+かつての `baseBranches` は非推奨で、指定すると設定検証が `Config migration necessary` を警告する。
 
 ## モノレポでの挙動
 
 Renovate は `pnpm-workspace.yaml` を読み、各ワークスペースの `package.json` を検出する。ワークスペース構成のための追加設定は要らない。
 
-複数のワークスペースが同じパッケージに依存している場合、既定ではワークスペースごとに別々の PR になる。関連パッケージを 1 つの PR にまとめるには `groupName` を指定する。
+既定では 1 パッケージにつき 1 つの PR が作られる。バージョンを揃えて動かす必要があるパッケージ群では、これが問題になる。`@nestjs/core` は同じバージョンの `@nestjs/common` を peer dependency として要求するため、片方だけを上げた木では CI が落ちる。`prisma`（CLI）と `@prisma/client`（実行時）も一致していなければ生成物と食い違う。
+
+同じ `groupName` を与えたパッケージは 1 つの PR にまとまり、揃った状態で 1 回だけ CI が走る。
 
 ```json
 {
-  "description": "NestJS 系を 1 PR にまとめる",
+  "description": "Group NestJS packages — they must move in lockstep",
   "matchPackageNames": ["/^@nestjs//"],
   "groupName": "nestjs"
 },
 {
-  "description": "Prisma 系を 1 PR にまとめる",
+  "description": "Group Prisma packages — CLI and client must match",
   "matchPackageNames": ["prisma", "@prisma/client"],
   "groupName": "prisma"
 }
 ```
+
+`config:recommended` に含まれる `group:monorepos` プリセットが、よく知られたモノレポ由来のパッケージ群（`react` と `react-dom` など）を既にまとめる。プリセットの対象に含まれるかどうかに依存させたくないものは、上記のように明示する。
+
+グルーピングのルールは `packageRules` の先頭側に置く。末尾には、自動マージを打ち消すルールだけを残す。
 
 ## 動作を確認する
 
@@ -171,4 +179,4 @@ Renovate は `pnpm-workspace.yaml` を読み、各ワークスペースの `pack
 
 **原因**: `baseBranches` が未指定のため、デフォルトブランチが対象になっている。
 
-**対処**: `renovate.json` に `"baseBranches": ["develop"]` を加える。
+**対処**: `renovate.json` に `"baseBranchPatterns": ["develop"]` を加える。
