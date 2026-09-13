@@ -17,6 +17,16 @@
     },
     "test": {
       "dependsOn": ["^build"]
+    },
+    "test:coverage": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
+    },
+    "test:e2e": {
+      // web と api は dev サーバーとして自分で再コンパイルする。事前に要るのは
+      // 両者が dist/ 経由で読み込む packages/shared のビルドだけ。
+      "dependsOn": ["@kotoba/shared#build"],
+      "cache": false
     }
   }
 }
