@@ -35,7 +35,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 | DB                     | PostgreSQL（Supabase）+ Prisma                                           |
 | AI                     | Gemini API（はい/いいえ応答・解答判定: Flash 系の安価モデル）            |
 | バリデーション・型共有 | zod（`packages/shared` でフロント・API 間共有）                          |
-| テスト                 | ユニットテスト + Playwright（E2E）                                       |
+| テスト                 | Vitest（ユニット）/ Storybook（コンポーネント）/ Playwright（E2E）       |
 | CI/CD                  | GitHub Actions                                                           |
 | 依存関係更新           | Renovate                                                                 |
 | ホスティング           | Vercel（web + api を Services で 1 プロジェクト）/ DB+Auth: Supabase      |

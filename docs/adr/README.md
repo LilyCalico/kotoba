@@ -34,3 +34,4 @@
 | # | タイトル | ステータス |
 | --- | --- | --- |
 | [0001](0001-turborepo-as-task-runner.md) | Turborepo をタスクランナーとして採用する | 採用 |
+| [0002](0002-vitest-and-playwright-for-testing.md) | テストを Vitest と Playwright で構成する | 採用 |

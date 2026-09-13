@@ -1,7 +1,11 @@
 packages:
   - "apps/*"
   - "packages/*"
+  - "e2e"
 
+# @swc/core のネイティブバインディングは optionalDependencies のプラットフォーム別
+# パッケージとして配られる。postinstall を走らせなくても解決できる。
 ignoredBuiltDependencies:
+  - "@swc/core"
   - sharp
   - unrs-resolver
