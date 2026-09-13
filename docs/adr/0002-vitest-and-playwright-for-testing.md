@@ -1,0 +1,96 @@
+# テストを Vitest と Playwright で構成する
+
+## ステータス
+
+採用
+
+## コンテキスト
+
+`docs/specifications/non-functional-requirements.md` は「ユニットテスト（解答判定ロジック中心）+ E2E 数本（Playwright）」と「CI で lint / test を回す」ことを要求している。この要求を満たす土台を、実装が積み上がる前に決める必要がある。
+
+満たすべき制約は 4 つある。
+
+| 制約 | 内容 |
+| --- | --- |
+| ESM | `apps/api` は `"type": "module"`。NestJS 12 が ESM で配布されているため、テストランナーも ESM を前提にする |
+| デコレータメタデータ | NestJS の DI はコンストラクタ引数の型情報（`emitDecoratorMetadata`）で依存を解決する。これが失われるとテスト内で DI が壊れる |
+| async Server Component | `apps/web` は App Router を使う。React の `async` Server Component をユニットテストで描画する手段は存在しない |
+| 同一ホスト構成 | 本番では Vercel Services が web と api を 1 つのホストに載せ、フロントは相対パス `/api/v1` を叩く。E2E もこの前提で書けなければ意味がない |
+
+## 決定
+
+### 何を・どこまでテストするか
+
+| レイヤ | 対象 | 範囲 |
+| --- | --- | --- |
+| `packages/shared` | zod スキーマが表現している仕様の境界（入力長 200 字、`trim`、`discriminatedUnion` の分岐） | スキーマが仕様を担っている箇所のみ。zod 自体の挙動は対象外 |
+| `apps/api`（ユニット） | 解答判定の正規化マッチ、プロンプト組み立て、サービス層のロジック | 非機能要件が名指しする本命。AI 呼び出しはモックに差し替える |
+| `apps/api`（統合） | コントローラーと `ZodValidationPipe` の HTTP 契約（200 / 400 のレスポンス形） | `@nestjs/testing` + `supertest` で HTTP 層まで。外部 I/O は差し替える |
+| `apps/web` | 同期コンポーネント、フック、クライアント側の表示ロジック | `async` Server Component は対象外。E2E で担保する |
+| `e2e` | ゲーム 1 周の主要フロー数本 | AI 応答はスタブ化して決定的にする |
+
+AI の判定精度 eval、アクセシビリティ自動検査、Lighthouse 計測はこの構成の外に置く。いずれも実行コストと実行タイミングが通常のテストと異なり、非機能要件で別建ての条件（paths フィルタ + nightly）が定義されている。
+
+### ツール
+
+| 用途 | ツール |
+| --- | --- |
+| テストランナー（全ワークスペース） | Vitest |
+| React コンポーネント | `@testing-library/react` + `jsdom` |
+| NestJS の DI / HTTP | `@nestjs/testing` + `supertest` |
+| E2E | `@playwright/test`（Chromium） |
+| カバレッジ | `@vitest/coverage-v8` |
+
+`apps/api` では Vitest のトランスパイラを `unplugin-swc` 経由で SWC に差し替える。Vitest 既定の esbuild は `emitDecoratorMetadata` を実装しておらず、そのままでは NestJS の DI が引数の型を判別できない。`unplugin-swc` は `tsconfig.json` の `experimentalDecorators` / `emitDecoratorMetadata` を読んで SWC の設定に反映する。
+
+E2E はリポジトリルートの独立ワークスペース `e2e/` に置き、Playwright の `webServer` で web と api を同時に起動する。`apps/web/next.config.ts` は環境変数 `API_PROXY_ORIGIN` が設定されているときだけ `/api/v1/*` を api へ中継する。本番ではこの変数を設定せず、Vercel Services のルーティングに任せる。これにより、テストコードは本番と同じ相対パスだけを扱う。
+
+カバレッジは計測できる状態までとし、閾値ゲートは設けない。
+
+### CI
+
+ユニットテストと E2E を別ジョブに分ける。E2E は Chromium のみを対象とし、ブラウザバイナリを Playwright のバージョンをキーにキャッシュする。
+
+## 検討した選択肢
+
+### テストランナー
+
+| 選択肢 | 評価 |
+| --- | --- |
+| **Vitest に統一**（採用） | ESM をネイティブに扱う。`apps/api` のみ `unplugin-swc` を足せばデコレータメタデータが残る。設定・モック API・レポーターが 1 系統に揃い、Renovate の更新 PR もグループ化できる |
+| `apps/api` は Jest、`apps/web` は Vitest | NestJS の公式チュートリアルや社外サンプルとは揃う。一方で ESM 環境の Jest は `--experimental-vm-modules` を前提とした設定が必要になり、モック API とレポーターが 2 系統に分かれる |
+| `node:test` | 依存を増やさない。React コンポーネントの描画・カバレッジ・監視実行を自前で組む必要があり、得るものより手間が上回る |
+
+### E2E の配置
+
+| 選択肢 | 評価 |
+| --- | --- |
+| **ルート直下の独立ワークスペース**（採用） | web と api を同時に起動でき、本番の同一ホスト構成をそのまま再現できる。どちらのアプリにも属さないため、置き場所の判断が要らない |
+| `apps/web/e2e/` | 設定は最小で済む。ただし api を跨ぐフローを書く段階で、web のワークスペースから api を起動することになり、構成を組み直す |
+
+### 開発時の `/api/v1` の解決
+
+| 選択肢 | 評価 |
+| --- | --- |
+| **Next.js の rewrite を環境変数で切り替える**（採用） | テストコードが本番と同じ相対パスだけを扱う。変数を未設定にすれば本番の挙動に影響しない |
+| テストから api の絶対 URL を直接叩く | 中継の設定が不要。ただしフロントが実際に使う経路を通らないため、ルーティングの取り違えを検出できない |
+
+## 影響
+
+得たもの。
+
+- 3 ワークスペースでテストの書き方が揃い、どこに何を書くかの判断が「対象がどのレイヤか」だけになる
+- E2E が本番と同じ相対パスで書けるため、ローカルで通ったテストがデプロイ後に経路違いで落ちることがない
+- `apps/api` のビルドとテストで同じ `tsconfig.json` を参照するため、デコレータ設定が二重管理にならない
+
+引き受けたコスト。
+
+- `apps/api` のテストは `@swc/core` のネイティブバイナリに依存する。プラットフォームごとの `optionalDependencies` として配布されるため追加の手当ては不要だが、依存は増える
+- `unplugin-swc` は Vitest と NestJS の橋渡しのためだけに存在する。どちらかの仕様が変われば追随が必要になる
+- テストファイルをビルド成果物から除くため、各ワークスペースが `tsconfig.json` と `tsconfig.build.json` の 2 つを持つ
+
+## 見直しの条件
+
+- Vitest が `emitDecoratorMetadata` を既定のトランスパイラで扱えるようになった場合。`unplugin-swc` と `@swc/core` を落とせる
+- React の `async` Server Component をユニットテストで描画する手段が確立した場合。`apps/web` と E2E の責務の線を引き直す
+- E2E が増えて CI の待ち時間が許容できなくなった場合。シャーディングか、実行対象を変更パスで絞る方式を検討する
