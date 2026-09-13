@@ -279,6 +279,14 @@ pnpm test:e2e       # E2E（web と api は Playwright が起動する）
 
 **対処**: `X-Powered-By` ヘッダーを見る。api まで届いていれば `Express`、Next.js が返していれば `Next.js` になる。
 
+### LayoutProps / PageProps が見つからない
+
+**症状**: `apps/web` の型検査が `error TS2304: Cannot find name 'LayoutProps'` で落ちる。ローカルでは通るのに CI だけ失敗する。
+
+**原因**: `LayoutProps` と `PageProps` は Next.js がルート構成から生成するグローバル型で、実体は `.next/types/` に出力される。生成は `next dev` / `next build` / `next typegen` の実行時に行われるため、ビルド前に型検査を走らせると存在しない。ローカルで通るのは、以前の開発サーバー起動やビルドで `.next/` が残っているためである。
+
+**対処**: `typecheck` スクリプトを `next typegen && tsc --noEmit` にする。`next typegen` はフルビルドを伴わずに型定義だけを生成する。タスクの実行順に依存しなくなる。
+
 ### `pnpm typecheck` が tsc not found で落ちる
 
 **症状**: `e2e` の `typecheck` が `sh: tsc: command not found` で失敗し、他のワークスペースのタスクも巻き添えで中断する。
