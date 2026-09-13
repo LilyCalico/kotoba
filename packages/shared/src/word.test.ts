@@ -1,0 +1,66 @@
+import { describe, expect, it } from "vitest";
+import { type Word, isAcceptedAnswer, normalizeAnswer, wordSchema } from "./word.js";
+
+const word: Word = {
+  id: "kura-skymning",
+  language: "sv",
+  word: "Kura skymning",
+  reading: "クーラ・シムニング",
+  partOfSpeech: "phrase",
+  frequency: 1,
+  acceptedAnswers: ["クーラシムニング"],
+  definition: {
+    ja: "夕暮れどきに明かりをつけず、薄闇の中で静かに過ごすこと。",
+    en: "Sitting quietly in the dusk without turning on any lamps.",
+  },
+  teaser: {
+    ja: "日が落ちても、あえて手を伸ばさないスイッチがある",
+    en: "The sun goes down, and the switch stays untouched on purpose",
+  },
+  hints: {
+    ja: ["方向性", "使われる場面", "語の成り立ち"],
+    en: ["direction", "occasion", "origin"],
+  },
+};
+
+describe("normalizeAnswer", () => {
+  it("ダイアクリティカルを落として大文字小文字を揃える", () => {
+    expect(normalizeAnswer("Smultronställe")).toBe(normalizeAnswer("smultronstalle"));
+    expect(normalizeAnswer("Mångata")).toBe(normalizeAnswer("mangata"));
+  });
+
+  it("区切り文字と長音符を無視する", () => {
+    expect(normalizeAnswer("クーラ・シムニング")).toBe(normalizeAnswer("クラシムニング"));
+    expect(normalizeAnswer("ラーゴム")).toBe(normalizeAnswer("ラゴム"));
+  });
+});
+
+describe("isAcceptedAnswer", () => {
+  it("単語そのものと別表記の両方を正解とみなす", () => {
+    expect(isAcceptedAnswer(word, "kura skymning")).toBe(true);
+    expect(isAcceptedAnswer(word, "クーラシムニング")).toBe(true);
+  });
+
+  it("別の単語は正解にしない", () => {
+    expect(isAcceptedAnswer(word, "fredagsmys")).toBe(false);
+    expect(isAcceptedAnswer(word, "  ")).toBe(false);
+  });
+});
+
+describe("wordSchema", () => {
+  it("片方の UI 言語が欠けたデータを弾く", () => {
+    const { en: _dropped, ...jaOnly } = word.definition;
+
+    expect(wordSchema.safeParse({ ...word, definition: jaOnly }).success).toBe(false);
+  });
+
+  it("ヒントが 3 つでないデータを弾く", () => {
+    expect(
+      wordSchema.safeParse({ ...word, hints: { ...word.hints, en: ["one"] } }).success,
+    ).toBe(false);
+  });
+
+  it("使用頻度の範囲外を弾く", () => {
+    expect(wordSchema.safeParse({ ...word, frequency: 6 }).success).toBe(false);
+  });
+});
