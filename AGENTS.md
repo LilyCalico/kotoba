@@ -50,4 +50,4 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## コンポーネント実装規約
 
-UI を実装・変更するときは、デザインの詳細（トーン&マナー・デザイントークン・アニメーション方針）を `docs/specifications/ui-design.md` に従って決める。
+UI を実装・変更するときは、デザインの詳細（トーン&マナー・デザイントークン・アニメーション方針）を `docs/specifications/design.md` に従って決める。
