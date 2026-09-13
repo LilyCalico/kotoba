@@ -52,9 +52,17 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   - サービスにはオリジナルのリクエストパスがそのまま届くため、api 側は `setGlobalPrefix("api/v1")` で接頭辞を受ける
   - web と api が同一ホストに載るので、フロントからは相対パス `/api/v1` を叩く。プレビューは 1 デプロイ 1 ホストであり、相対パスなら常に自分のデプロイの api を呼ぶ
 
-## 設計判断の記録
+## ドキュメントの構成
 
-構成や技術選定のうち、選択肢が複数あり後から意図を問われるものは `docs/adr/` に ADR として残す。書く対象・ファイル名・構成は `docs/adr/README.md` に従う。
+`docs/` は役割ごとに 3 つに分ける。
+
+| ディレクトリ | 扱うもの |
+| --- | --- |
+| `docs/specifications/` | 何を作るか。プロダクト仕様 |
+| `docs/adr/` | なぜそう決めたか。書き方は `docs/adr/README.md` に従う |
+| `docs/guides/` | どう設定するか。採用した構成の再現手順 |
+
+構成や技術選定のうち、選択肢が複数あり後から意図を問われるものは ADR として残す。
 
 ## コンポーネント実装規約
 
