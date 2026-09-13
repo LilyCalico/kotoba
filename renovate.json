@@ -25,6 +25,11 @@
       "groupName": "prisma"
     },
     {
+      "description": "Group Vitest packages — the coverage provider must match the runner",
+      "matchPackageNames": ["vitest", "@vitest/coverage-v8"],
+      "groupName": "vitest"
+    },
+    {
       "description": "Automerge patch updates (devDependencies only)",
       "matchDepTypes": ["devDependencies"],
       "matchUpdateTypes": ["patch"],
