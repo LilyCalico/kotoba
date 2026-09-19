@@ -21,6 +21,9 @@ blob-report/
 .next/
 out/
 
+# storybook
+storybook-static/
+
 # production
 build/
 dist/

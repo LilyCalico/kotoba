@@ -3,9 +3,10 @@ packages:
   - "packages/*"
   - "e2e"
 
-# @swc/core のネイティブバインディングは optionalDependencies のプラットフォーム別
-# パッケージとして配られる。postinstall を走らせなくても解決できる。
+# @swc/core と esbuild のネイティブバインディングは optionalDependencies の
+# プラットフォーム別パッケージとして配られる。postinstall を走らせなくても解決できる。
 ignoredBuiltDependencies:
   - "@swc/core"
+  - esbuild
   - sharp
   - unrs-resolver
