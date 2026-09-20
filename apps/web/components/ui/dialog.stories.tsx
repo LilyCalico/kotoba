@@ -13,8 +13,6 @@ import {
 const meta = {
   title: "UI/Dialog",
   component: Dialog,
-  // Dialog は children を必須で取る。各 story は DialogTrigger ごと render で
-  // 組み立てるため、ここでは型を満たすための既定値だけを置く。
   args: { children: null },
 } satisfies Meta<typeof Dialog>;
 

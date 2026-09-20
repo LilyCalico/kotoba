@@ -10,9 +10,6 @@ import {
   type LinkProps as LinkPrimitiveProps,
 } from "react-aria-components"
 
-// フォーカスリングは `:focus-visible` ではなく React Aria が付与する
-// `data-focus-visible` に当てる。マウス操作でも輪郭が出るブラウザ差を受けず、
-// キーボード操作時に必ず可視になる。
 const buttonVariants = cva(
   "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none data-[focus-visible]:border-ring data-[focus-visible]:ring-3 data-[focus-visible]:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {

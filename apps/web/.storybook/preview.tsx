@@ -3,10 +3,6 @@ import { zenMaruGothic } from "../app/fonts";
 import { Providers } from "../app/providers";
 import "../app/globals.css";
 
-/**
- * story を本番と同じ条件で描く。アプリのルートと同じプロバイダ・フォント・
- * デザイントークンを当てるため、story 側で配色や書体を指定する必要はない。
- */
 const preview: Preview = {
   parameters: {
     layout: "fullscreen",

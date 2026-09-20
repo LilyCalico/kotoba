@@ -98,9 +98,6 @@ function FieldContent({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
-// フォーカスリングは `:focus-visible` ではなく React Aria が付与する
-// `data-focus-visible` に当てる。マウス操作でも輪郭が出るブラウザ差を受けず、
-// キーボード操作時に必ず可視になる。
 function FieldLabel({
   className,
   ...props
