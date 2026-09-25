@@ -147,18 +147,18 @@ export const zenMaruGothic = Zen_Maru_Gothic({
 
 可変フォントではないので `weight` の明示が要る。`variable` を `--font-sans` にすると、`globals.css` の `@theme inline` が持つ `--font-sans` の参照先になり、Tailwind の `font-sans` から引ける。
 
-`app/layout.tsx` で `<html>` に当て、あわせて `metadata` と `lang` を差し替える。
+`app/layout.tsx` で `<html>` に当て、あわせて `metadata` と `lang` を差し替える。UI の文言は英語で書くため `lang` は `en` にする。
 
 ```tsx
 export const metadata: Metadata = {
   title: { default: "kotoba", template: "%s | kotoba" },
   description:
-    "はい / いいえ で質問して、スウェーデン語の「その言語にしかない言葉」を当てるゲーム。",
+    "Ask yes-or-no questions to uncover a Swedish word that exists in no other language.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ja" className={`${zenMaruGothic.variable} h-full antialiased`}>
+    <html lang="en" className={`${zenMaruGothic.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <Providers>{children}</Providers>
       </body>
@@ -176,7 +176,7 @@ cd apps/web
 pnpm add motion
 ```
 
-`MotionConfig` と `I18nProvider` はどちらもクライアント側で動く。`app/providers.tsx` に `"use client"` でまとめ、Server Component である `app/layout.tsx` から差し込む。
+`MotionConfig` と `I18nProvider` はどちらもクライアント側で動く。`I18nProvider` の locale は `<html lang>` と揃える。`app/providers.tsx` に `"use client"` でまとめ、Server Component である `app/layout.tsx` から差し込む。
 
 ```tsx
 "use client";
@@ -186,7 +186,7 @@ import { I18nProvider } from "react-aria-components";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <I18nProvider locale="ja">
+    <I18nProvider locale="en">
       <MotionConfig reducedMotion="user">{children}</MotionConfig>
     </I18nProvider>
   );
@@ -249,26 +249,7 @@ cd apps/web
 rm public/file.svg public/globe.svg public/next.svg public/vercel.svg public/window.svg
 ```
 
-`app/page.tsx` は Next.js のテンプレートを捨て、ロゴと説明だけのプレースホルダにする。ゲーム画面は後続で差し替える。
-
-```tsx
-import Image from "next/image";
-
-export default function Home() {
-  return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-4 p-6">
-      <h1>
-        <Image src="/kotoba-logo.png" alt="kotoba" width={220} height={66} priority />
-      </h1>
-      <p className="max-w-80 text-center text-sm text-muted-foreground">
-        はい / いいえ で質問して、スウェーデン語の「その言語にしかない言葉」を当てるゲーム。
-      </p>
-    </main>
-  );
-}
-```
-
-`<h1>` は残す。E2E の smoke テストが見出しの存在を確かめている。
+`app/page.tsx` は Next.js のテンプレートを捨て、ロゴを `<h1>` に据えた画面にする。E2E の smoke テストが `<h1>` の存在を確かめているため、この見出しは欠かさない。
 
 ## 9. eslint-plugin-jsx-a11y を足す
 
@@ -381,11 +362,21 @@ story はコンポーネントの隣に `components/ui/<name>.stories.tsx` と�
 "build-storybook": { "dependsOn": ["^build"], "outputs": ["storybook-static/**"] }
 ```
 
-ビルド成果物を `.gitignore` に足す。
+ビルド成果物を `.gitignore` と `eslint.config.mjs` の `globalIgnores` に足す。ESLint 側にも足さないと、ビルド後の `pnpm lint` が生成物を検査して数千件の指摘を出す。
 
 ```
 # storybook
 storybook-static/
+```
+
+```js
+globalIgnores([
+  ".next/**",
+  "out/**",
+  "build/**",
+  "next-env.d.ts",
+  "storybook-static/**",
+]),
 ```
 
 ## 11. 通しで確認する
