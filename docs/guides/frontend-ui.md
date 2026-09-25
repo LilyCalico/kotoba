@@ -1,10 +1,33 @@
 # フロント UI 基盤の設定手順
 
-`apps/web` にデザイントークン・UI コンポーネント・Storybook を置く。`create-next-app` が作った状態から始め、通しで実行すると現在の構成になる。
+`apps/web` にデザイントークン・UI コンポーネント・Storybook を置く。`create-next-app` が作った状態から始め、手順 1 から順に実行すると現在の構成になる。
 
-何をどう見せるかの方針は [`docs/specifications/design.md`](../specifications/design.md) が、テストとの役割分担は [ADR 0002](../adr/0002-vitest-and-playwright-for-testing.md) が定める。
+## セットアップするもの
 
-Figma の草案は https://www.figma.com/design/mWFhHDTqPHFBKhIMrkKj9B/Kotoba?node-id=112-16215 。
+いずれも `apps/web` で実行する。手順 1 が入れる 6 つは dependencies に入る。
+
+**手順 1 — `npx shadcn@latest init -b aria -p nova -y --no-monorepo`**
+
+- `react-aria-components` — primitive base
+- `class-variance-authority` — コンポーネントの variant 定義
+- `cn` — `lib/utils.ts` が再輸出する `cn` の実体
+- `lucide-react` — アイコン
+- `shadcn` — コンポーネントを足す CLI
+- `tw-animate-css` — Tailwind v4 向けのアニメーションユーティリティ
+
+**手順 7 — `pnpm add motion`**
+
+- `motion` — `MotionConfig` とアニメーション
+
+**手順 9 — `pnpm add -D eslint-plugin-jsx-a11y`**
+
+- `eslint-plugin-jsx-a11y` — アクセシビリティの静的検証
+
+**手順 10 — `pnpm add -D storybook @storybook/nextjs-vite vite`**
+
+- `storybook` — コンポーネント単体の確認
+- `@storybook/nextjs-vite` — Storybook の Next.js 向けフレームワーク
+- `vite` — 同フレームワークが peer に要求するバンドラ
 
 ## 1. shadcn/ui を初期化する
 
@@ -27,14 +50,6 @@ npx shadcn@latest add button input field label dialog -y
 ```
 
 aria base に `text-field` という名前のコンポーネントは無い。テキスト入力は `input` が担い、その内部が React Aria の `TextField` にあたる。ラベル付きの入力は `Field` / `FieldLabel` / `Input` を組んで作る。
-
-```tsx
-<Field>
-  <FieldLabel htmlFor="question">質問か解答</FieldLabel>
-  <Input id="question" placeholder="金曜日に限った言葉ですか？" />
-  <FieldDescription>はい / いいえ で答えられる質問にしてください。</FieldDescription>
-</Field>
-```
 
 `dialog` は依存として `separator` も連れてくる。`FieldSeparator` の実体でもあるので取り除かない。
 
@@ -182,7 +197,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
 ## 8. アセットを置き、scaffold の残骸を消す
 
-Figma から**背景透過 PNG で @2x**（Figma の表示サイズの 2 倍）で書き出す。
+[Figma の草案](https://www.figma.com/design/mWFhHDTqPHFBKhIMrkKj9B/Kotoba?node-id=112-16215) から**背景透過 PNG で @2x**（Figma の表示サイズの 2 倍）で書き出す。
 
 | 対象 | Figma ノード | 書き出すサイズ | 置き場所 |
 | --- | --- | --- | --- |
