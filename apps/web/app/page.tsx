@@ -5,8 +5,8 @@ import { LinkButton } from "@/components/ui/button";
 
 export default function Home() {
   return (
-    <main className="relative flex flex-1 items-center justify-center overflow-hidden px-5">
-      <LeafScatter />
+    <main className="relative flex flex-1 items-center justify-center overflow-hidden px-5 pt-18">
+      <LeafScatter variant="start" />
       <div className="relative z-10 flex w-[18.625rem] max-w-full flex-col items-start gap-6">
         <div className="flex w-full flex-col gap-5">
           <h1>
@@ -19,8 +19,9 @@ export default function Home() {
             />
           </h1>
           <p className="text-[0.625rem] text-muted-foreground">
-            Somewhere in Swedish there&apos;s a word for a feeling you&apos;ve
-            never been able to name.
+            Somewhere in Swedish there&apos;s a word
+            <br />
+            for a feeling you&apos;ve never been able to name.
           </p>
         </div>
         <hr className="w-6 border-t border-muted-foreground" />

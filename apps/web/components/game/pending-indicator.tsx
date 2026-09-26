@@ -6,7 +6,7 @@ const DOTS = [0, 1, 2];
 
 export function PendingIndicator() {
   return (
-    <p className="mr-auto flex items-center gap-1 rounded-md bg-card px-4 py-3">
+    <p className="mr-auto flex w-fit items-center gap-1 rounded-md bg-card px-4 py-3">
       <span className="sr-only">Waiting for an answer</span>
       {DOTS.map((index) => (
         <motion.span

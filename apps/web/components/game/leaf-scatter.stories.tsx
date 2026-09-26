@@ -10,10 +10,18 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {
+export const Start: Story = {
   render: () => (
     <div className="relative h-[32rem] w-full max-w-lg overflow-hidden rounded-2xl border border-border">
-      <LeafScatter />
+      <LeafScatter variant="start" />
+    </div>
+  ),
+};
+
+export const Teaser: Story = {
+  render: () => (
+    <div className="relative h-[32rem] w-full max-w-lg overflow-hidden rounded-2xl border border-border">
+      <LeafScatter variant="teaser" />
     </div>
   ),
 };

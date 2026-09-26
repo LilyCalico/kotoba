@@ -222,7 +222,7 @@ export function PlayScreen({ wordId }: { wordId?: string }) {
           key="teaser"
           transition={PHASE_TRANSITION}
         >
-          <LeafScatter />
+          <LeafScatter variant="teaser" />
           <div className="relative z-10 mx-auto w-full max-w-lg">
             <TeaserCard teaser={state.teaser} variant="presented" />
           </div>
@@ -254,7 +254,7 @@ export function PlayScreen({ wordId }: { wordId?: string }) {
             <TeaserCard teaser={state.teaser} />
 
             <main
-              className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4"
+              className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto px-4 pt-10 pb-4"
               id="chat-log"
             >
               <h1 className="sr-only">Guess the hidden Swedish word</h1>
@@ -275,7 +275,7 @@ export function PlayScreen({ wordId }: { wordId?: string }) {
               {announcement ? announcementText(announcement) : ""}
             </div>
 
-            <div className="flex flex-col gap-2 p-4">
+            <div className="flex flex-col gap-3 px-4 pb-3">
               {finished ? (
                 <LinkButton className="h-11 self-center px-6" href="/">
                   Play again

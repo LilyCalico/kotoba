@@ -21,7 +21,7 @@ export function VerdictMessage({
 }) {
   return (
     <p
-      className="mr-auto max-w-[85%] rounded-md bg-card px-4 py-2 text-sm text-card-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      className="mr-auto w-fit max-w-[85%] rounded-md bg-card px-4 py-2 text-sm text-card-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       ref={ref}
       tabIndex={-1}
     >
