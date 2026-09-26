@@ -23,9 +23,9 @@ type Story = StoryObj<typeof meta>;
 export const Vertical: Story = {
   render: () => (
     <Field className="w-80">
-      <FieldLabel htmlFor="field-vertical">ニックネーム</FieldLabel>
+      <FieldLabel htmlFor="field-vertical">Nickname</FieldLabel>
       <Input id="field-vertical" placeholder="kotoba" />
-      <FieldDescription>結果カードに表示されます。</FieldDescription>
+      <FieldDescription>Shown on the result card.</FieldDescription>
     </Field>
   ),
 };
@@ -33,9 +33,9 @@ export const Vertical: Story = {
 export const Horizontal: Story = {
   render: () => (
     <Field orientation="horizontal" className="w-96">
-      <FieldLabel htmlFor="field-horizontal">解答</FieldLabel>
+      <FieldLabel htmlFor="field-horizontal">Guess</FieldLabel>
       <Input id="field-horizontal" placeholder="fika" />
-      <Button>送信</Button>
+      <Button>Send</Button>
     </Field>
   ),
 };
@@ -43,17 +43,17 @@ export const Horizontal: Story = {
 export const Group: Story = {
   render: () => (
     <FieldSet className="w-80">
-      <FieldLegend>プレイ設定</FieldLegend>
+      <FieldLegend>Play settings</FieldLegend>
       <FieldGroup>
         <Field>
-          <FieldLabel htmlFor="field-group-name">ニックネーム</FieldLabel>
+          <FieldLabel htmlFor="field-group-name">Nickname</FieldLabel>
           <Input id="field-group-name" placeholder="kotoba" />
         </Field>
         <FieldSeparator />
         <Field>
-          <FieldLabel htmlFor="field-group-hints">ヒントの回数</FieldLabel>
+          <FieldLabel htmlFor="field-group-hints">Number of hints</FieldLabel>
           <Input id="field-group-hints" type="number" defaultValue={3} />
-          <FieldDescription>1 ゲームで使えるヒントの上限。</FieldDescription>
+          <FieldDescription>The most hints you can use in one game.</FieldDescription>
         </Field>
       </FieldGroup>
     </FieldSet>

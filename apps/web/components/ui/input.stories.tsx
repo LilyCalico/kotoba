@@ -17,7 +17,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
-  args: { placeholder: "質問か解答を入力" },
+  args: { placeholder: "Ask a question or guess the word" },
   render: (args) => (
     <div className="w-80">
       <Input {...args} />
@@ -28,10 +28,10 @@ export const Default: Story = {
 export const WithLabel: Story = {
   render: () => (
     <Field className="w-80">
-      <FieldLabel htmlFor="input-question">質問か解答</FieldLabel>
-      <Input id="input-question" placeholder="金曜日に限った言葉ですか？" />
+      <FieldLabel htmlFor="input-question">Question or guess</FieldLabel>
+      <Input id="input-question" placeholder="Is it tied to Fridays?" />
       <FieldDescription>
-        はい / いいえ で答えられる質問にしてください。
+        Ask something that can be answered with yes or no.
       </FieldDescription>
     </Field>
   ),
@@ -40,9 +40,9 @@ export const WithLabel: Story = {
 export const Invalid: Story = {
   render: () => (
     <Field className="w-80" data-invalid>
-      <FieldLabel htmlFor="input-invalid">質問か解答</FieldLabel>
-      <Input id="input-invalid" aria-invalid defaultValue={"あ".repeat(12)} />
-      <FieldError>200 文字以内で入力してください。</FieldError>
+      <FieldLabel htmlFor="input-invalid">Question or guess</FieldLabel>
+      <Input id="input-invalid" aria-invalid defaultValue={"a".repeat(12)} />
+      <FieldError>Keep it within 200 characters.</FieldError>
     </Field>
   ),
 };
@@ -50,8 +50,8 @@ export const Invalid: Story = {
 export const Disabled: Story = {
   render: () => (
     <Field className="w-80" data-disabled="true">
-      <FieldLabel htmlFor="input-disabled">質問か解答</FieldLabel>
-      <Input id="input-disabled" placeholder="ゲーム終了" disabled />
+      <FieldLabel htmlFor="input-disabled">Question or guess</FieldLabel>
+      <Input id="input-disabled" placeholder="Game over" disabled />
     </Field>
   ),
 };
