@@ -9,12 +9,12 @@ export const metadata: Metadata = {
     template: "%s | kotoba",
   },
   description:
-    "はい / いいえ で質問して、スウェーデン語の「その言語にしかない言葉」を当てるゲーム。",
+    "Ask yes-or-no questions to uncover a Swedish word for a feeling you've never been able to name.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ja" className={`${zenMaruGothic.variable} h-full antialiased`}>
+    <html lang="en" className={`${zenMaruGothic.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <Providers>{children}</Providers>
       </body>

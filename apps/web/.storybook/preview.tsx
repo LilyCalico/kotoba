@@ -1,10 +1,10 @@
 import type { Preview } from "@storybook/nextjs-vite";
-import { I18nProvider } from "react-aria-components";
 import { zenMaruGothic } from "../app/fonts";
 import { Providers } from "../app/providers";
 import "../app/globals.css";
 
-// ダイアログは <body> の直下に描画されるため、フォントと言語は story の外側の <html> に当てる。
+// Storybook は app/layout.tsx を通らないため、<html> に当てる値をここで当てる。
+// ダイアログは <body> の直下に描画されるので、story を包む要素ではなく <html> に置く。
 document.documentElement.classList.add(zenMaruGothic.variable);
 document.documentElement.lang = "en";
 
@@ -15,12 +15,9 @@ const preview: Preview = {
   decorators: [
     (Story) => (
       <Providers>
-        {/* コンポーネントと story の文言は英語。React Aria の組み込みラベルも英語に揃える。 */}
-        <I18nProvider locale="en">
-          <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background p-8 font-sans text-foreground">
-            <Story />
-          </div>
-        </I18nProvider>
+        <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background p-8 font-sans text-foreground">
+          <Story />
+        </div>
       </Providers>
     ),
   ],
