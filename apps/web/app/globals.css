@@ -82,5 +82,16 @@
   }
   html {
     @apply font-sans;
+    font-size: 100%;
+  }
+  @media (min-width: 48rem) {
+    html {
+      font-size: 106.25%;
+    }
+  }
+  @media (min-width: 64rem) {
+    html {
+      font-size: 112.5%;
+    }
   }
 }
