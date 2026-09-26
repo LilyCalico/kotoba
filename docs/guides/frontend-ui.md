@@ -6,7 +6,7 @@
 
 いずれも `apps/web` で実行する。手順 1 が入れる 6 つは dependencies に入る。
 
-**手順 1 — `npx shadcn@latest init -b aria -p nova -y --no-monorepo`**
+**手順 1 — `npx shadcn@latest init -b aria -p luma -y --no-monorepo`**
 
 - `react-aria-components` — primitive base
 - `class-variance-authority` — コンポーネントの variant 定義
@@ -31,12 +31,14 @@
 
 ## 1. shadcn/ui を初期化する
 
-primitive base に React Aria Components を選ぶ。`-b aria` がそれを指定し、`-p nova` がプリセット（アイコンは Lucide）を指定する。
+primitive base に React Aria Components を、見た目のスタイルに Luma を選ぶ。`-b aria` が前者を、`-p luma` が後者のプリセット（アイコンは Lucide）を指定する。`components.json` の `style` は `aria-luma` になる。
 
 ```bash
 cd apps/web
-npx shadcn@latest init -b aria -p nova -y --no-monorepo
+npx shadcn@latest init -b aria -p luma -y --no-monorepo
 ```
+
+Luma は大きな角丸と広めの余白をとるスタイルで、ボタンは両端が丸く、ダイアログは影を落として浮かぶ。各スタイルの見た目は https://ui.shadcn.com/create で切り替えて見比べられる。
 
 どちらのフラグも省略すると対話プロンプトに落ちるため、非対話で流すなら両方渡す。`--no-monorepo` は「モノレポとして足場を組み直すか」の確認を抑える。`apps/web` は既に存在するワークスペースなので組み直しは要らない。
 
@@ -74,6 +76,16 @@ sed -i '' 's/has-\[:focus-visible\]:/has-[[data-focus-visible]]:/g' components/u
 ```bash
 grep -rn 'focus-visible:' apps/web/components/ui/
 ```
+
+### 入力欄の輪郭を残す
+
+Luma の `Input` は枠線を消し、`--input` を半透明にした塗りで入力欄を示す。このリポジトリの `--input` は、入力欄の輪郭がコントラスト比 3:1（WCAG 1.4.11）を満たすように濃くした色なので（手順 4）、塗りに回すと濃い灰緑の面になり、輪郭も失われる。`components/ui/input.tsx` の塗りを枠線に戻し、角丸・高さ・余白は Luma のまま使う。
+
+| 生成された記述 | 置き換え後 |
+| --- | --- |
+| `border-transparent bg-input/50` | `border-input bg-transparent` |
+
+無効状態は `disabled:bg-input/50` で塗り、有効な入力欄と見分ける。
 
 ## 4. デザイントークンを差し替える
 
@@ -331,24 +343,28 @@ const config: StorybookConfig = {
 export default config;
 ```
 
-`.storybook/preview.tsx` では、アプリのルートと同じプロバイダ・フォント・`globals.css` を decorator として当てる。story 側で配色や書体を指定する必要がなくなり、本番と同じ条件で見比べられる。
+`.storybook/preview.tsx` では、アプリのルートと同じプロバイダ・フォント・`globals.css` を当てる。story 側で配色や書体を指定する必要がなくなり、本番と同じ条件で見比べられる。コンポーネントと story の文言は英語で書くため、Storybook の locale と `lang` は英語にする。
 
 ```tsx
 import type { Preview } from "@storybook/nextjs-vite";
+import { I18nProvider } from "react-aria-components";
 import { zenMaruGothic } from "../app/fonts";
 import { Providers } from "../app/providers";
 import "../app/globals.css";
+
+document.documentElement.classList.add(zenMaruGothic.variable);
+document.documentElement.lang = "en";
 
 const preview: Preview = {
   parameters: { layout: "fullscreen" },
   decorators: [
     (Story) => (
       <Providers>
-        <div
-          className={`${zenMaruGothic.variable} flex min-h-screen flex-col items-center justify-center gap-6 bg-background p-8 font-sans text-foreground`}
-        >
-          <Story />
-        </div>
+        <I18nProvider locale="en">
+          <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background p-8 font-sans text-foreground">
+            <Story />
+          </div>
+        </I18nProvider>
       </Providers>
     ),
   ],
@@ -356,6 +372,8 @@ const preview: Preview = {
 
 export default preview;
 ```
+
+フォントの変数と `lang` は、story を包む要素ではなく `<html>` に当てる。ダイアログは `<body>` の直下に描画されるため、story を包む要素に当てた値は届かない。内側の `I18nProvider` は `Providers` の locale を上書きし、React Aria の組み込みラベルと日付・数値の書式を英語にする。
 
 `@storybook/nextjs-vite` は `next/font/google` を解決できるため、`app/fonts.ts` をそのまま import できる。
 
@@ -381,11 +399,16 @@ story はコンポーネントの隣に `components/ui/<name>.stories.tsx` と�
 "build-storybook": { "dependsOn": ["^build"], "outputs": ["storybook-static/**"] }
 ```
 
-ビルド成果物を `.gitignore` に足す。
+ビルド成果物を `.gitignore` に足し、ESLint の対象からも外す。
 
 ```
 # storybook
 storybook-static/
+```
+
+```js
+// apps/web/eslint.config.mjs の globalIgnores
+"storybook-static/**",
 ```
 
 ## 11. 通しで確認する
@@ -401,12 +424,13 @@ pnpm dev        # http://localhost:3000
 pnpm storybook  # http://localhost:6006
 ```
 
-目で見て確かめるのは次の 4 点。
+目で見て確かめるのは次の 5 点。
 
 1. トップページの背景が緑みを帯びた淡いオフホワイトで、本文が丸ゴシックで描かれている
 2. OS の外観をダークにしても配色が変わらない
 3. Storybook で **Tab キー**を押すとフォーカスされたボタンに緑のリングが出る。マウスでクリックした場合は出ない
 4. `UI/Dialog` が Esc で閉じ、Tab がダイアログ内に閉じ込められる
+5. `UI/Dialog` を開いたとき、ダイアログの中の文字も丸ゴシックで描かれている
 
 ## つまずきポイント
 
@@ -416,7 +440,7 @@ pnpm storybook  # http://localhost:6006
 
 **原因**: `-y` が抑えるのは確認プロンプトだけで、プリセットの選択は別枠になっている。
 
-**対処**: `-p nova` のようにプリセットを明示する。`-d` でも通るが、その場合 base は `-b` ではなく既定の `base` になる。
+**対処**: `-p luma` のようにプリセットを明示する。`-d` でも通るが、その場合 base は `-b` ではなく既定の `base` になる。
 
 ### `shadcn init` が「フレームワークを検出できない」と言う
 
@@ -473,3 +497,11 @@ pnpm storybook  # http://localhost:6006
 **原因**: フォントを `<html>` に当てていない。
 
 **対処**: `subsets` はプリロードする範囲の指定であって、self-host する範囲の指定ではない。日本語のグリフは unicode-range で分割された別ファイルとして必ず落ちてくる（`next build` 後に `.next/static/media` へ 200 個以上の `.woff2` が並ぶ）。`subsets: ["latin"]` のままでよく、確認すべきは `zenMaruGothic.variable` が `<html>` の `className` に入っているかどうか。
+
+### Storybook でダイアログの中だけ明朝体になる
+
+**症状**: story の本文は丸ゴシックなのに、`UI/Dialog` を開くとダイアログの中の文字がブラウザ既定の明朝体で描かれる。
+
+**原因**: フォントの変数を story を包む要素にだけ当てている。ダイアログは `<body>` の直下に描画されるため、変数が届かず `font-sans` が解決できない。
+
+**対処**: 手順 10 のとおり、`.storybook/preview.tsx` で `<html>` に `zenMaruGothic.variable` を当てる。
