@@ -4,8 +4,8 @@ import type { GameStart } from "@kotoba/shared";
 import Link from "next/link";
 import { useEffect, useReducer, useRef, useState } from "react";
 
-import { AnswerFeedback } from "@/components/game/answer-feedback";
-import { ErrorMessage } from "@/components/game/error-message";
+import { AnswerFeedback, answerText } from "@/components/game/answer-feedback";
+import { ERROR_TEXT, ErrorMessage } from "@/components/game/error-message";
 import { GiveUpDialog } from "@/components/game/give-up-dialog";
 import { Header } from "@/components/game/header";
 import { HintButton } from "@/components/game/hint-button";
@@ -16,17 +16,19 @@ import { PendingIndicator } from "@/components/game/pending-indicator";
 import { HINT_REQUEST_TEXT, PlayerMessage } from "@/components/game/player-message";
 import { ResultCard } from "@/components/game/result-card";
 import { TeaserCard } from "@/components/game/teaser-card";
-import { VerdictMessage } from "@/components/game/verdict-message";
+import { VerdictMessage, verdictText } from "@/components/game/verdict-message";
 import { buttonVariants } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { type GameClient, GameClientError } from "@/lib/game/client";
 import { createMockGameClient } from "@/lib/game/mock-client";
 import {
+  type AnnouncedEntry,
   type ChatEntry,
   type GameAction,
   type GameState,
   createGameState,
   gameReducer,
+  latestAnnouncement,
   remainingHints,
 } from "@/lib/game/state";
 
@@ -35,6 +37,11 @@ export const TEASER_DURATION_MS = 3000;
 
 export const START_FAILED_TEXT = "Couldn't start a game.";
 export const GIVE_UP_FAILED_TEXT = "Couldn't give up. Please try again.";
+export const TEASER_INSTRUCTION = "Press Enter or Space to start asking questions.";
+export const SKIP_LINK_TEXT = "Skip to the input";
+
+/** 入力欄の置き場所。skip link の飛び先になる。 */
+const PLAYER_INPUT_ID = "player-input";
 
 type PlayAction = GameAction | { type: "started"; start: GameStart };
 
@@ -55,7 +62,7 @@ export function PlayScreen({ wordId }: { wordId?: string }) {
 
 /**
  * ゲーム 1 周の画面。描画した時点で新しいゲームを始め、画面を離れるとゲームは破棄される。
- * 設問の提示とチャットの 2 状態をとり、設問の提示は 3 秒で、またはクリックかキー入力で即座にチャットへ移る。
+ * 設問の提示とチャットの 2 状態をとり、設問の提示は 3 秒で、または Enter / Space / クリックで即座にチャットへ移る。
  */
 export function GameScreen({ client }: { client: GameClient }) {
   const [game, dispatch] = useReducer(playReducer, null);
@@ -94,29 +101,39 @@ export function GameScreen({ client }: { client: GameClient }) {
   useEffect(() => {
     if (phase !== "teaser") return;
 
-    // 自動で移るときもクリックやキー入力で移るときも、フォーカスは動かさない。
+    // 自動で移るときも操作で移るときも、フォーカスは動かさない。
     const enterChat = () => dispatch({ type: "chat-entered" });
+    // Tab やスクリーンリーダーの操作キーで、設問を読む前に進まないよう Enter と Space に絞る。
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.repeat || (event.key !== "Enter" && event.key !== " ")) return;
+      event.preventDefault();
+      enterChat();
+    };
     const timer = setTimeout(enterChat, TEASER_DURATION_MS);
     // pointerdown で移ると、続く click がチャットの同じ位置にある操作に当たるため、click を待つ。
     document.addEventListener("click", enterChat);
-    document.addEventListener("keydown", enterChat);
+    document.addEventListener("keydown", onKeyDown);
     return () => {
       clearTimeout(timer);
       document.removeEventListener("click", enterChat);
-      document.removeEventListener("keydown", enterChat);
+      document.removeEventListener("keydown", onKeyDown);
     };
   }, [phase]);
 
   return (
-    <main className="flex h-dvh justify-center overflow-hidden">
+    <div className="flex h-dvh justify-center overflow-hidden">
       <div className="relative flex w-full max-w-[42rem] flex-col">
         {phase !== "chat" && <LeafScatter variant="teaser" />}
         {game?.phase === "chat" ? (
           <Chat client={client} dispatch={dispatch} state={game} />
         ) : (
-          <div className="relative z-10 flex flex-1 items-center justify-center px-5">
+          <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-5">
+            <h1 className="sr-only">kotoba</h1>
             {game ? (
-              <TeaserCard teaser={game.teaser} variant="floating" />
+              <>
+                <TeaserCard teaser={game.teaser} variant="floating" />
+                <p className="sr-only">{TEASER_INSTRUCTION}</p>
+              </>
             ) : (
               !startFailed && (
                 <div>
@@ -124,16 +141,20 @@ export function GameScreen({ client }: { client: GameClient }) {
                 </div>
               )
             )}
-          </div>
+          </main>
         )}
       </div>
-    </main>
+    </div>
   );
 }
 
 /**
  * チャット。上からヘッダー、設問、ログ、ヒントボタンと入力欄を積み、ログだけをスクロールさせる。
  * 送信中は入力欄とヒントボタンを押せなくし、終了後は両方を畳む。
+ *
+ * 新しく確定した回答・正誤フィードバック・失敗はライブリージョンで読み上げる。
+ * フォーカスは、回答と誤答ではその要素へ、ヒントの開示ではヒントカードへ、終了時は結果カードの見出しへ移す。
+ * 失敗したときは、送信なら入力欄へ、ヒントならヒントボタンへ戻し、そのまま再試行できるようにする。
  */
 function Chat({
   state,
@@ -148,16 +169,42 @@ function Chat({
   const [giveUpOpen, setGiveUpOpen] = useState(false);
   const [givingUp, setGivingUp] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const hintRef = useRef<HTMLButtonElement>(null);
+  const entryRef = useRef<HTMLElement | null>(null);
 
   const { gameId, status, entries, hintsUsed } = state;
   const sending = status === "sending";
   const finished = status === "finished";
+  const announcement = latestAnnouncement(state);
+
+  const last = entries.at(-1);
+  const lastId = last?.id;
+  const previous = entries.at(-2);
+  const errorFocus =
+    last?.kind !== "error"
+      ? null
+      : previous?.kind === "player" && previous.message.type === "hint-request"
+        ? "hint"
+        : "input";
 
   // 要素が増えたら末尾へ追従する。応答待ちのインジケーターの出入りでも高さが変わるため、`status` も見る。
   useEffect(() => {
     const log = logRef.current;
     if (log) log.scrollTop = log.scrollHeight;
   }, [entries.length, status]);
+
+  // 末尾に積まれた要素に応じてフォーカスを移す。プレイヤーの発言が積まれたときは `entryRef` が空で、動かさない。
+  useEffect(() => {
+    if (lastId === undefined) return;
+    const target =
+      errorFocus === "hint"
+        ? hintRef.current
+        : errorFocus === "input"
+          ? inputRef.current
+          : entryRef.current;
+    target?.focus();
+  }, [lastId, errorFocus]);
 
   async function send(input: string) {
     dispatch({ type: "input-sent", text: input });
@@ -200,31 +247,68 @@ function Chat({
 
   return (
     <>
-      <div className="flex shrink-0 flex-col gap-4 pt-[env(safe-area-inset-top)]">
-        <Header onGiveUp={finished ? undefined : () => setGiveUpOpen(true)} />
-        <TeaserCard teaser={state.teaser} variant="pinned" />
-      </div>
-      <div className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto px-4 pt-10 pb-6" ref={logRef}>
-        {entries.map((entry) => (
-          <Entry entry={entry} key={entry.id} />
-        ))}
-        {sending && <PendingIndicator />}
-        {finished && (
-          <Link className={buttonVariants({ className: "h-11 self-center px-6" })} href="/">
-            Play again
-          </Link>
-        )}
-      </div>
       {!finished && (
-        <div className="flex shrink-0 flex-col gap-3 px-4 pb-3">
-          <HintButton
-            disabled={sending}
-            onPress={requestHint}
-            remaining={remainingHints(hintsUsed)}
-          />
-          <InputForm disabled={sending} onSubmit={send} onValueChange={setText} value={text} />
-        </div>
+        <a
+          className="sr-only rounded-md bg-card px-3 py-2 text-sm text-card-foreground outline-none focus:not-sr-only focus:absolute focus:top-2 focus:left-4 focus:z-20 focus-visible:ring-3 focus-visible:ring-ring/50"
+          href={`#${PLAYER_INPUT_ID}`}
+          onClick={(event) => {
+            event.preventDefault();
+            inputRef.current?.focus();
+          }}
+        >
+          {SKIP_LINK_TEXT}
+        </a>
       )}
+      <div className="shrink-0 pt-[env(safe-area-inset-top)]">
+        <Header onGiveUp={finished ? undefined : () => setGiveUpOpen(true)} />
+      </div>
+      <main className="flex min-h-0 flex-1 flex-col pt-4">
+        <TeaserCard teaser={state.teaser} variant="pinned" />
+        <div
+          className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto px-4 pt-10 pb-6"
+          ref={logRef}
+        >
+          {entries.map((entry) => (
+            <Entry
+              entry={entry}
+              key={entry.id}
+              ref={
+                entry.id === lastId
+                  ? (element) => {
+                      entryRef.current = element;
+                    }
+                  : undefined
+              }
+            />
+          ))}
+          {sending && <PendingIndicator />}
+          {finished && (
+            <Link className={buttonVariants({ className: "h-11 self-center px-6" })} href="/">
+              Play again
+            </Link>
+          )}
+        </div>
+        {!finished && (
+          <div className="flex shrink-0 flex-col gap-3 px-4 pb-3" id={PLAYER_INPUT_ID}>
+            <HintButton
+              disabled={sending}
+              onPress={requestHint}
+              ref={hintRef}
+              remaining={remainingHints(hintsUsed)}
+            />
+            <InputForm
+              disabled={sending}
+              onSubmit={send}
+              onValueChange={setText}
+              ref={inputRef}
+              value={text}
+            />
+          </div>
+        )}
+        <div className="sr-only" role="status">
+          {announcement && <p key={announcement.id}>{announcementText(announcement)}</p>}
+        </div>
+      </main>
       <div className="shrink-0 pb-[env(safe-area-inset-bottom)]" />
       <GiveUpDialog
         isOpen={giveUpOpen}
@@ -236,7 +320,28 @@ function Chat({
   );
 }
 
-function Entry({ entry }: { entry: ChatEntry }) {
+function announcementText(entry: AnnouncedEntry): string {
+  switch (entry.kind) {
+    case "verdict":
+      return verdictText(entry.verdict);
+    case "answer-feedback":
+      return answerText(entry.correct);
+    case "error":
+      return ERROR_TEXT;
+  }
+}
+
+/**
+ * ログの 1 要素。`ref` はフォーカス先になる要素にだけ渡る。
+ * プレイヤーの発言とエラーはフォーカス先にならないため、`ref` を受けない。
+ */
+function Entry({
+  entry,
+  ref,
+}: {
+  entry: ChatEntry;
+  ref?: (element: HTMLElement | null) => void;
+}) {
   switch (entry.kind) {
     case "player":
       return (
@@ -245,16 +350,17 @@ function Entry({ entry }: { entry: ChatEntry }) {
         />
       );
     case "verdict":
-      return <VerdictMessage verdict={entry.verdict} />;
+      return <VerdictMessage ref={ref} verdict={entry.verdict} />;
     case "answer-feedback":
-      return <AnswerFeedback correct={entry.correct} />;
+      return <AnswerFeedback correct={entry.correct} ref={ref} />;
     case "hint":
-      return <HintCard index={entry.hint.index} text={entry.hint.text} />;
+      return <HintCard index={entry.hint.index} ref={ref} text={entry.hint.text} />;
     case "result":
       return (
         <ResultCard
           definition={entry.result.definition}
           outcome={entry.result.outcome}
+          ref={ref}
           word={entry.result.word}
         />
       );
