@@ -97,7 +97,7 @@ Luma の `Input` は枠線を消し、`--input` を半透明にした塗りで�
 | `--foreground` | `#1c1c1c` | 本文 |
 | `--card` / `--popover` | `#fbfdfb` | ヘッダー、設問カード、ヒントカード、AI の回答バブル、入力欄 |
 | `--card-foreground` / `--popover-foreground` | `#1c1c1c` | サーフェス上の文字 |
-| `--primary` | `#42823a` | START ボタン、送信ボタン、ロゴ |
+| `--primary` | `#42823a` | 送信ボタン、ロゴ |
 | `--primary-foreground` | `#fbfdfb` | アクセント上の文字 |
 | `--secondary` / `--accent` | `#dde8d7` | プレイヤーの発言バブルと、その上に乗るホバー面 |
 | `--secondary-foreground` / `--accent-foreground` | `#1c1c1c` | 同上の文字 |

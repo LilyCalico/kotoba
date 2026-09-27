@@ -1,7 +1,7 @@
 import Image from "next/image";
+import Link from "next/link";
 
 import { LeafScatter } from "@/components/game/leaf-scatter";
-import { LinkButton } from "@/components/ui/button";
 
 export default function Home() {
   return (
@@ -30,9 +30,17 @@ export default function Home() {
           <p className="text-base font-medium text-balance text-foreground text-outline">
             Ask yes-or-no questions to uncover the hidden word.
           </p>
-          <LinkButton className="mt-13" href="/play" size="lg">
-            START
-          </LinkButton>
+          <Link
+            className="mt-13 rounded-md outline-none transition-transform hover:brightness-110 focus-visible:ring-3 focus-visible:ring-ring/30 active:translate-y-px"
+            href="/play"
+          >
+            <Image
+              alt="START"
+              height={54}
+              src="/start-button.png"
+              width={120}
+            />
+          </Link>
         </div>
       </div>
     </main>
