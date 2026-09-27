@@ -18,7 +18,7 @@ export function HintButton({
 }) {
   return (
     <Button
-      className="h-auto gap-1.5 self-start rounded-md border-border bg-card px-3 py-2 text-[0.625rem] text-card-foreground"
+      className="h-auto gap-1.5 self-start rounded-md border-border bg-card px-3 py-2 text-sm text-card-foreground"
       isDisabled={disabled || remaining <= 0}
       onPress={onPress}
       variant="outline"

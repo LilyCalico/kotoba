@@ -14,6 +14,7 @@
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
@@ -68,7 +69,9 @@
   /* フォーカスリング。アクセントと同値 */
   --ring: #42823a;
 
+  /* 取り消せない操作（ギブアップの確定など）。塗りの上の文字は 4.5:1 を満たす */
   --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: #fbfdfb;
 
   --radius: 0.625rem;
 }

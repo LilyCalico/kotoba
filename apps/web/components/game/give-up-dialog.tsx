@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 
 /**
- * ギブアップの確認。Esc と外側のクリックは Cancel と同じく閉じるだけで、ギブアップは確定しない。
+ * ギブアップの確認。Give up は取り消せない操作なので赤で塗る。Esc と外側のクリックは Cancel と同じく閉じるだけで、ギブアップは確定しない。
  * フォーカストラップと開いたときのフォーカス移動は React Aria Components に任せる。
  */
 export function GiveUpDialog({
@@ -31,7 +31,12 @@ export function GiveUpDialog({
       </DialogHeader>
       <DialogFooter>
         <DialogClose variant="outline">Cancel</DialogClose>
-        <Button onPress={onConfirm}>Give up</Button>
+        <Button
+          className="bg-destructive text-destructive-foreground hover:bg-destructive/80"
+          onPress={onConfirm}
+        >
+          Give up
+        </Button>
       </DialogFooter>
     </Dialog>
   );
