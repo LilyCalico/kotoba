@@ -245,19 +245,18 @@ describe("latestAnnouncement", () => {
     expect(latestAnnouncement(chat)).toBeUndefined();
   });
 
-  it("verdict も answer-feedback もなければ undefined を返す", () => {
+  it("verdict も answer-feedback も error もなければ undefined を返す", () => {
     const state = run(
       chat,
       { type: "hint-requested" },
       { type: "hint-revealed", hint: { index: 1, text: "hint" } },
       { type: "input-sent", text: "Is it a noun?" },
-      { type: "failed" },
     );
 
     expect(latestAnnouncement(state)).toBeUndefined();
   });
 
-  it("hint / player / error を飛ばして最新の verdict を返す", () => {
+  it("hint / player を飛ばして最新の verdict を返す", () => {
     const state = run(
       chat,
       { type: "input-sent", text: "Is it a noun?" },
@@ -265,10 +264,27 @@ describe("latestAnnouncement", () => {
       { type: "hint-requested" },
       { type: "hint-revealed", hint: { index: 1, text: "hint" } },
       { type: "input-sent", text: "Is it a verb?" },
-      { type: "failed" },
     );
 
     expect(latestAnnouncement(state)).toEqual({ id: "1", kind: "verdict", verdict: "yes" });
+  });
+
+  it("verdict より新しい error を返す", () => {
+    const state = run(
+      chat,
+      { type: "input-sent", text: "Is it a noun?" },
+      { type: "input-resolved", result: { kind: "question", verdict: "yes" } },
+      { type: "input-sent", text: "Is it a verb?" },
+      { type: "failed" },
+    );
+
+    expect(latestAnnouncement(state)).toEqual({ id: "3", kind: "error" });
+  });
+
+  it("ヒントの失敗も error として返す", () => {
+    const state = run(chat, { type: "hint-requested" }, { type: "failed" });
+
+    expect(latestAnnouncement(state)).toEqual({ id: "1", kind: "error" });
   });
 
   it("verdict より新しい answer-feedback を返す", () => {
