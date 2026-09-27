@@ -11,7 +11,14 @@ export default function Home() {
         <div className="relative flex w-[20rem] max-w-full flex-col items-start gap-6">
           <div className="flex w-full flex-col gap-5">
             <h1>
-              <Image alt="kotoba" height={66} priority src="/kotoba-logo.png" width={220} />
+              <Image
+                alt="kotoba"
+                fetchPriority="high"
+                height={66}
+                loading="eager"
+                src="/kotoba-logo.png"
+                width={220}
+              />
             </h1>
             <p className="text-sm text-muted-foreground">
               Somewhere in Swedish there&apos;s a word
