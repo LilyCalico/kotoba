@@ -1,9 +1,15 @@
+"use client";
+
 import { MAX_HINTS } from "@kotoba/shared";
+import { motion } from "motion/react";
+
+import { cardAppear } from "@/components/game/motion";
 
 /**
  * 開示したヒント。フル幅・枠線・💡 ラベルの 3 点で回答バブルと見分けられる。
  * ヒントはライブリージョンに載せないため、開示したときのフォーカス先になって読み上げさせる。
  * そのため `ref` を受け付けて `tabIndex={-1}` を持つ。
+ * 描画された時点で、わずかに拡大しながら現れる。
  */
 export function HintCard({
   index,
@@ -15,7 +21,8 @@ export function HintCard({
   ref?: React.Ref<HTMLElement>;
 }) {
   return (
-    <section
+    <motion.section
+      {...cardAppear}
       aria-label={`Hint ${index} of ${MAX_HINTS}`}
       className="flex w-full flex-col gap-3 rounded-2xl border border-border bg-card p-4 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       ref={ref}
@@ -26,6 +33,6 @@ export function HintCard({
         Hint {index}/{MAX_HINTS}
       </p>
       <p className="text-sm text-foreground">{text}</p>
-    </section>
+    </motion.section>
   );
 }

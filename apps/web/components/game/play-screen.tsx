@@ -1,6 +1,7 @@
 "use client";
 
 import type { GameStart } from "@kotoba/shared";
+import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useReducer, useRef, useState } from "react";
 
@@ -12,10 +13,11 @@ import { HintButton } from "@/components/game/hint-button";
 import { HintCard } from "@/components/game/hint-card";
 import { InputForm } from "@/components/game/input-form";
 import { LeafScatter } from "@/components/game/leaf-scatter";
+import { chatItemAppear, chromeAppear } from "@/components/game/motion";
 import { PendingIndicator } from "@/components/game/pending-indicator";
 import { HINT_REQUEST_TEXT, PlayerMessage } from "@/components/game/player-message";
 import { ResultCard } from "@/components/game/result-card";
-import { TeaserCard } from "@/components/game/teaser-card";
+import { TEASER_LAYOUT_TRANSITION, TeaserCard } from "@/components/game/teaser-card";
 import { VerdictMessage, verdictText } from "@/components/game/verdict-message";
 import { buttonVariants } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
@@ -42,6 +44,9 @@ export const SKIP_LINK_TEXT = "Skip to the input";
 
 /** 入力欄の置き場所。skip link の飛び先になる。 */
 const PLAYER_INPUT_ID = "player-input";
+
+/** 設問の提示とチャットの設問カードをつなぐ共有レイアウトの名前。 */
+const TEASER_LAYOUT_ID = "teaser";
 
 type PlayAction = GameAction | { type: "started"; start: GameStart };
 
@@ -123,7 +128,18 @@ export function GameScreen({ client }: { client: GameClient }) {
   return (
     <div className="flex h-dvh justify-center overflow-hidden">
       <div className="relative flex w-full max-w-[42rem] flex-col">
-        {phase !== "chat" && <LeafScatter variant="teaser" />}
+        <AnimatePresence>
+          {phase !== "chat" && (
+            <motion.div
+              className="pointer-events-none absolute inset-0"
+              exit={{ opacity: 0 }}
+              key="leaves"
+              transition={TEASER_LAYOUT_TRANSITION}
+            >
+              <LeafScatter variant="teaser" />
+            </motion.div>
+          )}
+        </AnimatePresence>
         {game?.phase === "chat" ? (
           <Chat client={client} dispatch={dispatch} state={game} />
         ) : (
@@ -131,7 +147,7 @@ export function GameScreen({ client }: { client: GameClient }) {
             <h1 className="sr-only">kotoba</h1>
             {game ? (
               <>
-                <TeaserCard teaser={game.teaser} variant="floating" />
+                <TeaserCard layoutId={TEASER_LAYOUT_ID} teaser={game.teaser} variant="floating" />
                 <p className="sr-only">{TEASER_INSTRUCTION}</p>
               </>
             ) : (
@@ -259,37 +275,48 @@ function Chat({
           {SKIP_LINK_TEXT}
         </a>
       )}
-      <div className="shrink-0 pt-[env(safe-area-inset-top)]">
+      <motion.div {...chromeAppear} className="shrink-0 pt-[env(safe-area-inset-top)]">
         <Header onGiveUp={finished ? undefined : () => setGiveUpOpen(true)} />
-      </div>
+      </motion.div>
       <main className="flex min-h-0 flex-1 flex-col pt-4">
-        <TeaserCard teaser={state.teaser} variant="pinned" />
+        <TeaserCard layoutId={TEASER_LAYOUT_ID} teaser={state.teaser} variant="pinned" />
         <div
           className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto px-4 pt-10 pb-6"
           ref={logRef}
         >
           {entries.map((entry) => (
-            <Entry
-              entry={entry}
-              key={entry.id}
-              ref={
-                entry.id === lastId
-                  ? (element) => {
-                      entryRef.current = element;
-                    }
-                  : undefined
-              }
-            />
+            <ChatItem key={entry.id}>
+              <Entry
+                entry={entry}
+                ref={
+                  entry.id === lastId
+                    ? (element) => {
+                        entryRef.current = element;
+                      }
+                    : undefined
+                }
+              />
+            </ChatItem>
           ))}
-          {sending && <PendingIndicator />}
+          {sending && (
+            <ChatItem>
+              <PendingIndicator />
+            </ChatItem>
+          )}
           {finished && (
-            <Link className={buttonVariants({ className: "h-11 self-center px-6" })} href="/">
-              Play again
-            </Link>
+            <ChatItem>
+              <Link className={buttonVariants({ className: "h-11 self-center px-6" })} href="/">
+                Play again
+              </Link>
+            </ChatItem>
           )}
         </div>
         {!finished && (
-          <div className="flex shrink-0 flex-col gap-3 px-4 pb-3" id={PLAYER_INPUT_ID}>
+          <motion.div
+            {...chromeAppear}
+            className="flex shrink-0 flex-col gap-3 px-4 pb-3"
+            id={PLAYER_INPUT_ID}
+          >
             <HintButton
               disabled={sending}
               onPress={requestHint}
@@ -303,7 +330,7 @@ function Chat({
               ref={inputRef}
               value={text}
             />
-          </div>
+          </motion.div>
         )}
         <div className="sr-only" role="status">
           {announcement && <p key={announcement.id}>{announcementText(announcement)}</p>}
@@ -317,6 +344,18 @@ function Chat({
         onOpenChange={setGiveUpOpen}
       />
     </>
+  );
+}
+
+/**
+ * ログの 1 要素の出現。ログに積まれるすべての要素を包み、下からわずかに上がりながら現す。
+ * 中身の左寄せ・右寄せ・中央寄せが効くよう、自身も縦の flex にする。
+ */
+function ChatItem({ children }: { children: React.ReactNode }) {
+  return (
+    <motion.div {...chatItemAppear} className="flex flex-col">
+      {children}
+    </motion.div>
   );
 }
 
