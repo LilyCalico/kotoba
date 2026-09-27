@@ -13,15 +13,18 @@ import {
 /**
  * ギブアップの確認。Give up は取り消せない操作なので赤で塗る。Esc と外側のクリックは Cancel と同じく閉じるだけで、ギブアップは確定しない。
  * フォーカストラップと開いたときのフォーカス移動は React Aria Components に任せる。
+ * `isPending` はギブアップの要求中を表し、Give up を押せなくして要求の重複を防ぐ。
  */
 export function GiveUpDialog({
   isOpen,
   onOpenChange,
   onConfirm,
+  isPending = false,
 }: {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   onConfirm: () => void;
+  isPending?: boolean;
 }) {
   return (
     <Dialog isDismissable isOpen={isOpen} onOpenChange={onOpenChange} showCloseButton={false}>
@@ -32,7 +35,8 @@ export function GiveUpDialog({
       <DialogFooter>
         <DialogClose variant="outline">Cancel</DialogClose>
         <Button
-          className="bg-destructive text-destructive-foreground hover:bg-destructive/80"
+          className="bg-destructive text-destructive-foreground hover:bg-destructive/80 data-[pending]:opacity-50"
+          isPending={isPending}
           onPress={onConfirm}
         >
           Give up

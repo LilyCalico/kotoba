@@ -71,3 +71,14 @@ export const Confirm: Story = {
     await expect(args.onConfirm).toHaveBeenCalledOnce();
   },
 };
+
+/** ギブアップの要求中。Give up を押しても確定を重ねない。 */
+export const Pending: Story = {
+  args: { isPending: true },
+  render: (args) => <GiveUpDialog {...args} />,
+  play: async ({ args }) => {
+    await userEvent.click(await screen.findByRole("button", { name: "Give up" }));
+
+    await expect(args.onConfirm).not.toHaveBeenCalled();
+  },
+};
