@@ -162,6 +162,20 @@ After opening the PR, update the board Status to the option meaning "in review".
    - If it fails, do not guess at the cause by reading code alone — **reproduce it in the browser first**, then fix it. After fixing, re-run the same steps and confirm they succeed
    - Include a summary of the operations you performed and their results in the PR body (or the final report)
    - For changes without a UI (config, scripts, tests only), do the equivalent verification through the applicable means (running tests, running commands) instead of browser verification
+4. **Attach screenshots when the PR adds or changes a component** (anything under `apps/web/components/`). This step is mandatory for such PRs, so reviewers can judge the look without starting Storybook
+   - Run `pnpm build-storybook` in `apps/web`, serve `storybook-static/` locally, and capture every story of the added / changed components with Playwright at a 375px-wide viewport (`deviceScaleFactor: 2`). Open each story through `iframe.html?viewMode=story&id=<story-id>` and crop the capture vertically to the rendered component plus a small margin, keeping the full 375px width so the left / right alignment stays visible
+   - Look at every image before publishing it. A capture that is blank, cut off, or mostly empty space gets retaken
+   - The `gh` CLI cannot attach images to a PR, so publish them on a dedicated branch `pr-assets/<PR number>` that holds only the images. Build the commit with git plumbing so the working branch and the worktree stay untouched (in zsh, write `${commit}` with braces — a bare `$commit:` is parsed as a history modifier):
+     ```bash
+     tree=$(for f in "$SHOTS"/*.png; do
+       printf '100644 blob %s\t%s\n' "$(git hash-object -w "$f")" "$(basename "$f")"
+     done | git mktree)
+     root=$(printf '040000 tree %s\tpr-%s\n' "$tree" "$PR_NUMBER" | git mktree)
+     commit=$(git commit-tree "$root" -m "chore: PR #${PR_NUMBER} のスクリーンショット")
+     git push origin "${commit}:refs/heads/pr-assets/${PR_NUMBER}"
+     ```
+   - Add a "スクリーンショット" section to the PR body, before "動作確認", with one `###` heading per component and story. Reference each image by commit SHA so later pushes cannot change it: `<img src="https://github.com/<owner>/<repo>/blob/<commit>/pr-<PR number>/<file>.png?raw=true" width="375" alt="<story>">`. Note any capture that shows a single frame of an animation
+   - When the component changes again after review, retake the affected stories, build the commit the same way with `-p origin/pr-assets/<PR number>` added to `git commit-tree` so the push stays a fast-forward, and point the image URLs at the new commit
 
 ## Step 8: PR watch loop (Claude review & CI)
 
