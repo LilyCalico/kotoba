@@ -67,3 +67,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## コンポーネント実装規約
 
 UI を実装・変更するときは、デザインの詳細（トーン&マナー・デザイントークン・アニメーション方針）を `docs/specifications/design.md` に従って決める。
+
+## API 実装規約
+
+`apps/api` のエンドポイントと、それを呼ぶ `apps/web` のクライアントを実装・変更するときは、パス・リクエスト・レスポンス・エラーを `docs/specifications/api.md` に従って決める。仕様を変えるときは、先に `api.md` を更新する。
