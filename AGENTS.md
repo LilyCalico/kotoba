@@ -54,13 +54,14 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## ドキュメントの構成
 
-`docs/` は役割ごとに 3 つに分ける。
+`docs/` は役割ごとに 4 つに分ける。
 
 | ディレクトリ | 扱うもの |
 | --- | --- |
 | `docs/specifications/` | 何を作るか。プロダクト仕様 |
 | `docs/adr/` | なぜそう決めたか。書き方は `docs/adr/README.md` に従う |
 | `docs/guides/` | どう設定するか。採用した構成の再現手順 |
+| `docs/notes/` | どう書くか。初めて使うライブラリの使い方を、このリポジトリの実装を例に解説する学習用ノート |
 
 構成や技術選定のうち、選択肢が複数あり後から意図を問われるものは ADR として残す。
 
