@@ -27,6 +27,13 @@
       // 両者が dist/ 経由で読み込む packages/shared のビルドだけ。
       "dependsOn": ["@kotoba/shared#build"],
       "cache": false
+    },
+    "db:seed": {
+      // seed は src/words/words.ts 経由で packages/shared の dist を読み込む。
+      "dependsOn": ["^build"],
+      // Turborepo は宣言していない環境変数をタスクに渡さない。シェルで接続先を指定して流せるようにする。
+      "passThroughEnv": ["DATABASE_URL", "DIRECT_URL"],
+      "cache": false
     }
   }
 }

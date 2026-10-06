@@ -9,7 +9,12 @@
     "test": "turbo run test",
     "test:coverage": "turbo run test:coverage",
     "test:e2e": "turbo run test:e2e",
-    "typecheck": "turbo run typecheck"
+    "typecheck": "turbo run typecheck",
+    "db:start": "pnpm --filter @kotoba/api db:start",
+    "db:stop": "pnpm --filter @kotoba/api db:stop",
+    "db:migrate": "pnpm --filter @kotoba/api db:migrate",
+    "db:deploy": "pnpm --filter @kotoba/api db:deploy",
+    "db:seed": "turbo run db:seed"
   },
   "devDependencies": {
     "turbo": "^2"
