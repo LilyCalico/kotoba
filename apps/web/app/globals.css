@@ -1,26 +1,97 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* テーマはライトのみ。`dark:` をクラス指定に紐づけたうえで `.dark` をどこにも
+   付けないことで、`prefers-color-scheme` に反応する既定の挙動を打ち消す。 */
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans);
+  --font-heading: var(--font-sans);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  /* 背景と前景 */
+  --background: #f1f6ef;
+  --foreground: #1c1c1c;
+
+  /* サーフェス（ヘッダー、設問カード、ヒントカード、AI の回答バブル、入力欄） */
+  --card: #fbfdfb;
+  --card-foreground: #1c1c1c;
+  --popover: #fbfdfb;
+  --popover-foreground: #1c1c1c;
+
+  /* アクセント（START ボタン、送信ボタン、ロゴ） */
+  --primary: #42823a;
+  --primary-foreground: #fbfdfb;
+
+  /* アクセント（弱）。プレイヤーの発言バブルと、その上に乗るホバー面 */
+  --secondary: #dde8d7;
+  --secondary-foreground: #1c1c1c;
+  --accent: #dde8d7;
+  --accent-foreground: #1c1c1c;
+
+  /* 補足テキストとその下地 */
+  --muted: #e8eee6;
+  --muted-foreground: #6b6b6b;
+
+  /* 装飾的な区切り線と、コントロールの輪郭。後者は WCAG 1.4.11 の 3:1 を満たす */
+  --border: #dddddd;
+  --input: #7f8c7d;
+
+  /* フォーカスリング。アクセントと同値 */
+  --ring: #42823a;
+
+  --destructive: oklch(0.577 0.245 27.325);
+
+  --radius: 0.625rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+    font-size: 100%;
+  }
+  @media (min-width: 48rem) {
+    html {
+      font-size: 106.25%;
+    }
+  }
+  @media (min-width: 64rem) {
+    html {
+      font-size: 112.5%;
+    }
+  }
 }

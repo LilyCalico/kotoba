@@ -8,6 +8,7 @@
 
 | 手順書 | 対象 |
 | --- | --- |
+| [frontend-ui.md](frontend-ui.md) | デザイントークン、shadcn/ui、Storybook によるフロント UI 基盤 |
 | [monorepo-turborepo.md](monorepo-turborepo.md) | pnpm ワークスペースによるモノレポ構成と Turborepo |
 | [nestjs.md](nestjs.md) | NestJS による API アプリケーション |
 | [renovate.md](renovate.md) | Renovate による依存関係の自動更新 |
