@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { useState } from "react";
 import { HintCard } from "@/components/game/hint-card";
 import { PlayerMessage } from "@/components/game/player-message";
 import { VerdictMessage } from "@/components/game/verdict-message";
+import { Button } from "@/components/ui/button";
 
 const HINTS = [
   "The word is tied to one particular day of the week",
@@ -49,4 +51,20 @@ export const AmongMessages: Story = {
       <VerdictMessage verdict="yes" />
     </>
   ),
+};
+
+/** 開示の動き。Reveal を押すたびにカードを描き直し、出現の動きをもう一度再生する。 */
+export const Reveal: Story = {
+  render: function Render(args) {
+    const [count, setCount] = useState(1);
+
+    return (
+      <>
+        <Button className="self-start" onPress={() => setCount((value) => value + 1)} variant="outline">
+          Reveal
+        </Button>
+        <HintCard {...args} key={count} />
+      </>
+    );
+  },
 };

@@ -1,5 +1,10 @@
+"use client";
+
 import type { Outcome } from "@kotoba/shared";
+import { motion } from "motion/react";
 import { useId } from "react";
+
+import { cardAppear } from "@/components/game/motion";
 
 export function resultHeading(outcome: Outcome): string {
   return outcome === "cleared" ? "You found it" : "The word was";
@@ -8,6 +13,7 @@ export function resultHeading(outcome: Outcome): string {
 /**
  * 正解の単語と定義。クリアとギブアップで見出しを変える。
  * 見出しはゲーム終了時のフォーカス先になるため、`ref` を受け付けて `tabIndex={-1}` を持つ。
+ * 描画された時点で、わずかに拡大しながら現れる。
  */
 export function ResultCard({
   outcome,
@@ -23,7 +29,8 @@ export function ResultCard({
   const headingId = useId();
 
   return (
-    <section
+    <motion.section
+      {...cardAppear}
       aria-labelledby={headingId}
       className="flex w-full flex-col gap-2 rounded-2xl border border-border bg-card p-4"
     >
@@ -37,6 +44,6 @@ export function ResultCard({
       </h2>
       <p className="text-lg text-foreground">{word}</p>
       <p className="text-sm text-muted-foreground">{definition}</p>
-    </section>
+    </motion.section>
   );
 }
