@@ -35,3 +35,4 @@
 | --- | --- | --- |
 | [0001](0001-turborepo-as-task-runner.md) | Turborepo をタスクランナーとして採用する | 採用 |
 | [0002](0002-vitest-and-playwright-for-testing.md) | テストを Vitest と Playwright で構成する | 採用 |
+| [0003](0003-game-session-store.md) | 進行中ゲームを GameStore の裏で保持し、デプロイ前に共有ストアへ差し替える | 採用 |
