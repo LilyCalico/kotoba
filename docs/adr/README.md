@@ -38,3 +38,4 @@
 | [0003](0003-game-session-store.md) | 進行中ゲームを GameStore の裏で保持し、デプロイ前に共有ストアへ差し替える | 採用 |
 | [0004](0004-localized-word-text-as-jsonb.md) | 単語の多言語テキストを jsonb 列で持つ | 採用 |
 | [0005](0005-supabase-cli-for-local-and-ci-db.md) | ローカル開発と CI の DB を Supabase CLI で立てる | 採用 |
+| [0006](0006-openapi-from-zod-via-nestjs-swagger.md) | OpenAPI 仕様を @nestjs/swagger と zod の Standard Schema から生成する | 採用 |
