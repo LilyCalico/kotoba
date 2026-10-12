@@ -9,6 +9,8 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],
+    // DB を使うテストは vitest.db.config.ts で、DB を立てた環境でだけ流す。
+    exclude: ["src/**/*.db.test.ts"],
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts"],

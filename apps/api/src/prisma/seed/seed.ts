@@ -1,9 +1,9 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { Prisma, PrismaClient } from "../generated/prisma/client.js";
-import { words } from "../words/words.js";
+import { Prisma, PrismaClient } from "../../generated/prisma/client.js";
+import { words } from "./words.js";
 
 /**
- * 単語プール（src/words/words.ts）を words テーブルへ入れる。`prisma db seed` から呼ばれる。
+ * 同じディレクトリの words.ts の単語を words テーブルへ入れる。`prisma db seed` から呼ばれる。
  * words.ts は読み込み時に wordSchema で全件を検証しているため、ここに来る値は形が保証されている。
  * id で upsert するので、何度流しても同じ状態になる。
  */

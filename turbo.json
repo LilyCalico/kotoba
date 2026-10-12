@@ -38,9 +38,15 @@
       "cache": false
     },
     "db:seed": {
-      // seed は src/words/words.ts 経由で packages/shared の dist を読み込む。
+      // seed は src/prisma/seed/words.ts 経由で packages/shared の dist を読み込む。
       "dependsOn": ["^build"],
       // Turborepo は宣言していない環境変数をタスクに渡さない。シェルで接続先を指定して流せるようにする。
+      "passThroughEnv": ["DATABASE_URL", "DIRECT_URL"],
+      "cache": false
+    },
+    "test:db": {
+      // DB の中身を相手にするため、結果をキャッシュしない。依存と環境変数の扱いは db:seed と同じ。
+      "dependsOn": ["^build"],
       "passThroughEnv": ["DATABASE_URL", "DIRECT_URL"],
       "cache": false
     }

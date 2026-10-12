@@ -41,6 +41,8 @@ jobs:
         working-directory: apps/api
         run: pnpm exec prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
       - run: pnpm db:seed
+      # seed した DB を相手に、アプリが単語を読み出せることを確かめる。
+      - run: pnpm test:db
 
   e2e:
     runs-on: ubuntu-latest

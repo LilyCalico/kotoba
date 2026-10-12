@@ -23,7 +23,7 @@ const hintsSchema = z.tuple([z.string().min(1), z.string().min(1), z.string().mi
  * 出題する単語 1 件。
  * 開始時にクライアントへ送るのは teaser のみ、ヒントは開示操作のたびに 1 つずつ送り、
  * word と definition はゲームが終わるまで送らない。
- * データ本体は API 側（`apps/api/src/words`）にのみ置き、web にはバンドルしない。
+ * データ本体は API 側の DB（seed の入力は `apps/api/src/prisma/seed/words.ts`）にのみ置き、web にはバンドルしない。
  */
 export const wordSchema = z.object({
   /** 出題済み単語の記録と DB 移行のキー。配列の順序に依存させない */
