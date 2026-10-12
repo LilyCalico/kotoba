@@ -19,6 +19,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Storybook のビルド成果物。
     "storybook-static/**",
+    // apps/api の OpenAPI 仕様から生成した型。手で直さない。
+    "lib/api/schema.d.ts",
   ]),
 ]);
 

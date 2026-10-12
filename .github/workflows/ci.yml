@@ -20,6 +20,11 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm build
       - run: pnpm test
+      # コミットした OpenAPI 仕様と web の型が、いまのコードから生成したものと一致するか。
+      - name: Check generated API types are up to date
+        run: |
+          pnpm generate:api
+          git diff --exit-code -- apps/api/openapi.json apps/web/lib/api/schema.d.ts
 
   db:
     runs-on: ubuntu-latest

@@ -12,7 +12,8 @@
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage --passWithNoTests",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "generate:api": "openapi-typescript ../api/openapi.json --output lib/api/schema.d.ts --default-non-nullable false"
   },
   "dependencies": {
     "@kotoba/shared": "workspace:*",
@@ -21,6 +22,7 @@
     "lucide-react": "^1.47.0",
     "motion": "^13.4.0",
     "next": "16.3.3",
+    "openapi-fetch": "^0.17.0",
     "react": "19.2.8",
     "react-aria-components": "^1.21.1",
     "react-dom": "19.2.8",
@@ -39,6 +41,7 @@
     "eslint-config-next": "16.3.3",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react-hooks": "^7.1.1",
+    "openapi-typescript": "^7.13.0",
     "storybook": "^10.6.0",
     "tailwindcss": "^4",
     "typescript": "^5",

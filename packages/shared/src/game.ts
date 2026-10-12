@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+/*
+ * リクエストとレスポンスのスキーマには `meta({ id })` で名前を付ける。
+ * API の OpenAPI 仕様は、この名前で `components.schemas` に載せ、`$ref` で参照する。
+ */
+
 /** 出題言語。プレイヤーがゲーム開始前に選ぶ。 */
 export const languageSchema = z.enum(["sv", "ja"]);
 export type Language = z.infer<typeof languageSchema>;
@@ -38,7 +43,7 @@ export const startGameRequestSchema = z.object({
   language: languageSchema,
   locale: uiLocaleSchema.default("en"),
   excludeWordIds: z.array(z.string()).max(MAX_EXCLUDE_WORD_IDS).default([]),
-});
+}).meta({ id: "StartGameRequest" });
 export type StartGameRequest = z.input<typeof startGameRequestSchema>;
 
 /**
@@ -47,7 +52,7 @@ export type StartGameRequest = z.input<typeof startGameRequestSchema>;
  */
 export const playerInputSchema = z.object({
   text: z.string().trim().min(1).max(MAX_INPUT_LENGTH),
-});
+}).meta({ id: "PlayerInput" });
 export type PlayerInput = z.infer<typeof playerInputSchema>;
 
 /** 入力が質問と分類されたときの応答。 */
@@ -63,10 +68,9 @@ export const answerResultSchema = z.object({
   result: z.lazy(() => gameResultSchema).optional(),
 });
 
-export const inputResultSchema = z.discriminatedUnion("kind", [
-  questionResultSchema,
-  answerResultSchema,
-]);
+export const inputResultSchema = z
+  .discriminatedUnion("kind", [questionResultSchema, answerResultSchema])
+  .meta({ id: "InputResult" });
 export type InputResult = z.infer<typeof inputResultSchema>;
 
 /** 終了条件はクリアとギブアップの 2 つ。誤答に回数制限はない。 */
@@ -82,19 +86,19 @@ export const gameResultSchema = z.object({
   wordId: z.string(),
   word: z.string(),
   definition: z.string(),
-});
+}).meta({ id: "GameResult" });
 export type GameResult = z.infer<typeof gameResultSchema>;
 
 /** ヒント開示のリクエスト。番号を送らせることで、再送しても次のヒントが開示されない。 */
 export const hintRequestSchema = z.object({
   index: z.number().int().min(1),
-});
+}).meta({ id: "HintRequest" });
 export type HintRequest = z.infer<typeof hintRequestSchema>;
 
 export const hintSchema = z.object({
   index: z.number().int().min(1).max(MAX_HINTS),
   text: z.string(),
-});
+}).meta({ id: "Hint" });
 export type Hint = z.infer<typeof hintSchema>;
 
 /** ゲーム開始時にクライアントへ渡す初期情報。秘密の単語は含まない。 */
@@ -102,7 +106,7 @@ export const gameStartSchema = z.object({
   gameId: z.uuid(),
   language: languageSchema,
   teaser: z.string(),
-});
+}).meta({ id: "GameStart" });
 export type GameStart = z.infer<typeof gameStartSchema>;
 
 /** サーバーが返すエラーの `code`。画面はこれで分岐し、`title` と `detail` は表示に使わない。 */
@@ -125,5 +129,5 @@ export const problemSchema = z.object({
   status: z.number().int(),
   code: errorCodeSchema,
   detail: z.string().optional(),
-});
+}).meta({ id: "Problem" });
 export type Problem = z.infer<typeof problemSchema>;

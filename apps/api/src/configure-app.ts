@@ -1,5 +1,6 @@
-import type { INestApplication } from "@nestjs/common";
+import { type INestApplication, StandardSchemaValidationPipe } from "@nestjs/common";
 import type { NextFunction, Request, Response } from "express";
+import { ApiError } from "./common/api-error.js";
 import { ProblemDetailsFilter } from "./common/problem-details.filter.js";
 
 /**
@@ -20,5 +21,24 @@ export function configureApp(app: INestApplication): void {
     response.setHeader("Cache-Control", "no-store");
     next();
   });
+  // `@Body({ schema })` などで引数に付けた zod スキーマで検証し、変換後の値を渡す。
+  // 合わなければ `validation_error`。どこが合わないかは、入力した本人が送った値の範囲なので `detail` に載せる。
+  app.useGlobalPipes(
+    new StandardSchemaValidationPipe({
+      exceptionFactory: (issues) =>
+        new ApiError(
+          "validation_error",
+          issues
+            .map(({ path, message }) => `${formatPath(path)}: ${message}`)
+            .join("; "),
+        ),
+    }),
+  );
   app.useGlobalFilters(new ProblemDetailsFilter());
+}
+
+/** Standard Schema の issue の位置を `a.b.0` の形にする。要素はキーそのものか `{ key }` のどちらか。 */
+function formatPath(path: ReadonlyArray<PropertyKey | { key: PropertyKey }> | undefined): string {
+  if (!path?.length) return "(root)";
+  return path.map((segment) => String(typeof segment === "object" ? segment.key : segment)).join(".");
 }
