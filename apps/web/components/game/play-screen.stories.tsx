@@ -54,7 +54,7 @@ export const Starting: Story = {
   args: { client: mockClient({ startGame: never }) },
 };
 
-/** 設問の提示。3 秒で、またはクリックかキー入力でチャットへ移る。 */
+/** 設問の提示。3 秒で、または Enter / Space / クリックでチャットへ移る。 */
 export const Teaser: Story = {};
 
 /** 5 値の回答、誤答、ヒントを 1 つずつ積んだチャット。 */
@@ -113,17 +113,32 @@ export const GaveUp: Story = {
   },
 };
 
-/** 送信の失敗。ログにエラーを積み、入力欄に同じ文字列を戻す。 */
+/**
+ * 送信の失敗。ログにエラーを積んで読み上げ、入力欄に同じ文字列を戻してフォーカスを移す。
+ */
 export const InputFailed: Story = {
   args: { client: mockClient({ sendInput: fail }) },
   play: async () => {
     await enterChat();
     await send("Is it about Friday?");
 
-    await screen.findByText(ERROR_TEXT);
-    await expect(screen.getByRole("textbox", { name: INPUT_LABEL })).toHaveValue(
-      "Is it about Friday?",
-    );
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(ERROR_TEXT));
+    const input = screen.getByRole("textbox", { name: INPUT_LABEL });
+    await expect(input).toHaveValue("Is it about Friday?");
+    await waitFor(() => expect(input).toHaveFocus());
+  },
+};
+
+/** ヒントの要求の失敗。ログにエラーを積んで読み上げ、ヒントボタンにフォーカスを戻す。 */
+export const HintFailed: Story = {
+  args: { client: mockClient({ revealHint: fail }) },
+  play: async () => {
+    await enterChat();
+    const hint = screen.getByRole("button", { name: /^Hint/ });
+    await userEvent.click(hint);
+
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(ERROR_TEXT));
+    await waitFor(() => expect(hint).toHaveFocus());
   },
 };
 

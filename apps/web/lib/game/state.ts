@@ -158,18 +158,26 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
   }
 }
 
-/** ライブリージョンで読み上げる要素の種類。 */
-export type AnnouncedEntry = Extract<ChatEntry, { kind: "verdict" | "answer-feedback" }>;
+/**
+ * ライブリージョンで読み上げる要素の種類。
+ * `error` はフォーカスを入力欄かヒントボタンへ戻すため表示そのものにフォーカスが当たらず、
+ * 読み上げなければ非視覚では失敗に気づけないため対象に含める。
+ */
+export type AnnouncedEntry = Extract<ChatEntry, { kind: "verdict" | "answer-feedback" | "error" }>;
+
+function isAnnounced(entry: ChatEntry | undefined): entry is AnnouncedEntry {
+  return entry?.kind === "verdict" || entry?.kind === "answer-feedback" || entry?.kind === "error";
+}
 
 /**
- * ライブリージョンに載せる要素。`entries` の中で最も新しい `verdict` か `answer-feedback` を返す。
+ * ライブリージョンに載せる要素。`entries` の中で最も新しい `verdict` か `answer-feedback` か `error` を返す。
  * 正解時は `answer-feedback` の後ろに `result` が積まれるが、このときも `answer-feedback` を返す。
  * 画面側は返された要素の `id` が変わったときだけ読み上げを更新し、同じ要素を二度読み上げない。
  */
 export function latestAnnouncement(state: GameState): AnnouncedEntry | undefined {
   for (let index = state.entries.length - 1; index >= 0; index--) {
     const entry = state.entries[index];
-    if (entry?.kind === "verdict" || entry?.kind === "answer-feedback") return entry;
+    if (isAnnounced(entry)) return entry;
   }
   return undefined;
 }
