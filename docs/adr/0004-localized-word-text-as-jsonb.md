@@ -13,7 +13,7 @@
 | 言語によらない値 | `id`・`language`・`word`・`reading`・`partOfSpeech`・`frequency`・`acceptedAnswers` | 出題の絞り込み（`language`）と重み付け（`frequency`）、解答の判定 |
 | UI 言語ごとに書き分けるテキスト | `definition`・`teaser`・`hints`（3 つ組）・`literal`・`note`・`example` | 開始・ヒント・結果の応答で、ゲームの `locale` の文をまるごと返す |
 
-UI 言語は `ja` と `en` の 2 つで、どちらかが欠けた単語は `wordSchema` の検証で落ちる。単語は人手で作り、`apps/api/src/words/words.ts` から seed で DB に入れる。語数は数百語の規模を見込む。
+UI 言語は `ja` と `en` の 2 つで、どちらかが欠けた単語は `wordSchema` の検証で落ちる。単語は人手で作り、`apps/api/src/prisma/seed/words.ts` から seed で DB に入れる。語数は数百語の規模を見込む。
 
 UI 言語ごとのテキストを、PostgreSQL のテーブルでどう表すかを決める。
 
@@ -57,7 +57,7 @@ UI 言語を足すときは行を足すだけで済み、`NOT NULL` 制約で訳
 
 ### 得たもの
 
-- 単語の形が `wordSchema`・`words.ts`・DB で同じになり、seed と読み出しが値をそのまま受け渡すだけになる
+- 単語の形が `wordSchema`・seed データ・DB で同じになり、seed と読み出しが値をそのまま受け渡すだけになる
 - UI 言語の追加が migration なしで済む
 
 ### 引き受けたコスト

@@ -1,6 +1,6 @@
 # Prisma と Supabase の設定手順
 
-`apps/api` から Prisma で PostgreSQL（Supabase）を使うための手順。ローカルの Supabase を立て、migration と seed を流し、NestJS から `PrismaService` で DB に触れるところまでを扱う。NestJS 自体の組み立ては [nestjs.md](nestjs.md) を参照する。
+`apps/api` から Prisma で PostgreSQL（Supabase）を使うための手順。ローカルの Supabase を立て、migration と seed を流し、NestJS から `PrismaService` で DB に触れ、DB を使うテストを流すところまでを扱う。NestJS 自体の組み立ては [nestjs.md](nestjs.md) を参照する。
 
 構成の判断は ADR に置いている。ローカルと CI の DB は [0005](../adr/0005-supabase-cli-for-local-and-ci-db.md)、単語の多言語テキストの持ち方は [0004](../adr/0004-localized-word-text-as-jsonb.md)。
 
@@ -119,7 +119,7 @@ export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
-    seed: "tsx src/prisma/seed.ts",
+    seed: "tsx src/prisma/seed/seed.ts",
   },
   datasource: {
     url: process.env.DIRECT_URL,
@@ -194,7 +194,9 @@ pnpm db:deploy
 pnpm db:seed
 ```
 
-`apps/api/src/words/words.ts` の単語プールを `words` テーブルへ入れる。`id` で upsert するため、何度流しても同じ状態になる。流し終わると、DB にある件数を `words.ts` の語数と突き合わせ、合わなければ失敗する。
+`apps/api/src/prisma/seed/words.ts` の単語を `words` テーブルへ入れる。`id` で upsert するため、何度流しても同じ状態になる。流し終わると、DB にある件数を `words.ts` の語数と突き合わせ、合わなければ失敗する。
+
+`src/prisma/seed/` は seed のためだけのコードで、アプリは実行時に読まない。`tsconfig.build.json` の `exclude` に入れ、`nest build` の成果物（`dist`）に含めない。単語を足す・直すときは `words.ts` を書き換えて seed を流し直す。デプロイは要らない。
 
 ルートの `db:seed` は Turborepo 経由（`turbo run db:seed`）で実行する。`turbo.json` の `db:seed` タスクには 2 つの設定を置いている。
 
@@ -208,7 +210,7 @@ pnpm db:seed
 
 | 設定 | 理由 |
 | --- | --- |
-| `dependsOn: ["^build"]` | `words.ts` が `@kotoba/shared` のビルド済みの `dist` を読み込む。先に `packages/shared` をビルドさせる |
+| `dependsOn: ["^build"]` | `src/prisma/seed/words.ts` が `@kotoba/shared` のビルド済みの `dist` を読み込む。先に `packages/shared` をビルドさせる |
 | `passThroughEnv` | Turborepo は宣言していない環境変数をタスクに渡さない。本番に流すときのように、シェルで接続先を渡せるようにする |
 
 入ったデータは Supabase Studio（http://127.0.0.1:54323）の Table Editor で確かめられる。
@@ -258,6 +260,14 @@ const word = await this.prisma.word.findUnique({ where: { id: "lagom" } });
 
 起動時に `$connect()` は呼ばない。接続は最初のクエリで張られるため、DB を使わないユニットテストや E2E は DB なしで起動できる。
 
+出題する単語は `WordsModule` の `WordsService` から引く。`findById(id)` と、ゲーム開始時の 1 語を選ぶ `pick({ language, excludeWordIds })` を持つ。
+
+| 振る舞い | 理由 |
+| --- | --- |
+| 結果をキャッシュせず、毎回 DB を引く | seed を流し直すだけで、デプロイなしに単語の変更が反映される |
+| 読んだ行を `wordSchema` で検証し、通らない行は候補から外して id 付きのエラーログを出す | `jsonb` の中身の形は DB が保証しない（ADR 0004）。不正な 1 語のためにゲーム全体を止めない |
+| 起動時、`DATABASE_URL` があれば全件を非同期に検証してログに出す | 不正な行にデプロイ直後に気づける。起動を待たせず、DB に届かなくても警告を出して起動を続ける |
+
 ## 9. CI で確かめる
 
 `.github/workflows/ci.yml` の `db` ジョブが、PR ごとに次を流す。
@@ -270,6 +280,7 @@ const word = await this.prisma.word.findUnique({ where: { id: "lagom" } });
   working-directory: apps/api
   run: pnpm exec prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
 - run: pnpm db:seed
+- run: pnpm test:db
 ```
 
 | 手順 | 確かめること |
@@ -277,10 +288,56 @@ const word = await this.prisma.word.findUnique({ where: { id: "lagom" } });
 | `db:deploy` | コミットされた migration が、空の DB に最初から最後まで通る |
 | `migrate diff --exit-code` | migration を流した DB と `schema.prisma` に差分がない。`schema.prisma` だけ変えて migration を作り忘れると、差分ありの終了コード 2 で失敗する |
 | `db:seed` | 単語プールが `wordSchema` の形のまま DB に入り、件数が合う |
+| `test:db` | seed した単語を、アプリ（`WordsService`）が seed データと同じ形で読み出せる |
 
 ほかのジョブは DB を使わない。`prisma generate` は DB につながないため、`DIRECT_URL` のない `pnpm install` でも `postinstall` が通る。
 
-## 10. 本番の Supabase につなぐ
+## 10. DB を使うテスト
+
+DB を相手にするテストは `*.db.test.ts` と名付ける。通常の `pnpm test` からは外し、DB を立てた環境で `pnpm test:db` から流す。
+
+```typescript
+// apps/api/vitest.config.ts（通常のユニットテスト）
+test: {
+  include: ["src/**/*.test.ts"],
+  exclude: ["src/**/*.db.test.ts"],
+}
+```
+
+```typescript
+// apps/api/vitest.db.config.ts（DB を使うテスト）
+import swc from "unplugin-swc";
+import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+  plugins: [swc.vite()],
+  test: {
+    environment: "node",
+    include: ["src/**/*.db.test.ts"],
+    setupFiles: ["dotenv/config"],
+    fileParallelism: false,
+  },
+});
+```
+
+| 設定 | 理由 |
+| --- | --- |
+| 設定ファイルを分ける | `mergeConfig` で `vitest.config.ts` を広げると、`include` と `exclude` が上書きされず連結され、DB を使うテストが除かれたままになる |
+| `setupFiles: ["dotenv/config"]` | Vitest は `.env` を読まない。`DATABASE_URL` を `.env` から渡す |
+| `fileParallelism: false` | テストファイルどうしが 1 つの DB を共有するため、並列に流さない |
+
+`apps/api` の `test:db` スクリプトは `vitest run --config vitest.db.config.ts`。ルートの `pnpm test:db` は `turbo run test:db` で、`turbo.json` の `test:db` タスクに `db:seed` と同じ `dependsOn: ["^build"]` と `passThroughEnv` を置く。
+
+手元では、DB を立てて seed してから流す。
+
+```bash
+pnpm db:start
+pnpm db:deploy
+pnpm db:seed
+pnpm test:db
+```
+
+## 11. 本番の Supabase につなぐ
 
 本番の Supabase プロジェクトは、Vercel へのデプロイと一緒に用意する。手順は次のとおり。
 
@@ -300,6 +357,7 @@ const word = await this.prisma.word.findUnique({ where: { id: "lagom" } });
 | スキーマを変えて migration を作る | `pnpm db:migrate` |
 | migration を流すだけ | `pnpm db:deploy` |
 | 単語を入れ直す | `pnpm db:seed` |
+| DB を使うテストを流す | `pnpm test:db` |
 | DB を空にして migration と seed をやり直す | `pnpm --filter @kotoba/api exec prisma migrate reset` のあと `pnpm db:seed` |
 | DB の中身を見る | http://127.0.0.1:54323（Supabase Studio） |
 | 接続情報を表示する | `pnpm --filter @kotoba/api exec supabase status` |
@@ -334,7 +392,7 @@ const word = await this.prisma.word.findUnique({ where: { id: "lagom" } });
 
 **症状**: `pnpm --filter @kotoba/api db:seed` が `Cannot find module '@kotoba/shared'` で落ちる。
 
-**原因**: `@kotoba/shared` はビルド済みの `dist` を公開している。クローン直後など `packages/shared` が未ビルドだと、`words.ts` がそれを読み込めない。
+**原因**: `@kotoba/shared` はビルド済みの `dist` を公開している。クローン直後など `packages/shared` が未ビルドだと、`src/prisma/seed/words.ts` がそれを読み込めない。
 
 **対処**: ルートの `pnpm db:seed`（`turbo run db:seed`）で実行する。`turbo.json` の `dependsOn: ["^build"]` が先に `packages/shared` をビルドする。
 
