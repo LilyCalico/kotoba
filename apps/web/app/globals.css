@@ -1,26 +1,211 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* テーマはライトのみ。`dark:` をクラス指定に紐づけたうえで `.dark` をどこにも
+   付けないことで、`prefers-color-scheme` に反応する既定の挙動を打ち消す。 */
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans);
+  --font-heading: var(--font-sans);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  /* 背景と前景 */
+  --background: #f1f6ef;
+  --foreground: #1c1c1c;
+
+  /* サーフェス（ヘッダー、設問カード、ヒントカード、AI の回答バブル、入力欄） */
+  --card: #fbfdfb;
+  --card-foreground: #1c1c1c;
+  --popover: #fbfdfb;
+  --popover-foreground: #1c1c1c;
+
+  /* アクセント（START ボタン、送信ボタン、ロゴ） */
+  --primary: #42823a;
+  --primary-foreground: #fbfdfb;
+
+  /* アクセント（弱）。プレイヤーの発言バブルと、その上に乗るホバー面 */
+  --secondary: #dde8d7;
+  --secondary-foreground: #1c1c1c;
+  --accent: #dde8d7;
+  --accent-foreground: #1c1c1c;
+
+  /* 補足テキストとその下地 */
+  --muted: #e8eee6;
+  --muted-foreground: #6b6b6b;
+
+  /* 装飾的な区切り線と、コントロールの輪郭。後者は WCAG 1.4.11 の 3:1 を満たす */
+  --border: #dddddd;
+  --input: #7f8c7d;
+
+  /* フォーカスリング。アクセントと同値 */
+  --ring: #42823a;
+
+  /* 取り消せない操作（ギブアップの確定など）。塗りの上の文字は 4.5:1 を満たす */
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: #fbfdfb;
+
+  --radius: 0.625rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+    font-size: 100%;
+  }
+  @media (min-width: 48rem) {
+    html {
+      font-size: 106.25%;
+    }
+  }
+  @media (min-width: 64rem) {
+    html {
+      font-size: 112.5%;
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* 背景色で文字を縁取り、背景の装飾から文字を浮き上がらせる。文字の影を半径 1〜5px の同心円上に
+   ずらして重ね、角の尖りのない丸い 5px の縁にする。 */
+@utility text-outline {
+  --outline-color: var(--background);
+  text-shadow:
+    1px 0px 0 var(--outline-color),
+    0.71px 0.71px 0 var(--outline-color),
+    0px 1px 0 var(--outline-color),
+    -0.71px 0.71px 0 var(--outline-color),
+    -1px 0px 0 var(--outline-color),
+    -0.71px -0.71px 0 var(--outline-color),
+    0px -1px 0 var(--outline-color),
+    0.71px -0.71px 0 var(--outline-color),
+    2px 0px 0 var(--outline-color),
+    1.73px 1px 0 var(--outline-color),
+    1px 1.73px 0 var(--outline-color),
+    0px 2px 0 var(--outline-color),
+    -1px 1.73px 0 var(--outline-color),
+    -1.73px 1px 0 var(--outline-color),
+    -2px 0px 0 var(--outline-color),
+    -1.73px -1px 0 var(--outline-color),
+    -1px -1.73px 0 var(--outline-color),
+    0px -2px 0 var(--outline-color),
+    1px -1.73px 0 var(--outline-color),
+    1.73px -1px 0 var(--outline-color),
+    3px 0px 0 var(--outline-color),
+    2.85px 0.93px 0 var(--outline-color),
+    2.43px 1.76px 0 var(--outline-color),
+    1.76px 2.43px 0 var(--outline-color),
+    0.93px 2.85px 0 var(--outline-color),
+    0px 3px 0 var(--outline-color),
+    -0.93px 2.85px 0 var(--outline-color),
+    -1.76px 2.43px 0 var(--outline-color),
+    -2.43px 1.76px 0 var(--outline-color),
+    -2.85px 0.93px 0 var(--outline-color),
+    -3px 0px 0 var(--outline-color),
+    -2.85px -0.93px 0 var(--outline-color),
+    -2.43px -1.76px 0 var(--outline-color),
+    -1.76px -2.43px 0 var(--outline-color),
+    -0.93px -2.85px 0 var(--outline-color),
+    0px -3px 0 var(--outline-color),
+    0.93px -2.85px 0 var(--outline-color),
+    1.76px -2.43px 0 var(--outline-color),
+    2.43px -1.76px 0 var(--outline-color),
+    2.85px -0.93px 0 var(--outline-color),
+    4px 0px 0 var(--outline-color),
+    3.9px 0.89px 0 var(--outline-color),
+    3.6px 1.74px 0 var(--outline-color),
+    3.13px 2.49px 0 var(--outline-color),
+    2.49px 3.13px 0 var(--outline-color),
+    1.74px 3.6px 0 var(--outline-color),
+    0.89px 3.9px 0 var(--outline-color),
+    0px 4px 0 var(--outline-color),
+    -0.89px 3.9px 0 var(--outline-color),
+    -1.74px 3.6px 0 var(--outline-color),
+    -2.49px 3.13px 0 var(--outline-color),
+    -3.13px 2.49px 0 var(--outline-color),
+    -3.6px 1.74px 0 var(--outline-color),
+    -3.9px 0.89px 0 var(--outline-color),
+    -4px 0px 0 var(--outline-color),
+    -3.9px -0.89px 0 var(--outline-color),
+    -3.6px -1.74px 0 var(--outline-color),
+    -3.13px -2.49px 0 var(--outline-color),
+    -2.49px -3.13px 0 var(--outline-color),
+    -1.74px -3.6px 0 var(--outline-color),
+    -0.89px -3.9px 0 var(--outline-color),
+    0px -4px 0 var(--outline-color),
+    0.89px -3.9px 0 var(--outline-color),
+    1.74px -3.6px 0 var(--outline-color),
+    2.49px -3.13px 0 var(--outline-color),
+    3.13px -2.49px 0 var(--outline-color),
+    3.6px -1.74px 0 var(--outline-color),
+    3.9px -0.89px 0 var(--outline-color),
+    5px 0px 0 var(--outline-color),
+    4.92px 0.87px 0 var(--outline-color),
+    4.7px 1.71px 0 var(--outline-color),
+    4.33px 2.5px 0 var(--outline-color),
+    3.83px 3.21px 0 var(--outline-color),
+    3.21px 3.83px 0 var(--outline-color),
+    2.5px 4.33px 0 var(--outline-color),
+    1.71px 4.7px 0 var(--outline-color),
+    0.87px 4.92px 0 var(--outline-color),
+    0px 5px 0 var(--outline-color),
+    -0.87px 4.92px 0 var(--outline-color),
+    -1.71px 4.7px 0 var(--outline-color),
+    -2.5px 4.33px 0 var(--outline-color),
+    -3.21px 3.83px 0 var(--outline-color),
+    -3.83px 3.21px 0 var(--outline-color),
+    -4.33px 2.5px 0 var(--outline-color),
+    -4.7px 1.71px 0 var(--outline-color),
+    -4.92px 0.87px 0 var(--outline-color),
+    -5px 0px 0 var(--outline-color),
+    -4.92px -0.87px 0 var(--outline-color),
+    -4.7px -1.71px 0 var(--outline-color),
+    -4.33px -2.5px 0 var(--outline-color),
+    -3.83px -3.21px 0 var(--outline-color),
+    -3.21px -3.83px 0 var(--outline-color),
+    -2.5px -4.33px 0 var(--outline-color),
+    -1.71px -4.7px 0 var(--outline-color),
+    -0.87px -4.92px 0 var(--outline-color),
+    0px -5px 0 var(--outline-color),
+    0.87px -4.92px 0 var(--outline-color),
+    1.71px -4.7px 0 var(--outline-color),
+    2.5px -4.33px 0 var(--outline-color),
+    3.21px -3.83px 0 var(--outline-color),
+    3.83px -3.21px 0 var(--outline-color),
+    4.33px -2.5px 0 var(--outline-color),
+    4.7px -1.71px 0 var(--outline-color),
+    4.92px -0.87px 0 var(--outline-color);
 }

@@ -54,16 +54,21 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## ドキュメントの構成
 
-`docs/` は役割ごとに 3 つに分ける。
+`docs/` は役割ごとに 4 つに分ける。
 
 | ディレクトリ | 扱うもの |
 | --- | --- |
 | `docs/specifications/` | 何を作るか。プロダクト仕様 |
 | `docs/adr/` | なぜそう決めたか。書き方は `docs/adr/README.md` に従う |
 | `docs/guides/` | どう設定するか。採用した構成の再現手順 |
+| `docs/notes/` | どう書くか。初めて使うライブラリの使い方を、このリポジトリの実装を例に解説する学習用ノート |
 
 構成や技術選定のうち、選択肢が複数あり後から意図を問われるものは ADR として残す。
 
 ## コンポーネント実装規約
 
 UI を実装・変更するときは、デザインの詳細（トーン&マナー・デザイントークン・アニメーション方針）を `docs/specifications/design.md` に従って決める。
+
+## API 実装規約
+
+`apps/api` のエンドポイントと、それを呼ぶ `apps/web` のクライアントを実装・変更するときは、パス・リクエスト・レスポンス・エラーを `docs/specifications/api.md` に従って決める。仕様を変えるときは、先に `api.md` を更新する。
