@@ -1,0 +1,2 @@
+# Prisma Client。`prisma generate`（pnpm install の postinstall）が作る
+/src/generated/

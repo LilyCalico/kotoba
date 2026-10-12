@@ -21,6 +21,27 @@ jobs:
       - run: pnpm build
       - run: pnpm test
 
+  db:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # 手元と同じ Supabase のローカル環境を立て、空の DB に migration と seed が通ることを確かめる。
+      - run: pnpm db:start
+      - run: cp apps/api/.env.example apps/api/.env
+      - run: pnpm db:deploy
+      # schema.prisma の変更に migration が追いついているか。差分があれば失敗する。
+      - name: Check migrations match the schema
+        working-directory: apps/api
+        run: pnpm exec prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
+      - run: pnpm db:seed
+
   e2e:
     runs-on: ubuntu-latest
     steps:

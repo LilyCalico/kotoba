@@ -11,6 +11,7 @@
 | [frontend-ui.md](frontend-ui.md) | デザイントークン、shadcn/ui、Storybook によるフロント UI 基盤 |
 | [monorepo-turborepo.md](monorepo-turborepo.md) | pnpm ワークスペースによるモノレポ構成と Turborepo |
 | [nestjs.md](nestjs.md) | NestJS による API アプリケーション |
+| [prisma-supabase.md](prisma-supabase.md) | Prisma と Supabase による DB（ローカル・CI・本番への接続） |
 | [renovate.md](renovate.md) | Renovate による依存関係の自動更新 |
 | [testing.md](testing.md) | Vitest によるユニットテストと Playwright による E2E |
 
