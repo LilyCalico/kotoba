@@ -17,6 +17,7 @@ const start: GameStart = {
 
 const cleared: GameResult = {
   outcome: "cleared",
+  wordId: "fredagsmys",
   word: "Fredagsmys",
   definition: "The habit of settling onto the sofa on a Friday night.",
 };

@@ -1,25 +1,50 @@
 import { describe, expect, it } from "vitest";
-import { MAX_INPUT_LENGTH, inputResultSchema, playerInputSchema } from "./game.js";
-
-const GAME_ID = "0199a1f0-1b1c-7c3d-8e2f-4a5b6c7d8e9f";
+import {
+  MAX_EXCLUDE_WORD_IDS,
+  MAX_INPUT_LENGTH,
+  hintRequestSchema,
+  inputResultSchema,
+  playerInputSchema,
+  startGameRequestSchema,
+} from "./game.js";
 
 describe("playerInputSchema", () => {
   it("前後の空白を落としてから受け取る", () => {
-    const parsed = playerInputSchema.parse({
-      gameId: GAME_ID,
-      text: "  金曜日に限った言葉ですか？  ",
-    });
+    const parsed = playerInputSchema.parse({ text: "  金曜日に限った言葉ですか？  " });
 
     expect(parsed.text).toBe("金曜日に限った言葉ですか？");
   });
 
   it("上限を超える入力を弾く", () => {
-    const result = playerInputSchema.safeParse({
-      gameId: GAME_ID,
-      text: "あ".repeat(MAX_INPUT_LENGTH + 1),
-    });
+    const result = playerInputSchema.safeParse({ text: "あ".repeat(MAX_INPUT_LENGTH + 1) });
 
     expect(result.success).toBe(false);
+  });
+});
+
+describe("startGameRequestSchema", () => {
+  it("locale と excludeWordIds を省くと既定値で埋める", () => {
+    expect(startGameRequestSchema.parse({ language: "sv" })).toEqual({
+      language: "sv",
+      locale: "en",
+      excludeWordIds: [],
+    });
+  });
+
+  it("上限を超える excludeWordIds を弾く", () => {
+    const excludeWordIds = Array.from({ length: MAX_EXCLUDE_WORD_IDS + 1 }, (_, i) => `w${i}`);
+
+    expect(startGameRequestSchema.safeParse({ language: "sv", excludeWordIds }).success).toBe(
+      false,
+    );
+  });
+});
+
+describe("hintRequestSchema", () => {
+  it("1 以上の整数だけを受け取る", () => {
+    expect(hintRequestSchema.safeParse({ index: 4 }).success).toBe(true);
+    expect(hintRequestSchema.safeParse({ index: 0 }).success).toBe(false);
+    expect(hintRequestSchema.safeParse({ index: 1.5 }).success).toBe(false);
   });
 });
 
