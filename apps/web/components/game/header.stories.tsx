@@ -20,3 +20,8 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
+
+/** ゲームの終了後。Give up ボタンを消し、高さは保つ。 */
+export const Finished: Story = {
+  args: { onGiveUp: undefined },
+};

@@ -13,11 +13,18 @@ const preview: Preview = {
     layout: "fullscreen",
   },
   decorators: [
-    (Story) => (
+    // 画面全体を描く story は `parameters.page: true` を指定し、中央寄せと余白を当てずに描く。
+    (Story, { parameters }) => (
       <Providers>
-        <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background p-8 font-sans text-foreground">
-          <Story />
-        </div>
+        {parameters.page ? (
+          <div className="flex min-h-screen flex-col bg-background font-sans text-foreground">
+            <Story />
+          </div>
+        ) : (
+          <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background p-8 font-sans text-foreground">
+            <Story />
+          </div>
+        )}
       </Providers>
     ),
   ],
