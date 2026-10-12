@@ -4,8 +4,7 @@ import { Test } from "@nestjs/testing";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { AppModule } from "./app.module.js";
-
-const GLOBAL_PREFIX = "api/v1";
+import { GLOBAL_PREFIX, configureApp } from "./configure-app.js";
 
 @Injectable()
 class GreetingService {
@@ -36,7 +35,7 @@ describe("テスト環境の配線", () => {
     }).compile();
 
     app = moduleRef.createNestApplication();
-    app.setGlobalPrefix(GLOBAL_PREFIX);
+    configureApp(app);
     await app.init();
   });
 
@@ -50,7 +49,7 @@ describe("テスト環境の配線", () => {
 
   it("HTTP 層が接頭辞込みで応答する", async () => {
     await request(app.getHttpServer())
-      .get(`/${GLOBAL_PREFIX}/greeting`)
+      .get(`${GLOBAL_PREFIX}/greeting`)
       .expect(200, { message: "hej" });
   });
 });
