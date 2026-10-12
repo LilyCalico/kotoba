@@ -34,7 +34,7 @@ export default defineConfig({
     {
       command: "pnpm --filter @kotoba/api dev",
       cwd: REPO_ROOT,
-      // api にはまだルートがなく、どのパスも 404 を返す。Playwright が 2xx を待つ
+      // api のルートはすべて POST で、GET にはどのパスも 404 を返す。Playwright が 2xx を待つ
       // url ではなく、ポートが接続を受け付けたことだけを待つ port を使う。
       port: API_PORT,
       reuseExistingServer: !isCI,

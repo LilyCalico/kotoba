@@ -8,7 +8,8 @@
 | --- | --- | --- |
 | モジュール形式 | ESM（`"type": "module"`） | NestJS 12 が ESM で配布されている |
 | TypeScript | 6 系 | `@nestjs/schematics` が `>=6.0.0` を要求する |
-| 公開接頭辞 | `api/v1` | Vercel Services の公開ルーティングが `/api/v1/(.*)` を api に向ける |
+| 公開接頭辞 | `/api/v1` | Vercel Services の公開ルーティングが `/api/v1/(.*)` を api に向ける |
+| エラーの形 | RFC 9457 の Problem Details に `code` を足したもの | `docs/specifications/api.md`「エラー」。画面は `code` で分岐する |
 | ポート | `process.env.PORT ?? 3001` | web の 3000 と衝突させない |
 
 ## 1. 依存を入れる
@@ -16,8 +17,8 @@
 `nest new` は使わない。あれは新しいディレクトリに独自のリポジトリを作るコマンドであり、既存のワークスペースには噛み合わない。ワークスペースに直接必要なものだけを入れる。
 
 ```bash
-pnpm --filter @kotoba/api add @nestjs/common @nestjs/core @nestjs/platform-express reflect-metadata rxjs
-pnpm --filter @kotoba/api add -D @nestjs/cli @nestjs/schematics typescript@^6 @types/node
+pnpm --filter @kotoba/api add @nestjs/common @nestjs/core @nestjs/platform-express reflect-metadata rxjs zod
+pnpm --filter @kotoba/api add -D @nestjs/cli @nestjs/schematics typescript@^6 @types/node @types/express@^5
 ```
 
 | パッケージ | 役割 |
@@ -26,7 +27,9 @@ pnpm --filter @kotoba/api add -D @nestjs/cli @nestjs/schematics typescript@^6 @t
 | `@nestjs/core` | アプリケーションの起動と DI コンテナ |
 | `@nestjs/platform-express` | HTTP サーバーの実装。NestJS 自体は HTTP に依存しない設計のため、別パッケージになっている |
 | `rxjs` | インターセプターとガードが Observable を扱う |
+| `zod` | `packages/shared` のスキーマで入力を検証するパイプが import する |
 | `@nestjs/cli` | `nest build` / `nest start --watch` |
+| `@types/express` | ミドルウェアと例外フィルターで Express の `Request` / `Response` に型を付ける。`@nestjs/platform-express` が使う Express 5 に揃える |
 
 ## 2. 設定ファイルを置く
 
@@ -85,23 +88,46 @@ pnpm --filter @kotoba/api add -D @nestjs/cli @nestjs/schematics typescript@^6 @t
 
 ## 3. 起動点を書く
 
+アプリの設定は `configureApp` にまとめ、起動点とテストの両方から呼ぶ。テストが本番と同じ HTTP の振る舞い（接頭辞・ヘッダー・エラーの形）を通るようにするためである。
+
+```typescript
+// apps/api/src/configure-app.ts
+import type { INestApplication } from "@nestjs/common";
+import type { NextFunction, Request, Response } from "express";
+import { ProblemDetailsFilter } from "./common/problem-details.filter.js";
+
+export const GLOBAL_PREFIX = "/api/v1";
+
+export function configureApp(app: INestApplication): void {
+  app.setGlobalPrefix(GLOBAL_PREFIX);
+  app.use((_request: Request, response: Response, next: NextFunction) => {
+    response.setHeader("Cache-Control", "no-store");
+    next();
+  });
+  app.useGlobalFilters(new ProblemDetailsFilter());
+}
+```
+
 ```typescript
 // apps/api/src/main.ts
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module.js";
-
-const GLOBAL_PREFIX = "api/v1";
+import { configureApp } from "./configure-app.js";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.setGlobalPrefix(GLOBAL_PREFIX);
+  configureApp(app);
   await app.listen(process.env.PORT ?? 3001);
 }
 
 void bootstrap();
 ```
 
-`setGlobalPrefix` が要るのは、Vercel Services がサービスに元のリクエストパスをそのまま渡すためである。`/api/v1/games` は `/games` に縮まらない。
+| 設定 | 理由 |
+| --- | --- |
+| `setGlobalPrefix("/api/v1")` | Vercel Services がサービスに元のリクエストパスをそのまま渡す。`/api/v1/games` は `/games` に縮まらない。先頭の `/` は省かない（「つまずきポイント」参照） |
+| `Cache-Control: no-store` | ゲームの応答は呼び出しごとに変わる。成功も失敗も、ブラウザや CDN に残さない |
+| `ProblemDetailsFilter` | すべての失敗を Problem Details で返す（「エラーを Problem Details で返す」参照） |
 
 ```typescript
 // apps/api/src/app.module.ts
@@ -145,39 +171,59 @@ constructor(private readonly games: GamesService) {}
 
 ```typescript
 // apps/api/src/common/zod-validation.pipe.ts
-import { BadRequestException, Injectable, PipeTransform } from "@nestjs/common";
+import { Injectable, type PipeTransform } from "@nestjs/common";
 import type { ZodType } from "zod";
+import { ApiError } from "./api-error.js";
 
 @Injectable()
-export class ZodValidationPipe implements PipeTransform {
-  constructor(private readonly schema: ZodType) {}
+export class ZodValidationPipe<T extends ZodType> implements PipeTransform {
+  constructor(private readonly schema: T) {}
 
   transform(value: unknown): unknown {
     const result = this.schema.safeParse(value);
-    if (!result.success) {
-      throw new BadRequestException(result.error.issues);
-    }
-    return result.data;
+    if (result.success) return result.data;
+
+    const detail = result.error.issues
+      .map((issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`)
+      .join("; ");
+    throw new ApiError("validation_error", detail);
   }
 }
 ```
 
-`zod` を import するため、`apps/api` 自身が `zod` を依存に持つ必要がある。`packages/shared` が持っていても届かない。
+`zod` を import するため、`apps/api` 自身が `zod` を依存に持つ（手順 1 で入れている）。`packages/shared` が持っていても届かない。
 
-```bash
-pnpm --filter @kotoba/api add zod
+### エラーを Problem Details で返す
+
+失敗は `ApiError`（`apps/api/src/common/api-error.ts`）に `code` を持たせて投げる。HTTP ステータスは `code` から決まる。
+
+```typescript
+throw new ApiError("game_not_found", "The game does not exist or has expired.");
 ```
+
+全体の例外フィルター `ProblemDetailsFilter`（`apps/api/src/common/problem-details.filter.ts`）が、すべての例外を `application/problem+json` の本文に変える。
+
+| 例外 | 応答 |
+| --- | --- |
+| `ApiError` | `code` に対応するステータスと、その `code` |
+| 存在しないルート・メソッド違い（Nest の `NotFoundException`） | 404 の `internal_error` |
+| 壊れた JSON・大きすぎる本文（express の body-parser のエラー） | 400 / 413 の `validation_error` |
+| それ以外 | 500 の `internal_error`。中身はサーバーのログにだけ出す |
+
+body-parser のエラーは `HttpException` ではなく、`status` と `expose: true` を持つエラー（http-errors）として届く。フィルターはこれも HTTP の失敗として読む。
+
+`detail` はそのまま応答に載るため、正解の単語や Q&A 履歴などの秘密を書かない。
 
 ### サービス
 
 ```typescript
 // apps/api/src/games/games.service.ts
 import { Injectable } from "@nestjs/common";
-import type { InputResult, PlayerInput } from "@kotoba/shared";
+import type { InputResult } from "@kotoba/shared";
 
 @Injectable()
 export class GamesService {
-  handleInput(input: PlayerInput): InputResult {
+  async input(gameId: string, text: string): Promise<InputResult> {
     return { kind: "question", verdict: "unclear" };
   }
 }
@@ -187,8 +233,9 @@ export class GamesService {
 
 ```typescript
 // apps/api/src/games/games.controller.ts
-import { Body, Controller, Post } from "@nestjs/common";
+import { Body, Controller, HttpCode, HttpStatus, Param, Post } from "@nestjs/common";
 import { playerInputSchema, type InputResult, type PlayerInput } from "@kotoba/shared";
+import { z } from "zod";
 import { ZodValidationPipe } from "../common/zod-validation.pipe.js";
 import { GamesService } from "./games.service.js";
 
@@ -196,16 +243,18 @@ import { GamesService } from "./games.service.js";
 export class GamesController {
   constructor(private readonly games: GamesService) {}
 
-  @Post("input")
-  submit(
-    @Body(new ZodValidationPipe(playerInputSchema)) input: PlayerInput,
-  ): InputResult {
-    return this.games.handleInput(input);
+  @Post(":gameId/inputs")
+  @HttpCode(HttpStatus.OK)
+  input(
+    @Param("gameId", new ZodValidationPipe(z.uuid())) gameId: string,
+    @Body(new ZodValidationPipe(playerInputSchema)) { text }: PlayerInput,
+  ): Promise<InputResult> {
+    return this.games.input(gameId, text);
   }
 }
 ```
 
-`@Controller("games")` と `@Post("input")` と `setGlobalPrefix("api/v1")` が連結して `POST /api/v1/games/input` になる。
+`@Controller("games")` と `@Post(":gameId/inputs")` と `setGlobalPrefix("/api/v1")` が連結して `POST /api/v1/games/{gameId}/inputs` になる。`@Post()` の既定のステータスは 201 のため、リソースを作らない操作には `@HttpCode(HttpStatus.OK)` を付ける。
 
 ### モジュール
 
@@ -245,25 +294,27 @@ pnpm --filter @kotoba/api dev
 
 ```
 [RoutesResolver] GamesController {/api/v1/games}:
-[RouterExplorer] Mapped {/api/v1/games/input, POST} route
+[RouterExplorer] Mapped {/api/v1/games/:gameId/inputs, POST} route
 ```
 
 疎通を確認する。
 
 ```bash
-curl -X POST http://localhost:3001/api/v1/games/input \
+curl -X POST http://localhost:3001/api/v1/games \
   -H "Content-Type: application/json" \
-  -d '{"gameId":"0199a1f0-1b1c-7c3d-8e2f-4a5b6c7d8e9f","text":"金曜日に限った言葉ですか？"}'
+  -d '{"language":"sv","locale":"ja"}'
 ```
 
-検証が効いていることは、スキーマに反する入力で確かめる。`text` を空にすると 400 と zod の issues が返る。
+検証が効いていることは、スキーマに反する入力で確かめる。`gameId` を UUID でない値にすると、400 の Problem Details が返る。
+
+```bash
+curl -X POST http://localhost:3001/api/v1/games/not-a-uuid/inputs \
+  -H "Content-Type: application/json" \
+  -d '{"text":"金曜日に限った言葉ですか？"}'
+```
 
 ```json
-{
-  "message": [{ "code": "too_small", "path": ["text"], "message": "Too small: expected string to have >=1 characters" }],
-  "error": "Bad Request",
-  "statusCode": 400
-}
+{ "type": "about:blank", "title": "Bad Request", "status": 400, "code": "validation_error", "detail": "(root): Invalid UUID" }
 ```
 
 ## つまずきポイント
@@ -307,6 +358,14 @@ curl -X POST http://localhost:3001/api/v1/games/input \
 **原因**: ESM は相対 import の拡張子を省略できない。
 
 **対処**: `from "./games.module.js"` のように付ける。ソースが `.ts` でも指定は `.js` にする。
+
+### 存在しないルートの 404 が HTML で返る
+
+**症状**: `/api/v1` の下の存在しないパスに、Problem Details ではなく Express の `Cannot GET ...` という HTML が返る。例外フィルターを通らない。
+
+**原因**: Nest の Express アダプターは、存在しないルートの 404 を受けるハンドラーを接頭辞の下にマウントする。接頭辞をそのままマウント先に使うため、`setGlobalPrefix("api/v1")` のように先頭の `/` がないと、どのパスにも当たらない。
+
+**対処**: `setGlobalPrefix("/api/v1")` と先頭の `/` を付ける。ルートの登録は `/` の有無によらず同じになる。
 
 ### 依存の循環
 
