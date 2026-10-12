@@ -97,7 +97,7 @@ Luma の `Input` は枠線を消し、`--input` を半透明にした塗りで�
 | `--foreground` | `#1c1c1c` | 本文 |
 | `--card` / `--popover` | `#fbfdfb` | ヘッダー、設問カード、ヒントカード、AI の回答バブル、入力欄 |
 | `--card-foreground` / `--popover-foreground` | `#1c1c1c` | サーフェス上の文字 |
-| `--primary` | `#42823a` | START ボタン、送信ボタン、ロゴ |
+| `--primary` | `#42823a` | 送信ボタン、ロゴ |
 | `--primary-foreground` | `#fbfdfb` | アクセント上の文字 |
 | `--secondary` / `--accent` | `#dde8d7` | プレイヤーの発言バブルと、その上に乗るホバー面 |
 | `--secondary-foreground` / `--accent-foreground` | `#1c1c1c` | 同上の文字 |
@@ -152,25 +152,25 @@ import { Zen_Maru_Gothic } from "next/font/google";
 
 export const zenMaruGothic = Zen_Maru_Gothic({
   variable: "--font-sans",
-  weight: ["400", "700"],
+  weight: ["400", "500", "700"],
   subsets: ["latin"],
 });
 ```
 
 可変フォントではないので `weight` の明示が要る。`variable` を `--font-sans` にすると、`globals.css` の `@theme inline` が持つ `--font-sans` の参照先になり、Tailwind の `font-sans` から引ける。
 
-`app/layout.tsx` で `<html>` に当て、あわせて `metadata` と `lang` を差し替える。
+`app/layout.tsx` で `<html>` に当て、あわせて `metadata` と `lang` を差し替える。UI の文言は英語なので、`lang` は `en`、`metadata` も英語で書く。
 
 ```tsx
 export const metadata: Metadata = {
   title: { default: "kotoba", template: "%s | kotoba" },
   description:
-    "はい / いいえ で質問して、スウェーデン語の「その言語にしかない言葉」を当てるゲーム。",
+    "Ask yes-or-no questions to uncover a Swedish word for a feeling you've never been able to name.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ja" className={`${zenMaruGothic.variable} h-full antialiased`}>
+    <html lang="en" className={`${zenMaruGothic.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <Providers>{children}</Providers>
       </body>
@@ -188,7 +188,7 @@ cd apps/web
 pnpm add motion
 ```
 
-`MotionConfig` と `I18nProvider` はどちらもクライアント側で動く。`app/providers.tsx` に `"use client"` でまとめ、Server Component である `app/layout.tsx` から差し込む。
+`MotionConfig` と `I18nProvider` はどちらもクライアント側で動く。`app/providers.tsx` に `"use client"` でまとめ、Server Component である `app/layout.tsx` から差し込む。`I18nProvider` の locale は `lang` と揃えて `en` にし、React Aria の組み込みラベルと日付・数値の書式を英語にする。
 
 ```tsx
 "use client";
@@ -198,7 +198,7 @@ import { I18nProvider } from "react-aria-components";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <I18nProvider locale="ja">
+    <I18nProvider locale="en">
       <MotionConfig reducedMotion="user">{children}</MotionConfig>
     </I18nProvider>
   );
@@ -261,26 +261,9 @@ cd apps/web
 rm public/file.svg public/globe.svg public/next.svg public/vercel.svg public/window.svg
 ```
 
-`app/page.tsx` は Next.js のテンプレートを捨て、ロゴと説明だけのプレースホルダにする。ゲーム画面は後続で差し替える。
+`app/page.tsx` は Next.js のテンプレートを捨て、スタート画面にする。ロゴ・リード文・区切り線・説明文・START ボタンを縦に積み、中央カラム（`max-w-[42rem]`）の中に葉のイラスト（`LeafScatter`）を散らす。中身はプロダクトのコードとして `apps/web/app/page.tsx` にある。
 
-```tsx
-import Image from "next/image";
-
-export default function Home() {
-  return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-4 p-6">
-      <h1>
-        <Image src="/kotoba-logo.png" alt="kotoba" width={220} height={66} priority />
-      </h1>
-      <p className="max-w-80 text-center text-sm text-muted-foreground">
-        はい / いいえ で質問して、スウェーデン語の「その言語にしかない言葉」を当てるゲーム。
-      </p>
-    </main>
-  );
-}
-```
-
-`<h1>` は残す。E2E の smoke テストが見出しの存在を確かめている。
+ロゴは `<h1>` に入れる。E2E の smoke テストが見出しの存在を確かめている。
 
 ## 9. eslint-plugin-jsx-a11y を足す
 
@@ -343,11 +326,10 @@ const config: StorybookConfig = {
 export default config;
 ```
 
-`.storybook/preview.tsx` では、アプリのルートと同じプロバイダ・フォント・`globals.css` を当てる。story 側で配色や書体を指定する必要がなくなり、本番と同じ条件で見比べられる。コンポーネントと story の文言は英語で書くため、Storybook の locale と `lang` は英語にする。
+`.storybook/preview.tsx` では、アプリのルートと同じプロバイダ・フォント・`globals.css` を当てる。story 側で配色や書体を指定する必要がなくなり、本番と同じ条件で見比べられる。locale は `Providers` が持つ `en` がそのまま効く。
 
 ```tsx
 import type { Preview } from "@storybook/nextjs-vite";
-import { I18nProvider } from "react-aria-components";
 import { zenMaruGothic } from "../app/fonts";
 import { Providers } from "../app/providers";
 import "../app/globals.css";
@@ -360,11 +342,9 @@ const preview: Preview = {
   decorators: [
     (Story) => (
       <Providers>
-        <I18nProvider locale="en">
-          <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background p-8 font-sans text-foreground">
-            <Story />
-          </div>
-        </I18nProvider>
+        <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background p-8 font-sans text-foreground">
+          <Story />
+        </div>
       </Providers>
     ),
   ],
@@ -373,7 +353,7 @@ const preview: Preview = {
 export default preview;
 ```
 
-フォントの変数と `lang` は、story を包む要素ではなく `<html>` に当てる。ダイアログは `<body>` の直下に描画されるため、story を包む要素に当てた値は届かない。内側の `I18nProvider` は `Providers` の locale を上書きし、React Aria の組み込みラベルと日付・数値の書式を英語にする。
+Storybook は `app/layout.tsx` を通らないため、`layout.tsx` が `<html>` に当てるフォントの変数と `lang` を preview で当てる。story を包む要素ではなく `<html>` に置くのは、ダイアログが `<body>` の直下に描画され、story を包む要素に当てた値が届かないためである。
 
 `@storybook/nextjs-vite` は `next/font/google` を解決できるため、`app/fonts.ts` をそのまま import できる。
 
