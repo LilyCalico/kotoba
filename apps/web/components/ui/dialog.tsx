@@ -16,6 +16,11 @@ import {
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
 
+const DialogDescriptionContext = React.createContext<{
+  id: string
+  setIsMounted: (isMounted: boolean) => void
+} | null>(null)
+
 function DialogTrigger({ ...props }: DialogTriggerPrimitiveProps) {
   return <DialogTriggerPrimitive data-slot="dialog-trigger" {...props} />
 }
@@ -72,6 +77,13 @@ function Dialog({
     children: React.ReactNode
     showCloseButton?: boolean
   }) {
+  const descriptionId = React.useId()
+  const [hasDescription, setHasDescription] = React.useState(false)
+  const descriptionContext = React.useMemo(
+    () => ({ id: descriptionId, setIsMounted: setHasDescription }),
+    [descriptionId]
+  )
+
   return (
     <DialogOverlay isDismissable={isDismissable} {...props}>
       <ModalPrimitive
@@ -87,8 +99,11 @@ function Dialog({
             "[display:inherit] [gap:inherit] outline-none",
             showCloseButton && "*:data-[slot=dialog-header]:pr-8"
           )}
+          aria-describedby={hasDescription ? descriptionId : undefined}
         >
-          {children}
+          <DialogDescriptionContext value={descriptionContext}>
+            {children}
+          </DialogDescriptionContext>
           {showCloseButton && (
             <DialogClose
               variant="ghost"
@@ -159,9 +174,18 @@ function DialogTitle({
 function DialogDescription({
   className,
   ...props
-}: Omit<React.ComponentProps<"div">, "slot">) {
+}: Omit<React.ComponentProps<"div">, "slot" | "id">) {
+  const context = React.useContext(DialogDescriptionContext)
+
+  React.useLayoutEffect(() => {
+    if (!context) return
+    context.setIsMounted(true)
+    return () => context.setIsMounted(false)
+  }, [context])
+
   return (
     <div
+      id={context?.id}
       data-slot="dialog-description"
       className={cn(
         "text-sm text-muted-foreground *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground",
