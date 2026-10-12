@@ -6,7 +6,7 @@ const meta = {
   title: "UI/Label",
   component: Label,
   args: {
-    children: "質問か解答",
+    children: "Question or guess",
   },
 } satisfies Meta<typeof Label>;
 
@@ -19,8 +19,8 @@ export const Default: Story = {};
 export const ForInput: Story = {
   render: () => (
     <div className="flex w-80 flex-col gap-2">
-      <Label htmlFor="label-question">質問か解答</Label>
-      <Input id="label-question" placeholder="金曜日に限った言葉ですか？" />
+      <Label htmlFor="label-question">Question or guess</Label>
+      <Input id="label-question" placeholder="Is it tied to Fridays?" />
     </div>
   ),
 };

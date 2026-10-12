@@ -23,17 +23,17 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   render: () => (
     <DialogTrigger>
-      <Button variant="outline">遊び方を見る</Button>
+      <Button variant="outline">How to play</Button>
       <Dialog>
         <DialogHeader>
-          <DialogTitle>遊び方</DialogTitle>
+          <DialogTitle>How to play</DialogTitle>
           <DialogDescription>
-            はい / いいえ で答えられる質問を重ねて、隠された言葉を当てます。
-            ヒントは 1 ゲームにつき 3 回まで使えます。
+            Ask yes-or-no questions to uncover the hidden word.
+            You can use up to 3 hints per game.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <DialogClose>閉じる</DialogClose>
+          <DialogClose>Close</DialogClose>
         </DialogFooter>
       </Dialog>
     </DialogTrigger>
@@ -43,16 +43,16 @@ export const Default: Story = {
 export const WithoutCloseButton: Story = {
   render: () => (
     <DialogTrigger>
-      <Button>結果を見る</Button>
+      <Button>See the result</Button>
       <Dialog showCloseButton={false} isDismissable={false}>
         <DialogHeader>
-          <DialogTitle>正解は fika でした</DialogTitle>
+          <DialogTitle>The word was fika</DialogTitle>
           <DialogDescription>
-            コーヒーと甘いものを囲んで一息つく、スウェーデンの習慣。
+            The Swedish habit of pausing for coffee and something sweet.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <DialogClose variant="default">もう一度遊ぶ</DialogClose>
+          <DialogClose variant="default">Play again</DialogClose>
         </DialogFooter>
       </Dialog>
     </DialogTrigger>

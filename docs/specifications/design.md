@@ -14,6 +14,8 @@ https://www.figma.com/design/mWFhHDTqPHFBKhIMrkKj9B/Kotoba?node-id=112-16215&t=n
 
 UI は shadcn/ui を土台にし、primitive base に React Aria Components を選ぶ。shadcn のデザインと DX、React Aria のアクセシビリティ実装（キーボード操作・フォーカス管理・スクリーンリーダー対応）を、実装を混在させずに両立させる構成である。
 
+shadcn の見た目のスタイルは Luma（`components.json` の `style` は `aria-luma`）。大きな角丸と広めの余白をとり、ボタンは両端が丸く、ダイアログは影を落として浮かぶ。丸ゴシックの書体と淡い緑の配色に合う柔らかさを優先する。ただし入力欄だけは Luma の塗りを使わず、`--input` の枠線で輪郭を示す。入力欄の輪郭は WCAG 1.4.11 の 3:1 を満たす必要があるためである。
+
 ## レスポンシブ設計
 
 ### 段階
