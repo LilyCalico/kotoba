@@ -76,6 +76,16 @@ describe("rulesFor", () => {
     }
   });
 
+  it("no・yes・irrelevant の順に行を並べる", () => {
+    for (const word of words) {
+      expect(rulesFor(word.id).map((rule) => rule.verdict), `${word.id} の行の並びが違う`).toEqual([
+        "no",
+        "yes",
+        "irrelevant",
+      ]);
+    }
+  });
+
   it("キーワードを小文字で持ち、同じ行の中で重複させない", () => {
     for (const word of words) {
       for (const rule of rulesFor(word.id)) {
