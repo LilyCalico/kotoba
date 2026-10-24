@@ -1,14 +1,42 @@
 import { type Page, expect, test } from "@playwright/test";
 
+import { words } from "../../apps/api/src/prisma/seed/words.js";
+
 const INPUT_LABEL = "Ask a question or guess the word";
-const FIXED_WORD = "/play?word=fredagsmys";
-const TEASER = "On Friday night, this word lives on the sofa";
-const WORD = "Fredagsmys";
-const DEFINITION =
-  "The habit of settling onto the sofa with family or a partner on a Friday night, snacks at hand.";
+/** web が出題済み単語を記録する `localStorage` のキー。`apps/web/lib/game/played-words.ts` と揃える。 */
+const PLAYED_WORDS_KEY = "kotoba:played-words";
 
 /** 質問への 5 値の回答の表示。 */
 const VERDICT = /^(Yes|No|Hard to say|That's not related|Try a yes-or-no question)$/;
+
+function seedWord(id: string) {
+  const word = words.find((candidate) => candidate.id === id);
+  if (!word) throw new Error(`${id} が seed にない`);
+  return word;
+}
+
+const fredagsmys = seedWord("fredagsmys");
+
+/**
+ * 出題済みの記録を入れた状態でページを開く。api は記録した単語を出題から除くので、
+ * seed のうち `unplayed` 以外を記録すれば、出題を `unplayed` に絞れる。
+ * 記録は最初の読み込みでだけ入れ、以降の画面遷移で web が書き足した記録は残す。
+ */
+async function playWithOnly(page: Page, ...unplayed: string[]) {
+  const played = words.map((word) => word.id).filter((id) => !unplayed.includes(id));
+  await page.addInitScript(
+    ([key, value]) => {
+      if (window.sessionStorage.getItem("e2e:played-words-set")) return;
+      window.sessionStorage.setItem("e2e:played-words-set", "1");
+      window.localStorage.setItem(key, value);
+    },
+    [PLAYED_WORDS_KEY, JSON.stringify(played)] as const,
+  );
+}
+
+async function playedWords(page: Page): Promise<string[]> {
+  return page.evaluate((key) => JSON.parse(window.localStorage.getItem(key) ?? "[]"), PLAYED_WORDS_KEY);
+}
 
 /**
  * ログに積まれたバブル。回答と正誤フィードバックは読み上げのためライブリージョンにも同じ文言が載るので、
@@ -40,6 +68,14 @@ async function send(page: Page, text: string) {
   await expect(page.getByText("Waiting for an answer")).toHaveCount(0);
 }
 
+async function giveUp(page: Page) {
+  await page.getByRole("banner").getByRole("button", { name: "Give up" }).click();
+  const dialog = page.getByRole("dialog", { name: "Give up?" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Give up" }).click();
+  await expect(dialog).toHaveCount(0);
+}
+
 test("START から設問の提示を経て、質問に回答が返る", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("link", { name: "START" }).click();
@@ -53,8 +89,9 @@ test("START から設問の提示を経て、質問に回答が返る", async ({
 });
 
 test("誤答のフィードバックのあと、同じ入力欄から再び解答できる", async ({ page }) => {
-  await page.goto(FIXED_WORD);
-  await expect(page.getByText(TEASER)).toBeVisible();
+  await playWithOnly(page, fredagsmys.id);
+  await page.goto("/play");
+  await expect(page.getByText(fredagsmys.teaser.en)).toBeVisible();
   await enterChat(page);
 
   await send(page, "hygge");
@@ -65,12 +102,15 @@ test("誤答のフィードバックのあと、同じ入力欄から再び解�
 });
 
 test("ヒントを 3 回開示すると、ヒントボタンが無効になる", async ({ page }) => {
-  await page.goto(FIXED_WORD);
+  await playWithOnly(page, fredagsmys.id);
+  await page.goto("/play");
   await enterChat(page);
 
-  for (const index of [1, 2, 3]) {
+  for (const [offset, text] of fredagsmys.hints.en.entries()) {
     await page.getByRole("button", { name: /^Hint/ }).click();
-    await expect(page.getByRole("region", { name: `Hint ${index} of 3` })).toBeVisible();
+    const hint = page.getByRole("region", { name: `Hint ${offset + 1} of 3` });
+    await expect(hint).toBeVisible();
+    await expect(hint.getByText(text)).toBeVisible();
   }
 
   const hint = page.getByRole("button", { name: "Hint (0 left)" });
@@ -78,32 +118,59 @@ test("ヒントを 3 回開示すると、ヒントボタンが無効になる",
   await expect(hint).toBeDisabled();
 });
 
-test("正解すると結果カードに単語と定義が出る", async ({ page }) => {
-  await page.goto(FIXED_WORD);
+test("正解すると結果カードに単語と定義が出て、単語が記録される", async ({ page }) => {
+  await playWithOnly(page, fredagsmys.id);
+  await page.goto("/play");
   await enterChat(page);
 
   await send(page, "fredagsmys");
 
   const result = page.getByRole("region", { name: "You found it" });
   await expect(result).toBeVisible();
-  await expect(result.getByText(WORD)).toBeVisible();
-  await expect(result.getByText(DEFINITION)).toBeVisible();
+  await expect(result.getByText(fredagsmys.word)).toBeVisible();
+  await expect(result.getByText(fredagsmys.definition.en)).toBeVisible();
   await expect(input(page)).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Play again" })).toBeVisible();
+  expect((await playedWords(page)).at(-1)).toBe(fredagsmys.id);
 });
 
 test("確認ダイアログを経てギブアップすると、結果カードに単語と定義が出る", async ({ page }) => {
-  await page.goto(FIXED_WORD);
+  await playWithOnly(page, fredagsmys.id);
+  await page.goto("/play");
   await enterChat(page);
 
-  await page.getByRole("banner").getByRole("button", { name: "Give up" }).click();
-  const dialog = page.getByRole("dialog", { name: "Give up?" });
-  await expect(dialog).toBeVisible();
-  await dialog.getByRole("button", { name: "Give up" }).click();
+  await giveUp(page);
 
-  await expect(dialog).toHaveCount(0);
   const result = page.getByRole("region", { name: "The word was" });
   await expect(result).toBeVisible();
-  await expect(result.getByText(WORD)).toBeVisible();
-  await expect(result.getByText(DEFINITION)).toBeVisible();
+  await expect(result.getByText(fredagsmys.word)).toBeVisible();
+  await expect(result.getByText(fredagsmys.definition.en)).toBeVisible();
+});
+
+test("答えを見た単語は、次のゲームで出題されない", async ({ page }) => {
+  const [first, second] = ["fredagsmys", "fika"].map(seedWord);
+  if (!first || !second) throw new Error("seed の単語が足りない");
+  await playWithOnly(page, first.id, second.id);
+  await page.goto("/play");
+  await enterChat(page);
+
+  await giveUp(page);
+  const answered = (await playedWords(page)).at(-1);
+  const next = answered === first.id ? second : first;
+
+  await page.getByRole("link", { name: "Play again" }).click();
+  await page.getByRole("link", { name: "START" }).click();
+  await expect(page.getByText(next.teaser.en)).toBeVisible();
+});
+
+test("プールを一巡すると、記録をその単語 1 件に戻す", async ({ page }) => {
+  await playWithOnly(page);
+  await page.goto("/play");
+  await enterChat(page);
+
+  await giveUp(page);
+
+  const played = await playedWords(page);
+  expect(played).toHaveLength(1);
+  expect(words.map((word) => word.id)).toContain(played[0]);
 });

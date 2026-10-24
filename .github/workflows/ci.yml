@@ -72,6 +72,12 @@ jobs:
       - name: Install Chromium
         run: pnpm --filter @kotoba/e2e exec playwright install --with-deps chromium
 
+      # E2E は実 API を相手にし、api は出題する単語を DB から引く。db ジョブと同じ手順で seed 済みの DB を用意する。
+      - run: pnpm db:start
+      - run: cp apps/api/.env.example apps/api/.env
+      - run: pnpm db:deploy
+      - run: pnpm db:seed
+
       - run: pnpm test:e2e
 
       - uses: actions/upload-artifact@v4
