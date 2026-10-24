@@ -17,6 +17,12 @@ enum Language {
   ja
 }
 
+/// 設問・ヒント・定義を返す言語。packages/shared の uiLocaleSchema と 1 対 1 に対応する
+enum UiLocale {
+  ja
+  en
+}
+
 enum PartOfSpeech {
   noun
   verb
@@ -49,7 +55,29 @@ model Word {
   example         Json?
   createdAt       DateTime     @default(now()) @map("created_at")
   updatedAt       DateTime     @updatedAt @map("updated_at")
+  games           Game[]
 
   @@index([language])
   @@map("words")
+}
+
+/// 進行中ゲーム。形は src/games/game-store.ts の Game と 1 対 1 に対応する。
+/// 秘密の単語と Q&A 履歴を含むため、クライアントには送らない。
+model Game {
+  id            String   @id @db.Uuid
+  wordId        String   @map("word_id")
+  word          Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  locale        UiLocale
+  hintsRevealed Int      @map("hints_revealed")
+  /// 判定が成功した入力と、返した結果の組の配列
+  history       Json
+  /// 終了したゲームの結果（GameResult）
+  result        Json?
+  /// 最後の操作から 1 時間後。これを過ぎたゲームは読み出さず、新しいゲームを作るときに消す
+  expiresAt     DateTime @map("expires_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([expiresAt])
+  @@map("games")
 }

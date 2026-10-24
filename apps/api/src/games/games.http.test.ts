@@ -6,6 +6,8 @@ import { AppModule } from "../app.module.js";
 import { configureApp } from "../configure-app.js";
 import { words } from "../prisma/seed/words.js";
 import { WordsService } from "../words/words.service.js";
+import { GAME_STORE } from "./game-store.js";
+import { MemoryGameStore } from "./memory-game-store.js";
 
 const lagom = words.find((word) => word.id === "lagom");
 if (!lagom) throw new Error("lagom が見つからない");
@@ -34,6 +36,9 @@ beforeAll(async () => {
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(WordsService)
     .useValue(fakeWords)
+    // 保存先もメモリ内の実装に差し替え、DB なしで流せるようにする。
+    .overrideProvider(GAME_STORE)
+    .useValue(new MemoryGameStore())
     .compile();
 
   app = moduleRef.createNestApplication();

@@ -1,9 +1,8 @@
 import { GAME_TTL_MS, type Game, type GameStore } from "./game-store.js";
 
 /**
- * プロセス内の `Map` に保持する `GameStore`。
- * Vercel では関数のインスタンスが複数立ち、メモリを共有しないため、デプロイする前に共有ストアの実装へ差し替える（#63）。
- * 差し替えたあともユニットテスト用に残す。
+ * プロセス内の `Map` に保持する `GameStore`。DB を使わないユニットテストと HTTP のテストで差し込む。
+ * インスタンスどうしでメモリを共有しないため、api は `PrismaGameStore` を使う。
  */
 export class MemoryGameStore implements GameStore {
   private readonly games = new Map<string, { game: Game; expiresAt: number }>();
@@ -23,13 +22,16 @@ export class MemoryGameStore implements GameStore {
     return structuredClone(entry.game);
   }
 
+  async create(game: Game): Promise<void> {
+    this.sweep();
+    await this.save(game);
+  }
+
   async save(game: Game): Promise<void> {
-    if (!this.games.has(game.id)) this.sweep();
     // 呼び出し側が持つオブジェクトを書き換えても、保存した状態が変わらないよう複製して持つ。
     this.games.set(game.id, { game: structuredClone(game), expiresAt: this.now() + GAME_TTL_MS });
   }
 
-  /** 期限切れのゲームを捨てる。読まれないまま放置されたゲームでメモリが膨らまないよう、新しいゲームを作るたびに呼ぶ。 */
   private sweep(): void {
     const now = this.now();
     for (const [id, { expiresAt }] of this.games) {
