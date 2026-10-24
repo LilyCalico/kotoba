@@ -24,6 +24,19 @@
     "typecheck": {
       "dependsOn": ["^build"]
     },
+    // web の型検査は、api の OpenAPI 仕様から生成した型を見る。api のビルド → 仕様の出力 → 型の生成 → 型検査の順に流す。
+    "@kotoba/web#typecheck": {
+      "dependsOn": ["^build", "generate:api"]
+    },
+    "openapi": {
+      // ビルドした dist からアプリを組み立てて仕様を書き出す。
+      "dependsOn": ["build"],
+      "outputs": ["openapi.json"]
+    },
+    "generate:api": {
+      "dependsOn": ["@kotoba/api#openapi"],
+      "outputs": ["lib/api/schema.d.ts"]
+    },
     "test": {
       "dependsOn": ["^build"]
     },

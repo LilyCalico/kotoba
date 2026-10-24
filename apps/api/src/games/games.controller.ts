@@ -5,52 +5,78 @@ import {
   type HintRequest,
   type InputResult,
   type PlayerInput,
+  gameResultSchema,
+  gameStartSchema,
   hintRequestSchema,
+  hintSchema,
+  inputResultSchema,
   playerInputSchema,
   startGameRequestSchema,
 } from "@kotoba/shared";
 import { Body, Controller, HttpCode, HttpStatus, Param, Post } from "@nestjs/common";
+import { ApiCreatedResponse, ApiOkResponse, ApiTags } from "@nestjs/swagger";
 import { z } from "zod";
-import { ZodValidationPipe } from "../common/zod-validation.pipe.js";
+import { ApiProblemResponses } from "../openapi/api-problem-responses.decorator.js";
 import { GamesService } from "./games.service.js";
 
 /** UUID の形でない `gameId` は、ゲームを探す前に `validation_error` にする。 */
-const gameIdPipe = new ZodValidationPipe(z.uuid());
+const gameIdSchema = z.uuid();
 
-/** ゲームセッション API。`apps/web` の `GameClient` の 4 メソッドと 1 対 1 に対応する。 */
+/**
+ * ゲームセッション API。`apps/web` の `GameClient` の 4 メソッドと 1 対 1 に対応する。
+ * 引数に付けた zod スキーマは、全体のパイプが検証に使い、OpenAPI 仕様の生成が本文とパスの形に使う。
+ */
+@ApiTags("games")
 @Controller("games")
 export class GamesController {
   constructor(private readonly games: GamesService) {}
 
   @Post()
+  @ApiCreatedResponse({ description: "ゲームを始めた", standardSchema: gameStartSchema })
+  @ApiProblemResponses(HttpStatus.BAD_REQUEST, HttpStatus.PAYLOAD_TOO_LARGE)
   start(
-    @Body(new ZodValidationPipe(startGameRequestSchema))
-    request: z.output<typeof startGameRequestSchema>,
+    @Body({ schema: startGameRequestSchema }) request: z.output<typeof startGameRequestSchema>,
   ): Promise<GameStart> {
     return this.games.start(request);
   }
 
   @Post(":gameId/inputs")
   @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ description: "入力を判定した", standardSchema: inputResultSchema })
+  @ApiProblemResponses(
+    HttpStatus.BAD_REQUEST,
+    HttpStatus.NOT_FOUND,
+    HttpStatus.CONFLICT,
+    HttpStatus.PAYLOAD_TOO_LARGE,
+  )
   input(
-    @Param("gameId", gameIdPipe) gameId: string,
-    @Body(new ZodValidationPipe(playerInputSchema)) { text }: PlayerInput,
+    @Param("gameId", { schema: gameIdSchema }) gameId: string,
+    @Body({ schema: playerInputSchema }) { text }: PlayerInput,
   ): Promise<InputResult> {
     return this.games.input(gameId, text);
   }
 
   @Post(":gameId/hints")
   @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ description: "ヒントを開示した", standardSchema: hintSchema })
+  @ApiProblemResponses(
+    HttpStatus.BAD_REQUEST,
+    HttpStatus.NOT_FOUND,
+    HttpStatus.CONFLICT,
+    HttpStatus.PAYLOAD_TOO_LARGE,
+  )
   revealHint(
-    @Param("gameId", gameIdPipe) gameId: string,
-    @Body(new ZodValidationPipe(hintRequestSchema)) { index }: HintRequest,
+    @Param("gameId", { schema: gameIdSchema }) gameId: string,
+    @Body({ schema: hintRequestSchema }) { index }: HintRequest,
   ): Promise<Hint> {
     return this.games.revealHint(gameId, index);
   }
 
   @Post(":gameId/give-up")
   @HttpCode(HttpStatus.OK)
-  giveUp(@Param("gameId", gameIdPipe) gameId: string): Promise<GameResult> {
+  @ApiOkResponse({ description: "ギブアップを確定した", standardSchema: gameResultSchema })
+  @ApiProblemResponses(HttpStatus.BAD_REQUEST, HttpStatus.NOT_FOUND)
+  giveUp(@Param("gameId", { schema: gameIdSchema }) gameId: string): Promise<GameResult> {
     return this.games.giveUp(gameId);
   }
 }

@@ -27,7 +27,7 @@ pnpm --filter @kotoba/api add -D @nestjs/cli @nestjs/schematics typescript@^6 @t
 | `@nestjs/core` | アプリケーションの起動と DI コンテナ |
 | `@nestjs/platform-express` | HTTP サーバーの実装。NestJS 自体は HTTP に依存しない設計のため、別パッケージになっている |
 | `rxjs` | インターセプターとガードが Observable を扱う |
-| `zod` | `packages/shared` のスキーマで入力を検証するパイプが import する |
+| `zod` | コントローラーが `packages/shared` にないスキーマ（`gameId` の `z.uuid()` など）を組み立てるときに import する |
 | `@nestjs/cli` | `nest build` / `nest start --watch` |
 | `@types/express` | ミドルウェアと例外フィルターで Express の `Request` / `Response` に型を付ける。`@nestjs/platform-express` が使う Express 5 に揃える |
 
@@ -92,8 +92,9 @@ pnpm --filter @kotoba/api add -D @nestjs/cli @nestjs/schematics typescript@^6 @t
 
 ```typescript
 // apps/api/src/configure-app.ts
-import type { INestApplication } from "@nestjs/common";
+import { type INestApplication, StandardSchemaValidationPipe } from "@nestjs/common";
 import type { NextFunction, Request, Response } from "express";
+import { ApiError } from "./common/api-error.js";
 import { ProblemDetailsFilter } from "./common/problem-details.filter.js";
 
 export const GLOBAL_PREFIX = "/api/v1";
@@ -104,6 +105,12 @@ export function configureApp(app: INestApplication): void {
     response.setHeader("Cache-Control", "no-store");
     next();
   });
+  app.useGlobalPipes(
+    new StandardSchemaValidationPipe({
+      exceptionFactory: (issues) =>
+        new ApiError("validation_error", issues.map(({ path, message }) => `${formatPath(path)}: ${message}`).join("; ")),
+    }),
+  );
   app.useGlobalFilters(new ProblemDetailsFilter());
 }
 ```
@@ -127,6 +134,7 @@ void bootstrap();
 | --- | --- |
 | `setGlobalPrefix("/api/v1")` | Vercel Services がサービスに元のリクエストパスをそのまま渡す。`/api/v1/games` は `/games` に縮まらない。先頭の `/` は省かない（「つまずきポイント」参照） |
 | `Cache-Control: no-store` | ゲームの応答は呼び出しごとに変わる。成功も失敗も、ブラウザや CDN に残さない |
+| `StandardSchemaValidationPipe` | 引数に付けた zod スキーマで検証し、変換後の値を渡す。合わなければ `validation_error`。`formatPath` は issue の位置を `text` や `excludeWordIds.0` の形にする（「入力の検証」参照） |
 | `ProblemDetailsFilter` | すべての失敗を Problem Details で返す（「エラーを Problem Details で返す」参照） |
 
 ```typescript
@@ -165,33 +173,16 @@ constructor(private readonly games: GamesService) {}
 
 `games` という機能を足す場合、作るファイルは 4 つ。**サービス → コントローラー → モジュール → 親モジュールへの登録** の順に書く。
 
-### 入力検証のパイプ
+### 入力の検証
 
-このリポジトリは検証に zod を使う。`packages/shared` のスキーマをそのまま適用するパイプを 1 つ用意する。
+このリポジトリは検証に zod を使う。NestJS 12 は Standard Schema に対応しており、zod 4 のスキーマをそのまま引数に付けられる。
 
 ```typescript
-// apps/api/src/common/zod-validation.pipe.ts
-import { Injectable, type PipeTransform } from "@nestjs/common";
-import type { ZodType } from "zod";
-import { ApiError } from "./api-error.js";
-
-@Injectable()
-export class ZodValidationPipe<T extends ZodType> implements PipeTransform {
-  constructor(private readonly schema: T) {}
-
-  transform(value: unknown): unknown {
-    const result = this.schema.safeParse(value);
-    if (result.success) return result.data;
-
-    const detail = result.error.issues
-      .map((issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`)
-      .join("; ");
-    throw new ApiError("validation_error", detail);
-  }
-}
+@Body({ schema: playerInputSchema }) { text }: PlayerInput
+@Param("gameId", { schema: z.uuid() }) gameId: string
 ```
 
-`zod` を import するため、`apps/api` 自身が `zod` を依存に持つ（手順 1 で入れている）。`packages/shared` が持っていても届かない。
+付けたスキーマは、`configureApp` で全体に登録した `StandardSchemaValidationPipe` が検証に使う。検証を通った値はスキーマで変換したもの（`trim` や既定値を当てたもの）になる。同じスキーマを、OpenAPI 仕様の生成も本文とパスパラメーターの形に使う（[openapi.md](openapi.md)）。
 
 ### エラーを Problem Details で返す
 
@@ -236,7 +227,6 @@ export class GamesService {
 import { Body, Controller, HttpCode, HttpStatus, Param, Post } from "@nestjs/common";
 import { playerInputSchema, type InputResult, type PlayerInput } from "@kotoba/shared";
 import { z } from "zod";
-import { ZodValidationPipe } from "../common/zod-validation.pipe.js";
 import { GamesService } from "./games.service.js";
 
 @Controller("games")
@@ -246,8 +236,8 @@ export class GamesController {
   @Post(":gameId/inputs")
   @HttpCode(HttpStatus.OK)
   input(
-    @Param("gameId", new ZodValidationPipe(z.uuid())) gameId: string,
-    @Body(new ZodValidationPipe(playerInputSchema)) { text }: PlayerInput,
+    @Param("gameId", { schema: z.uuid() }) gameId: string,
+    @Body({ schema: playerInputSchema }) { text }: PlayerInput,
   ): Promise<InputResult> {
     return this.games.input(gameId, text);
   }
