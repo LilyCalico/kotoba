@@ -38,7 +38,7 @@
 | 段階 | 保存先 | Issue |
 | --- | --- | --- |
 | ゲームセッション API の実装 | メモリ内（プロセス内の `Map`） | #24 |
-| Vercel へのデプロイの前 | 複数のインスタンスで共有できるストア（Supabase の PostgreSQL か Redis） | #63 |
+| Vercel へのデプロイの前 | 複数のインスタンスで共有できるストア。Supabase の PostgreSQL を選んだ（[ADR 0007](0007-game-store-on-postgresql.md)） | #63 |
 
 最後の操作から 1 時間経ったゲームは破棄し、`game_not_found` を返す。メモリ内の実装ではプロセス内で期限を管理し、共有ストアでは TTL を使う。
 
