@@ -1,12 +1,12 @@
 "use client";
 
-import type { GameStart } from "@kotoba/shared";
+import type { GameResult, GameStart, StartGameRequest } from "@kotoba/shared";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useReducer, useRef, useState } from "react";
 
 import { AnswerFeedback, answerText } from "@/components/game/answer-feedback";
-import { ERROR_TEXT, ErrorMessage } from "@/components/game/error-message";
+import { ERROR_TEXT, ErrorMessage, ExpiredMessage } from "@/components/game/error-message";
 import { GiveUpDialog } from "@/components/game/give-up-dialog";
 import { Header } from "@/components/game/header";
 import { HintButton } from "@/components/game/hint-button";
@@ -21,14 +21,21 @@ import { TEASER_LAYOUT_TRANSITION, TeaserCard } from "@/components/game/teaser-c
 import { VerdictMessage, verdictText } from "@/components/game/verdict-message";
 import { buttonVariants } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
+import { createApiGameClient } from "@/lib/game/api-client";
 import { type GameClient, GameClientError } from "@/lib/game/client";
-import { createMockGameClient } from "@/lib/game/mock-client";
+import {
+  type PlayedWordsStorage,
+  excludedWordIds,
+  getBrowserStorage,
+  recordPlayedWord,
+} from "@/lib/game/played-words";
 import {
   type AnnouncedEntry,
   type ChatEntry,
   type GameAction,
   type GameState,
   createGameState,
+  failureKind,
   gameReducer,
   latestAnnouncement,
   remainingHints,
@@ -50,26 +57,37 @@ const TEASER_LAYOUT_ID = "teaser";
 
 type PlayAction = GameAction | { type: "started"; start: GameStart };
 
+/** 出題済み単語の記録先。省略時はブラウザの `localStorage`、`null` なら記録しない。 */
+function resolveStorage(storage: PlayedWordsStorage | null | undefined): PlayedWordsStorage | null {
+  return storage === undefined ? getBrowserStorage() : storage;
+}
+
 /** `startGame` の応答を待つ間は `null`。応答が届いたら `gameReducer` に委ねる。 */
 function playReducer(state: GameState | null, action: PlayAction): GameState | null {
   if (action.type === "started") return state ?? createGameState(action.start);
   return state && gameReducer(state, action);
 }
 
-/**
- * `/play` の画面。モックの `GameClient` を初回の描画で 1 回だけ作り、`GameScreen` に渡す。
- * `wordId` は `createMockGameClient` にそのまま渡し、出題単語を固定する。
- */
-export function PlayScreen({ wordId }: { wordId?: string }) {
-  const [client] = useState(() => createMockGameClient({ wordId }));
+/** `/play` の画面。`apps/api` を叩く `GameClient` を初回の描画で 1 回だけ作り、`GameScreen` に渡す。 */
+export function PlayScreen() {
+  const [client] = useState(() => createApiGameClient());
   return <GameScreen client={client} />;
 }
 
 /**
  * ゲーム 1 周の画面。描画した時点で新しいゲームを始め、画面を離れるとゲームは破棄される。
  * 設問の提示とチャットの 2 状態をとり、設問の提示は 3 秒で、または Enter / Space / クリックで即座にチャットへ移る。
+ *
+ * 答えを見た単語（クリアかギブアップで届いた `wordId`）を `storage` に記録し、次のゲームの開始で
+ * `excludeWordIds` として送る。`storage` を省略するとブラウザの `localStorage` を使い、`null` なら記録しない。
  */
-export function GameScreen({ client }: { client: GameClient }) {
+export function GameScreen({
+  client,
+  storage,
+}: {
+  client: GameClient;
+  storage?: PlayedWordsStorage | null;
+}) {
   const [game, dispatch] = useReducer(playReducer, null);
   const [attempt, setAttempt] = useState(0);
   const [startFailed, setStartFailed] = useState(false);
@@ -77,13 +95,19 @@ export function GameScreen({ client }: { client: GameClient }) {
   useEffect(() => {
     // 開発時の Strict Mode ではエフェクトが 2 回走る。先に始めたゲームの応答は捨てる。
     let cancelled = false;
-    client.startGame("sv").then(
+    const request: StartGameRequest = {
+      language: "sv",
+      locale: "en",
+      excludeWordIds: excludedWordIds(resolveStorage(storage)),
+    };
+    client.startGame(request).then(
       (start) => {
         if (!cancelled) dispatch({ type: "started", start });
       },
       (error: unknown) => {
         if (cancelled) return;
         if (!(error instanceof GameClientError)) throw error;
+        // ゲームを始められなかったときは、失敗の種類によらず始め直しを促す。
         setStartFailed(true);
         toast({
           title: START_FAILED_TEXT,
@@ -100,7 +124,7 @@ export function GameScreen({ client }: { client: GameClient }) {
     return () => {
       cancelled = true;
     };
-  }, [client, attempt]);
+  }, [client, storage, attempt]);
 
   const phase = game?.phase;
   useEffect(() => {
@@ -141,7 +165,12 @@ export function GameScreen({ client }: { client: GameClient }) {
           )}
         </AnimatePresence>
         {game?.phase === "chat" ? (
-          <Chat client={client} dispatch={dispatch} state={game} />
+          <Chat
+            client={client}
+            dispatch={dispatch}
+            onFinished={(result) => recordPlayedWord(resolveStorage(storage), result.wordId)}
+            state={game}
+          />
         ) : (
           <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-5">
             <h1 className="sr-only">kotoba</h1>
@@ -171,15 +200,20 @@ export function GameScreen({ client }: { client: GameClient }) {
  * 新しく確定した回答・正誤フィードバック・失敗はライブリージョンで読み上げる。
  * フォーカスは、回答と誤答ではその要素へ、ヒントの開示ではヒントカードへ、終了時は結果カードの見出しへ移す。
  * 失敗したときは、送信なら入力欄へ、ヒントならヒントボタンへ戻し、そのまま再試行できるようにする。
+ * ゲームが見つからないときは案内を積んでゲームを終え、案内へフォーカスを移す。
+ *
+ * `onFinished` はクリアかギブアップの結果が届いたときに呼ぶ。
  */
 function Chat({
   state,
   dispatch,
   client,
+  onFinished,
 }: {
   state: GameState;
   dispatch: (action: GameAction) => void;
   client: GameClient;
+  onFinished: (result: GameResult) => void;
 }) {
   const [text, setText] = useState("");
   const [giveUpOpen, setGiveUpOpen] = useState(false);
@@ -228,9 +262,10 @@ function Chat({
     try {
       const result = await client.sendInput(gameId, { text: input });
       dispatch({ type: "input-resolved", result });
+      if (result.kind === "answer" && result.result) onFinished(result.result);
     } catch (error) {
       if (!(error instanceof GameClientError)) throw error;
-      dispatch({ type: "failed" });
+      dispatch({ type: "failed", code: error.code });
       setText(input);
     }
   }
@@ -242,7 +277,7 @@ function Chat({
       dispatch({ type: "hint-revealed", hint });
     } catch (error) {
       if (!(error instanceof GameClientError)) throw error;
-      dispatch({ type: "failed" });
+      dispatch({ type: "failed", code: error.code });
     }
   }
 
@@ -251,9 +286,15 @@ function Chat({
     try {
       const result = await client.giveUp(gameId);
       dispatch({ type: "gave-up", result });
+      onFinished(result);
       setGiveUpOpen(false);
     } catch (error) {
       if (!(error instanceof GameClientError)) throw error;
+      if (failureKind(error.code) === "expired") {
+        dispatch({ type: "failed", code: error.code });
+        setGiveUpOpen(false);
+        return;
+      }
       // ダイアログは開いたままにし、もう一度 Give up を押せば再試行になる。
       toast({ title: GIVE_UP_FAILED_TEXT });
     } finally {
@@ -405,5 +446,7 @@ function Entry({
       );
     case "error":
       return <ErrorMessage />;
+    case "expired":
+      return <ExpiredMessage ref={ref} />;
   }
 }

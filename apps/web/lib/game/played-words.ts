@@ -1,3 +1,5 @@
+import { MAX_EXCLUDE_WORD_IDS } from "@kotoba/shared";
+
 /** 出題済み単語の id を保存するキー。 */
 export const PLAYED_WORDS_KEY = "kotoba:played-words";
 
@@ -5,7 +7,7 @@ export const PLAYED_WORDS_KEY = "kotoba:played-words";
  * 出題済み単語を読み書きする口。`window.localStorage` をそのまま渡せる。
  * `null` は `window` の無い環境を表し、読み書きを行わず空として振る舞う。
  */
-export type PlayedWordsStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
+export type PlayedWordsStorage = Pick<Storage, "getItem" | "setItem">;
 
 /**
  * ブラウザの `localStorage` を返す。`window` が無い、またはアクセスを拒まれたときは `null`。
@@ -20,7 +22,7 @@ export function getBrowserStorage(): PlayedWordsStorage | null {
 }
 
 /**
- * 答えを見た単語の id を読む。
+ * 答えを見た単語の id を、答えを見た順に読む。
  * JSON として読めない値や配列でない値は空として扱い、配列の中の文字列でない要素は捨てる。
  */
 export function readPlayedWords(storage: PlayedWordsStorage | null): string[] {
@@ -37,48 +39,28 @@ export function readPlayedWords(storage: PlayedWordsStorage | null): string[] {
 }
 
 /**
- * 答えを見た単語の id を追記する。クリアとギブアップのときにだけ呼ぶ。
- * 記録済みの id は重ねない。書き込めなかったときは記録を諦め、出題は止めない。
+ * ゲーム開始時に送る `excludeWordIds`。記録のうち新しいものから最大 100 件を返す。
+ * プールが 100 語を超えても、直近 100 語との重複は避けられる。
+ */
+export function excludedWordIds(storage: PlayedWordsStorage | null): string[] {
+  return readPlayedWords(storage).slice(-MAX_EXCLUDE_WORD_IDS).reverse();
+}
+
+/**
+ * 答えを見た単語の id を記録する。クリアとギブアップのときにだけ呼ぶ。
+ *
+ * 記録に無ければ末尾に追記する。既にあれば、サーバーが除外しきれずに出題したことになり、
+ * プールを一巡したとわかる。このときは記録をその 1 件だけに戻し、次の一巡の重複除外をやり直す。
+ * 書き込めなかったときは記録を諦め、出題は止めない。
  */
 export function recordPlayedWord(storage: PlayedWordsStorage | null, id: string): void {
   if (!storage) return;
 
   const played = readPlayedWords(storage);
-  if (played.includes(id)) return;
+  const next = played.includes(id) ? [id] : [...played, id];
   try {
-    storage.setItem(PLAYED_WORDS_KEY, JSON.stringify([...played, id]));
+    storage.setItem(PLAYED_WORDS_KEY, JSON.stringify(next));
   } catch {
     // 容量超過やプライベートモードでは記録できない。
   }
-}
-
-function clearPlayedWords(storage: PlayedWordsStorage | null): void {
-  try {
-    storage?.removeItem(PLAYED_WORDS_KEY);
-  } catch {
-    // 消せなくても、呼び出し側はプール全体から選び直す。
-  }
-}
-
-/**
- * プールから記録済みの単語を除き、ランダムに 1 語選ぶ。
- * プールの全語が記録済みならリストを空に戻し、プール全体から選び直す。
- * プールに無い id が記録に残っていても、枯渇の判定には数えない。
- */
-export function pickWord<T extends { id: string }>(
-  pool: readonly T[],
-  storage: PlayedWordsStorage | null,
-  random: () => number = Math.random,
-): T {
-  if (pool.length === 0) throw new Error("単語プールが空");
-
-  const played = new Set(readPlayedWords(storage));
-  let candidates = pool.filter((word) => !played.has(word.id));
-  if (candidates.length === 0) {
-    clearPlayedWords(storage);
-    candidates = [...pool];
-  }
-
-  const index = Math.min(Math.floor(random() * candidates.length), candidates.length - 1);
-  return candidates[index] as T;
 }

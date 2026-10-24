@@ -1,16 +1,16 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, screen, userEvent, waitFor, within } from "storybook/test";
-import { ERROR_TEXT } from "@/components/game/error-message";
+import { ERROR_TEXT, EXPIRED_TEXT } from "@/components/game/error-message";
 import { INPUT_LABEL } from "@/components/game/input-form";
 import { GIVE_UP_FAILED_TEXT, GameScreen, START_FAILED_TEXT } from "@/components/game/play-screen";
 import { toastQueue } from "@/components/ui/toast";
-import { type GameClient, GameClientError } from "@/lib/game/client";
+import { type GameClient, GameClientError, type GameClientErrorCode } from "@/lib/game/client";
 import { createMockGameClient } from "@/lib/game/mock-client";
 
-/** 応答を待たせず、出題単語を固定し、出題済みの記録を残さないモック。 */
+/** 応答を待たせず、出題単語を固定したモック。 */
 function mockClient(overrides: Partial<GameClient> = {}): GameClient {
   return {
-    ...createMockGameClient({ wordId: "fredagsmys", delayMs: 0, storage: null }),
+    ...createMockGameClient({ wordId: "fredagsmys", delayMs: 0 }),
     ...overrides,
   };
 }
@@ -19,8 +19,8 @@ function never<T>(): Promise<T> {
   return new Promise(() => {});
 }
 
-function fail(): Promise<never> {
-  return Promise.reject(new GameClientError("モックの失敗"));
+function fail(code: GameClientErrorCode = "network_error"): () => Promise<never> {
+  return () => Promise.reject(new GameClientError(code, "モックの失敗"));
 }
 
 async function enterChat() {
@@ -39,7 +39,8 @@ const meta = {
   title: "Game/PlayScreen",
   component: GameScreen,
   parameters: { page: true },
-  args: { client: mockClient() },
+  // 出題済みの記録は残さない。
+  args: { client: mockClient(), storage: null },
   beforeEach: () => {
     toastQueue.clear();
   },
@@ -117,7 +118,7 @@ export const GaveUp: Story = {
  * 送信の失敗。ログにエラーを積んで読み上げ、入力欄に同じ文字列を戻してフォーカスを移す。
  */
 export const InputFailed: Story = {
-  args: { client: mockClient({ sendInput: fail }) },
+  args: { client: mockClient({ sendInput: fail() }) },
   play: async () => {
     await enterChat();
     await send("Is it about Friday?");
@@ -131,7 +132,7 @@ export const InputFailed: Story = {
 
 /** ヒントの要求の失敗。ログにエラーを積んで読み上げ、ヒントボタンにフォーカスを戻す。 */
 export const HintFailed: Story = {
-  args: { client: mockClient({ revealHint: fail }) },
+  args: { client: mockClient({ revealHint: fail() }) },
   play: async () => {
     await enterChat();
     const hint = screen.getByRole("button", { name: /^Hint/ });
@@ -144,7 +145,7 @@ export const HintFailed: Story = {
 
 /** ゲーム開始の失敗。Retry 付きのスナックバーで知らせる。 */
 export const StartFailed: Story = {
-  args: { client: mockClient({ startGame: fail }) },
+  args: { client: mockClient({ startGame: fail() }) },
   play: async () => {
     await screen.findByText(START_FAILED_TEXT);
   },
@@ -152,7 +153,7 @@ export const StartFailed: Story = {
 
 /** ギブアップの失敗。ダイアログを開いたままスナックバーで知らせる。 */
 export const GiveUpFailed: Story = {
-  args: { client: mockClient({ giveUp: fail }) },
+  args: { client: mockClient({ giveUp: fail() }) },
   play: async () => {
     await enterChat();
     await userEvent.click(screen.getByRole("button", { name: "Give up" }));
@@ -161,5 +162,47 @@ export const GiveUpFailed: Story = {
 
     await screen.findByText(GIVE_UP_FAILED_TEXT);
     await expect(dialog).toBeInTheDocument();
+  },
+};
+
+/** ゲームが見つからない。案内を積んで入力欄とヒントボタンを畳み、Play again を出す。 */
+export const Expired: Story = {
+  args: { client: mockClient({ sendInput: fail("game_not_found") }) },
+  play: async () => {
+    await enterChat();
+    await send("Is it about Friday?");
+
+    await waitFor(() => expect(screen.getByText(EXPIRED_TEXT)).toHaveFocus());
+    await expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    await expect(screen.queryByRole("button", { name: /^Hint/ })).not.toBeInTheDocument();
+    await expect(screen.getByRole("link", { name: "Play again" })).toHaveAttribute("href", "/");
+  },
+};
+
+/** ギブアップでゲームが見つからない。ダイアログを閉じて、送信のときと同じ案内を出す。 */
+export const GiveUpExpired: Story = {
+  args: { client: mockClient({ giveUp: fail("game_not_found") }) },
+  play: async () => {
+    await enterChat();
+    await userEvent.click(screen.getByRole("button", { name: "Give up" }));
+    const dialog = await screen.findByRole("dialog", { name: "Give up?" });
+    await userEvent.click(within(dialog).getByRole("button", { name: "Give up" }));
+
+    await screen.findByText(EXPIRED_TEXT);
+    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+    await expect(screen.getByRole("link", { name: "Play again" })).toBeInTheDocument();
+  },
+};
+
+/** 画面側で塞いでいるはずの操作の失敗。何も出さず、応答待ちだけを解く。 */
+export const IgnoredFailure: Story = {
+  args: { client: mockClient({ revealHint: fail("hint_out_of_order") }) },
+  play: async () => {
+    await enterChat();
+    const hint = screen.getByRole("button", { name: /^Hint/ });
+    await userEvent.click(hint);
+
+    await waitFor(() => expect(hint).toBeEnabled());
+    await expect(screen.queryByText(ERROR_TEXT)).not.toBeInTheDocument();
   },
 };

@@ -4,6 +4,7 @@ import {
   type GameAction,
   type GameState,
   createGameState,
+  failureKind,
   gameReducer,
   latestAnnouncement,
   remainingHints,
@@ -23,6 +24,11 @@ const cleared: GameResult = {
 };
 
 const gaveUp: GameResult = { ...cleared, outcome: "gave_up" };
+
+/** 再送を促す失敗。 */
+const failed: GameAction = { type: "failed", code: "network_error" };
+/** ゲームが見つからない失敗。 */
+const expired: GameAction = { type: "failed", code: "game_not_found" };
 
 function run(state: GameState, ...actions: GameAction[]): GameState {
   return actions.reduce(gameReducer, state);
@@ -133,13 +139,13 @@ describe("gameReducer", () => {
   });
 
   it("失敗は error を積んで idle に戻り、同じ操作で再送できる", () => {
-    const failed = run(chat, { type: "input-sent", text: "Is it a noun?" }, { type: "failed" });
+    const state = run(chat, { type: "input-sent", text: "Is it a noun?" }, failed);
 
-    expect(failed.status).toBe("idle");
-    expect(failed.entries.at(-1)).toEqual({ id: "1", kind: "error" });
+    expect(state.status).toBe("idle");
+    expect(state.entries.at(-1)).toEqual({ id: "1", kind: "error" });
 
     const retried = run(
-      failed,
+      state,
       { type: "input-sent", text: "Is it a noun?" },
       { type: "input-resolved", result: { kind: "question", verdict: "no" } },
     );
@@ -153,10 +159,37 @@ describe("gameReducer", () => {
   });
 
   it("ヒントの要求の失敗では hintsUsed を増やさない", () => {
-    const state = run(chat, { type: "hint-requested" }, { type: "failed" });
+    const state = run(chat, { type: "hint-requested" }, failed);
 
     expect(state.hintsUsed).toBe(0);
     expect(state.status).toBe("idle");
+  });
+
+  it("画面で塞いでいるはずの失敗は、何も積まずに idle に戻る", () => {
+    const sending = gameReducer(chat, { type: "hint-requested" });
+
+    for (const code of ["game_finished", "hint_out_of_order", "hint_limit_reached"] as const) {
+      const state = gameReducer(sending, { type: "failed", code });
+
+      expect(state.status).toBe("idle");
+      expect(state.entries).toEqual(sending.entries);
+    }
+  });
+
+  it("ゲームが見つからないと expired を積んで finished に入る", () => {
+    const state = run(chat, { type: "input-sent", text: "Is it a noun?" }, expired);
+
+    expect(state.status).toBe("finished");
+    expect(state.entries.at(-1)).toEqual({ id: "1", kind: "expired" });
+    expect(gameReducer(state, { type: "input-sent", text: "fika" })).toBe(state);
+  });
+
+  it("ゲームが見つからない失敗は、ギブアップのように sending でなくても受け付ける", () => {
+    const state = gameReducer(chat, expired);
+
+    expect(state.status).toBe("finished");
+    expect(state.entries).toEqual([{ id: "0", kind: "expired" }]);
+    expect(gameReducer(state, expired)).toBe(state);
   });
 
   it("ギブアップは result を積んで finished に入る", () => {
@@ -180,7 +213,7 @@ describe("gameReducer", () => {
     expect(gameReducer(chat, { type: "hint-revealed", hint: { index: 1, text: "hint" } })).toBe(
       chat,
     );
-    expect(gameReducer(chat, { type: "failed" })).toBe(chat);
+    expect(gameReducer(chat, failed)).toBe(chat);
   });
 
   it("送信中にギブアップしたあと遅れて届いた応答は無視する", () => {
@@ -197,7 +230,7 @@ describe("gameReducer", () => {
         result: { kind: "question", verdict: "yes" },
       }),
     ).toBe(finished);
-    expect(gameReducer(finished, { type: "failed" })).toBe(finished);
+    expect(gameReducer(finished, failed)).toBe(finished);
   });
 
   it("finished の後は操作を受け付けない", () => {
@@ -276,14 +309,14 @@ describe("latestAnnouncement", () => {
       { type: "input-sent", text: "Is it a noun?" },
       { type: "input-resolved", result: { kind: "question", verdict: "yes" } },
       { type: "input-sent", text: "Is it a verb?" },
-      { type: "failed" },
+      failed,
     );
 
     expect(latestAnnouncement(state)).toEqual({ id: "3", kind: "error" });
   });
 
   it("ヒントの失敗も error として返す", () => {
-    const state = run(chat, { type: "hint-requested" }, { type: "failed" });
+    const state = run(chat, { type: "hint-requested" }, failed);
 
     expect(latestAnnouncement(state)).toEqual({ id: "1", kind: "error" });
   });
@@ -324,5 +357,23 @@ describe("latestAnnouncement", () => {
     );
 
     expect(latestAnnouncement(state)).toEqual({ id: "1", kind: "verdict", verdict: "no" });
+  });
+});
+
+describe("failureKind", () => {
+  it("api.md の「画面の扱い」に従って失敗を分ける", () => {
+    expect(failureKind("game_not_found")).toBe("expired");
+    for (const code of ["game_finished", "hint_out_of_order", "hint_limit_reached"] as const) {
+      expect(failureKind(code)).toBe("ignored");
+    }
+    for (const code of [
+      "validation_error",
+      "rate_limited",
+      "internal_error",
+      "ai_unavailable",
+      "network_error",
+    ] as const) {
+      expect(failureKind(code)).toBe("retry");
+    }
   });
 });

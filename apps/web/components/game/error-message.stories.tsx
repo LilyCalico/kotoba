@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { ErrorMessage } from "@/components/game/error-message";
+import { ErrorMessage, ExpiredMessage } from "@/components/game/error-message";
 
 const meta = {
   title: "Game/ErrorMessage",
@@ -18,3 +18,8 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
+
+/** ゲームが見つからないときの案内。 */
+export const Expired: Story = {
+  render: () => <ExpiredMessage />,
+};

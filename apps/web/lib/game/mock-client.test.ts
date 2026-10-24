@@ -2,24 +2,7 @@ import { type Word, gameStartSchema } from "@kotoba/shared";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { GameClientError } from "./client";
 import { findWordById, words } from "./fixtures";
-import { DEFAULT_DELAY_MS, createMockGameClient } from "./mock-client";
-import { PLAYED_WORDS_KEY, type PlayedWordsStorage, readPlayedWords } from "./played-words";
-
-class MemoryStorage implements PlayedWordsStorage {
-  readonly items = new Map<string, string>();
-
-  getItem(key: string): string | null {
-    return this.items.get(key) ?? null;
-  }
-
-  setItem(key: string, value: string): void {
-    this.items.set(key, value);
-  }
-
-  removeItem(key: string): void {
-    this.items.delete(key);
-  }
-}
+import { DEFAULT_DELAY_MS, createMockGameClient, pickWord } from "./mock-client";
 
 function wordOf(id: string): Word {
   const word = findWordById(id);
@@ -29,8 +12,18 @@ function wordOf(id: string): Word {
 
 const fredagsmys = wordOf("fredagsmys");
 
-function clientFor(wordId?: string, storage = new MemoryStorage()) {
-  return { client: createMockGameClient({ wordId, delayMs: 0, storage }), storage };
+function clientFor(wordId?: string) {
+  return createMockGameClient({ wordId, delayMs: 0 });
+}
+
+/** 失敗の `code` を取り出す。失敗しなければテストを落とす。 */
+async function codeOf(promise: Promise<unknown>): Promise<string> {
+  const error = await promise.then(
+    () => undefined,
+    (reason: unknown) => reason,
+  );
+  expect(error).toBeInstanceOf(GameClientError);
+  return (error as GameClientError).code;
 }
 
 afterEach(() => {
@@ -40,9 +33,9 @@ afterEach(() => {
 
 describe("createMockGameClient", () => {
   it("開始 → 質問 → ヒント → 誤答 → 正解の 1 周が通る", async () => {
-    const { client } = clientFor("fredagsmys");
+    const client = clientFor("fredagsmys");
 
-    const start = await client.startGame("sv");
+    const start = await client.startGame({ language: "sv" });
     expect(start).toEqual({
       gameId: expect.any(String),
       language: "sv",
@@ -73,10 +66,27 @@ describe("createMockGameClient", () => {
     });
   });
 
-  it("gameId は UUID として検証を通る", async () => {
-    const { client } = clientFor();
+  it("locale の言語で設問・ヒント・定義を返す", async () => {
+    const client = clientFor("fredagsmys");
 
-    expect(gameStartSchema.safeParse(await client.startGame("sv")).success).toBe(true);
+    const { gameId, teaser } = await client.startGame({ language: "sv", locale: "ja" });
+
+    expect(teaser).toBe(fredagsmys.teaser.ja);
+    await expect(client.revealHint(gameId, 1)).resolves.toEqual({
+      index: 1,
+      text: fredagsmys.hints.ja[0],
+    });
+    await expect(client.giveUp(gameId)).resolves.toMatchObject({
+      definition: fredagsmys.definition.ja,
+    });
+  });
+
+  it("gameId は UUID として検証を通る", async () => {
+    const client = clientFor();
+
+    expect(gameStartSchema.safeParse(await client.startGame({ language: "sv" })).success).toBe(
+      true,
+    );
   });
 
   it("randomUUID の無い環境でも UUID を返す", async () => {
@@ -84,25 +94,26 @@ describe("createMockGameClient", () => {
     vi.stubGlobal("crypto", {
       getRandomValues: <T extends ArrayBufferView>(array: T) => real.getRandomValues(array),
     });
-    const { client } = clientFor();
+    const client = clientFor();
 
     for (let round = 0; round < 20; round++) {
-      expect(gameStartSchema.safeParse(await client.startGame("sv")).success).toBe(true);
+      const start = await client.startGame({ language: "sv" });
+      expect(gameStartSchema.safeParse(start).success).toBe(true);
     }
   });
 
   it("ゲームごとに別の gameId を返す", async () => {
-    const { client } = clientFor("fredagsmys");
+    const client = clientFor("fredagsmys");
 
-    const first = await client.startGame("sv");
-    const second = await client.startGame("sv");
+    const first = await client.startGame({ language: "sv" });
+    const second = await client.startGame({ language: "sv" });
 
     expect(first.gameId).not.toBe(second.gameId);
   });
 
   it("ヒントを番号どおりに返す", async () => {
-    const { client } = clientFor("fredagsmys");
-    const { gameId } = await client.startGame("sv");
+    const client = clientFor("fredagsmys");
+    const { gameId } = await client.startGame({ language: "sv" });
 
     for (const index of [1, 2, 3]) {
       await expect(client.revealHint(gameId, index)).resolves.toEqual({
@@ -113,8 +124,8 @@ describe("createMockGameClient", () => {
   });
 
   it("ギブアップすると正解の単語と定義を返す", async () => {
-    const { client } = clientFor("fredagsmys");
-    const { gameId } = await client.startGame("sv");
+    const client = clientFor("fredagsmys");
+    const { gameId } = await client.startGame({ language: "sv" });
 
     await expect(client.giveUp(gameId)).resolves.toEqual({
       outcome: "gave_up",
@@ -125,118 +136,113 @@ describe("createMockGameClient", () => {
   });
 });
 
-describe("出題済み単語の記録", () => {
-  it("質問・誤答・ヒントでは記録しない", async () => {
-    const { client, storage } = clientFor("fredagsmys");
-    const { gameId } = await client.startGame("sv");
+describe("excludeWordIds", () => {
+  it("渡した単語を選定から除く", async () => {
+    const [kept, ...rest] = words;
+    const client = clientFor();
 
-    await client.sendInput(gameId, { text: "Is it something you do on a Friday?" });
-    await client.sendInput(gameId, { text: "fika" });
-    await client.revealHint(gameId, 1);
-
-    expect(readPlayedWords(storage)).toEqual([]);
-  });
-
-  it("クリアで記録する", async () => {
-    const { client, storage } = clientFor("fredagsmys");
-    const { gameId } = await client.startGame("sv");
-
-    await client.sendInput(gameId, { text: "fredagsmys" });
-
-    expect(readPlayedWords(storage)).toEqual(["fredagsmys"]);
-  });
-
-  it("ギブアップで記録し、重ねて呼んでも 1 件にとどめる", async () => {
-    const { client, storage } = clientFor("fredagsmys");
-    const { gameId } = await client.startGame("sv");
-
-    await client.giveUp(gameId);
-    await client.giveUp(gameId);
-
-    expect(readPlayedWords(storage)).toEqual(["fredagsmys"]);
-  });
-
-  it("出題済みの単語を選定から除く", async () => {
-    const storage = new MemoryStorage();
-    const rest = words.slice(1);
-    storage.setItem(PLAYED_WORDS_KEY, JSON.stringify(rest.map((word) => word.id)));
-    const { client } = clientFor(undefined, storage);
-
-    await expect(client.startGame("sv")).resolves.toMatchObject({
-      teaser: words[0]?.teaser.en,
-    });
+    await expect(
+      client.startGame({ language: "sv", excludeWordIds: rest.map((word) => word.id) }),
+    ).resolves.toMatchObject({ teaser: kept?.teaser.en });
   });
 });
 
 describe("wordId", () => {
   it("出題単語を固定する", async () => {
     for (const word of words) {
-      const { client } = clientFor(word.id);
-      await expect(client.startGame("sv")).resolves.toMatchObject({ teaser: word.teaser.en });
+      await expect(clientFor(word.id).startGame({ language: "sv" })).resolves.toMatchObject({
+        teaser: word.teaser.en,
+      });
     }
   });
 
-  it("出題済みでも固定した単語を出す", async () => {
-    const storage = new MemoryStorage();
-    storage.setItem(PLAYED_WORDS_KEY, JSON.stringify(["fredagsmys"]));
-    const { client } = clientFor("fredagsmys", storage);
-
-    await expect(client.startGame("sv")).resolves.toMatchObject({
-      teaser: fredagsmys.teaser.en,
-    });
+  it("excludeWordIds に含まれていても固定した単語を出す", async () => {
+    await expect(
+      clientFor("fredagsmys").startGame({ language: "sv", excludeWordIds: ["fredagsmys"] }),
+    ).resolves.toMatchObject({ teaser: fredagsmys.teaser.en });
   });
 
   it("未知の id はランダム選出にフォールバックする", async () => {
-    const { client } = clientFor("unknown-word");
     const teasers = words.map((word) => word.teaser.en);
 
-    const { teaser } = await client.startGame("sv");
+    const { teaser } = await clientFor("unknown-word").startGame({ language: "sv" });
 
     expect(teasers).toContain(teaser);
   });
 });
 
 describe("失敗", () => {
-  it("単語の無い言語では GameClientError を投げる", async () => {
-    const { client } = clientFor();
-
-    await expect(client.startGame("ja")).rejects.toBeInstanceOf(GameClientError);
+  it("単語の無い言語では validation_error", async () => {
+    expect(await codeOf(clientFor().startGame({ language: "ja" }))).toBe("validation_error");
   });
 
-  it("未知の gameId では GameClientError を投げる", async () => {
-    const { client } = clientFor();
+  it("未知の gameId では game_not_found", async () => {
+    const client = clientFor();
     const gameId = "00000000-0000-4000-8000-000000000000";
 
-    await expect(client.sendInput(gameId, { text: "fika" })).rejects.toBeInstanceOf(
-      GameClientError,
-    );
-    await expect(client.revealHint(gameId, 1)).rejects.toBeInstanceOf(GameClientError);
-    await expect(client.giveUp(gameId)).rejects.toBeInstanceOf(GameClientError);
+    expect(await codeOf(client.sendInput(gameId, { text: "fika" }))).toBe("game_not_found");
+    expect(await codeOf(client.revealHint(gameId, 1))).toBe("game_not_found");
+    expect(await codeOf(client.giveUp(gameId))).toBe("game_not_found");
   });
 
   it("別のクライアントで始めたゲームは知らない", async () => {
-    const { gameId } = await clientFor().client.startGame("sv");
+    const { gameId } = await clientFor().startGame({ language: "sv" });
 
-    await expect(clientFor().client.giveUp(gameId)).rejects.toBeInstanceOf(GameClientError);
+    expect(await codeOf(clientFor().giveUp(gameId))).toBe("game_not_found");
   });
 
-  it("範囲外のヒント番号では GameClientError を投げる", async () => {
-    const { client } = clientFor("fredagsmys");
-    const { gameId } = await client.startGame("sv");
+  it("1 未満や整数でないヒント番号は validation_error、4 以上は hint_limit_reached", async () => {
+    const client = clientFor("fredagsmys");
+    const { gameId } = await client.startGame({ language: "sv" });
 
-    for (const index of [0, 4, 1.5]) {
-      await expect(client.revealHint(gameId, index)).rejects.toBeInstanceOf(GameClientError);
-    }
+    expect(await codeOf(client.revealHint(gameId, 0))).toBe("validation_error");
+    expect(await codeOf(client.revealHint(gameId, 1.5))).toBe("validation_error");
+    expect(await codeOf(client.revealHint(gameId, 4))).toBe("hint_limit_reached");
+  });
+});
+
+describe("pickWord", () => {
+  const pool = [{ id: "a" }, { id: "b" }, { id: "c" }];
+  /** 候補の先頭を選ぶ乱数。 */
+  const first = () => 0;
+  /** 候補の末尾を選ぶ乱数。 */
+  const last = () => 0.999_999;
+
+  it("除く単語を選定から外す", () => {
+    expect(pickWord(pool, ["a", "c"], first)).toEqual({ id: "b" });
+    expect(pickWord(pool, ["a", "c"], last)).toEqual({ id: "b" });
+  });
+
+  it("乱数に応じて候補から 1 語選ぶ", () => {
+    expect(pickWord(pool, ["b"], first)).toEqual({ id: "a" });
+    expect(pickWord(pool, ["b"], last)).toEqual({ id: "c" });
+  });
+
+  it("全語を除くとプール全体から選ぶ", () => {
+    expect(pickWord(pool, ["a", "b", "c"], first)).toEqual({ id: "a" });
+    expect(pickWord(pool, ["a", "b", "c"], last)).toEqual({ id: "c" });
+  });
+
+  it("プールに無い id は無視する", () => {
+    expect(pickWord(pool, ["removed", "a", "b"], first)).toEqual({ id: "c" });
+  });
+
+  it("乱数が 1 を返しても候補の範囲に収める", () => {
+    expect(pickWord(pool, [], () => 1)).toEqual({ id: "c" });
+  });
+
+  it("プールが空なら例外を投げる", () => {
+    expect(() => pickWord([], [])).toThrow();
   });
 });
 
 describe("delayMs", () => {
   it("既定では応答の前に遅延を挟む", async () => {
     vi.useFakeTimers();
-    const client = createMockGameClient({ wordId: "fredagsmys", storage: null });
+    const client = createMockGameClient({ wordId: "fredagsmys" });
     let settled = false;
 
-    const pending = client.startGame("sv").then((start) => {
+    const pending = client.startGame({ language: "sv" }).then((start) => {
       settled = true;
       return start;
     });
