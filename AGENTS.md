@@ -49,7 +49,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - NestJS から OpenAPI 仕様を自動生成 → フロントの型付きクライアントを生成
 - デプロイは Vercel Services で `apps/web` と `apps/api` を 1 プロジェクトの 2 サービスとして扱う。web と api が同一 deployment としてシップされるため、プレビュー環境でフロントとバックが常に同期し、ロールバックも一括で効く
   - 公開ルーティングは `/api/v1/(.*)` を api に、それ以外のすべてを web に向ける。Next.js 自身の `/api` と名前空間が衝突しないよう、api には専用のサブ名前空間を割り当てる
-  - サービスにはオリジナルのリクエストパスがそのまま届くため、api 側は `setGlobalPrefix("api/v1")` で接頭辞を受ける
+  - サービスにはオリジナルのリクエストパスがそのまま届くため、api 側は `setGlobalPrefix("/api/v1")` で接頭辞を受ける
   - web と api が同一ホストに載るので、フロントからは相対パス `/api/v1` を叩く。プレビューは 1 デプロイ 1 ホストであり、相対パスなら常に自分のデプロイの api を呼ぶ
 
 ## ドキュメントの構成

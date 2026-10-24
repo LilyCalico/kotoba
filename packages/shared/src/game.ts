@@ -4,6 +4,13 @@ import { z } from "zod";
 export const languageSchema = z.enum(["sv", "ja"]);
 export type Language = z.infer<typeof languageSchema>;
 
+/**
+ * UI の表示言語。プレイヤーが設定から選ぶ。
+ * 出題言語（`languageSchema`）とは別の軸で、英語 UI でスウェーデン語の単語を解くこともある。
+ */
+export const uiLocaleSchema = z.enum(["ja", "en"]);
+export type UiLocale = z.infer<typeof uiLocaleSchema>;
+
 /** AI が返す 5 種の回答。これ以外の文字列は返さない。 */
 export const verdictSchema = z.enum([
   "yes",
@@ -20,10 +27,25 @@ export type InputKind = z.infer<typeof inputKindSchema>;
 
 export const MAX_INPUT_LENGTH = 200;
 export const MAX_HINTS = 3;
+/** ゲーム開始時に送る出題済み単語の id の上限。 */
+export const MAX_EXCLUDE_WORD_IDS = 100;
 
-/** 質問欄と解答欄は統合されているため、送信される内容は常にこの形をとる。 */
+/**
+ * ゲーム開始のリクエスト。
+ * `excludeWordIds` はクライアントが記録した、答えを見た単語の id。新しいものから最大 100 件を送る。
+ */
+export const startGameRequestSchema = z.object({
+  language: languageSchema,
+  locale: uiLocaleSchema.default("en"),
+  excludeWordIds: z.array(z.string()).max(MAX_EXCLUDE_WORD_IDS).default([]),
+});
+export type StartGameRequest = z.input<typeof startGameRequestSchema>;
+
+/**
+ * 質問欄と解答欄は統合されているため、送信される内容は常にこの形をとる。
+ * 対象のゲームはパスの `gameId` で指す。
+ */
 export const playerInputSchema = z.object({
-  gameId: z.uuid(),
   text: z.string().trim().min(1).max(MAX_INPUT_LENGTH),
 });
 export type PlayerInput = z.infer<typeof playerInputSchema>;
@@ -51,13 +73,23 @@ export type InputResult = z.infer<typeof inputResultSchema>;
 export const outcomeSchema = z.enum(["cleared", "gave_up"]);
 export type Outcome = z.infer<typeof outcomeSchema>;
 
-/** 終了時にチャット末尾へ積むカードの中身。 */
+/**
+ * 終了時にチャット末尾へ積むカードの中身。
+ * `wordId` はクライアントが出題済みの単語を記録するために使う。開始時には id を返さないため、ここが id を知る唯一の機会になる。
+ */
 export const gameResultSchema = z.object({
   outcome: outcomeSchema,
+  wordId: z.string(),
   word: z.string(),
   definition: z.string(),
 });
 export type GameResult = z.infer<typeof gameResultSchema>;
+
+/** ヒント開示のリクエスト。番号を送らせることで、再送しても次のヒントが開示されない。 */
+export const hintRequestSchema = z.object({
+  index: z.number().int().min(1),
+});
+export type HintRequest = z.infer<typeof hintRequestSchema>;
 
 export const hintSchema = z.object({
   index: z.number().int().min(1).max(MAX_HINTS),
@@ -72,3 +104,26 @@ export const gameStartSchema = z.object({
   teaser: z.string(),
 });
 export type GameStart = z.infer<typeof gameStartSchema>;
+
+/** サーバーが返すエラーの `code`。画面はこれで分岐し、`title` と `detail` は表示に使わない。 */
+export const errorCodeSchema = z.enum([
+  "validation_error",
+  "game_not_found",
+  "game_finished",
+  "hint_out_of_order",
+  "hint_limit_reached",
+  "rate_limited",
+  "internal_error",
+  "ai_unavailable",
+]);
+export type ErrorCode = z.infer<typeof errorCodeSchema>;
+
+/** 失敗の応答。RFC 9457 の Problem Details に `code` を足した形。 */
+export const problemSchema = z.object({
+  type: z.string(),
+  title: z.string(),
+  status: z.number().int(),
+  code: errorCodeSchema,
+  detail: z.string().optional(),
+});
+export type Problem = z.infer<typeof problemSchema>;

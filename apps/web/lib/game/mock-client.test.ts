@@ -51,21 +51,22 @@ describe("createMockGameClient", () => {
 
     const { gameId } = start;
     await expect(
-      client.sendInput({ gameId, text: "Is it something you do on a Friday?" }),
+      client.sendInput(gameId, { text: "Is it something you do on a Friday?" }),
     ).resolves.toEqual({ kind: "question", verdict: "yes" });
     await expect(client.revealHint(gameId, 1)).resolves.toEqual({
       index: 1,
       text: fredagsmys.hints.en[0],
     });
-    await expect(client.sendInput({ gameId, text: "fika" })).resolves.toEqual({
+    await expect(client.sendInput(gameId, { text: "fika" })).resolves.toEqual({
       kind: "answer",
       correct: false,
     });
-    await expect(client.sendInput({ gameId, text: "Fredagsmys" })).resolves.toEqual({
+    await expect(client.sendInput(gameId, { text: "Fredagsmys" })).resolves.toEqual({
       kind: "answer",
       correct: true,
       result: {
         outcome: "cleared",
+        wordId: fredagsmys.id,
         word: fredagsmys.word,
         definition: fredagsmys.definition.en,
       },
@@ -117,6 +118,7 @@ describe("createMockGameClient", () => {
 
     await expect(client.giveUp(gameId)).resolves.toEqual({
       outcome: "gave_up",
+      wordId: fredagsmys.id,
       word: fredagsmys.word,
       definition: fredagsmys.definition.en,
     });
@@ -128,8 +130,8 @@ describe("出題済み単語の記録", () => {
     const { client, storage } = clientFor("fredagsmys");
     const { gameId } = await client.startGame("sv");
 
-    await client.sendInput({ gameId, text: "Is it something you do on a Friday?" });
-    await client.sendInput({ gameId, text: "fika" });
+    await client.sendInput(gameId, { text: "Is it something you do on a Friday?" });
+    await client.sendInput(gameId, { text: "fika" });
     await client.revealHint(gameId, 1);
 
     expect(readPlayedWords(storage)).toEqual([]);
@@ -139,7 +141,7 @@ describe("出題済み単語の記録", () => {
     const { client, storage } = clientFor("fredagsmys");
     const { gameId } = await client.startGame("sv");
 
-    await client.sendInput({ gameId, text: "fredagsmys" });
+    await client.sendInput(gameId, { text: "fredagsmys" });
 
     expect(readPlayedWords(storage)).toEqual(["fredagsmys"]);
   });
@@ -205,7 +207,7 @@ describe("失敗", () => {
     const { client } = clientFor();
     const gameId = "00000000-0000-4000-8000-000000000000";
 
-    await expect(client.sendInput({ gameId, text: "fika" })).rejects.toBeInstanceOf(
+    await expect(client.sendInput(gameId, { text: "fika" })).rejects.toBeInstanceOf(
       GameClientError,
     );
     await expect(client.revealHint(gameId, 1)).rejects.toBeInstanceOf(GameClientError);

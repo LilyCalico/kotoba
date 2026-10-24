@@ -258,17 +258,17 @@ pnpm test:db        # DB を使うテスト（ローカルの Supabase に seed 
 
 **症状**: `Timed out waiting 60000ms from config.webServer` で E2E が始まらない。
 
-**原因**: `webServer.url` はレスポンスの状態コードが 2xx / 3xx になるまで待つ。ルートを 1 つも持たない api はどのパスでも 404 を返すため、条件を満たさない。
+**原因**: `webServer.url` はレスポンスの状態コードが 2xx / 3xx になるまで待つ。api のルートはすべて POST で、Playwright が送る GET にはどのパスでも 404 を返すため、条件を満たさない。
 
 **対処**: `url` ではなく `port` を指定する。ポートが接続を受け付けた時点で起動完了と見なされる。
 
-### E2E で api への到達を 404 の本文では判定できない
+### E2E で api への到達を状態コードでは判定できない
 
-**症状**: `/api/v1/...` が api に届いているか確かめようとして、JSON のエラー応答を期待すると HTML が返る。
+**症状**: `/api/v1/...` が api に届いているか確かめようとして、存在しないパスの 404 を期待しても、届いたかどうか区別できない。
 
-**原因**: NestJS が JSON のエラーを返すのは例外フィルターを通る場合である。どのコントローラーにも一致しないパスは Express の既定 404 ハンドラに落ち、HTML になる。web と api のどちらも 404 を返すため、状態コードでも本文の形式でも区別できない。
+**原因**: web も api も、存在しないパスには 404 を返す。
 
-**対処**: `X-Powered-By` ヘッダーを見る。api まで届いていれば `Express`、Next.js が返していれば `Next.js` になる。
+**対処**: `Content-Type` を見る。api は失敗を Problem Details（`application/problem+json`）で返し、Next.js は HTML を返す。
 
 ### LayoutProps / PageProps が見つからない
 

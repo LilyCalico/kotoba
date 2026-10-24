@@ -1,13 +1,6 @@
 import { z } from "zod";
 import { languageSchema } from "./game.js";
 
-/**
- * UI の表示言語。プレイヤーが設定から選ぶ。
- * 出題言語（`languageSchema`）とは別の軸で、英語 UI でスウェーデン語の単語を解くこともある。
- */
-export const uiLocaleSchema = z.enum(["ja", "en"]);
-export type UiLocale = z.infer<typeof uiLocaleSchema>;
-
 /** UI 言語ごとに書き分けるテキスト。どちらかが欠けた単語はスキーマ検証で落ちる。 */
 const localized = <T extends z.ZodType>(schema: T) => z.object({ ja: schema, en: schema });
 

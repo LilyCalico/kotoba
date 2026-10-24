@@ -15,7 +15,7 @@ export interface GameClient {
   /** 単語を 1 語選び、`gameId` と設問を返す。秘密の単語は返さない。 */
   startGame(language: Language): Promise<GameStart>;
   /** 入力を質問と解答に分類し、質問には 5 値の回答を、解答には正誤を返す。 */
-  sendInput(input: PlayerInput): Promise<InputResult>;
+  sendInput(gameId: string, input: PlayerInput): Promise<InputResult>;
   /** `index` 番目（1 始まり）のヒントを開示する。 */
   revealHint(gameId: string, index: number): Promise<Hint>;
   /** ギブアップを確定し、正解の単語と定義を返す。 */

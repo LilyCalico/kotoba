@@ -226,7 +226,7 @@ function Chat({
     dispatch({ type: "input-sent", text: input });
     setText("");
     try {
-      const result = await client.sendInput({ gameId, text: input });
+      const result = await client.sendInput(gameId, { text: input });
       dispatch({ type: "input-resolved", result });
     } catch (error) {
       if (!(error instanceof GameClientError)) throw error;

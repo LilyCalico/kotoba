@@ -146,11 +146,11 @@ tsconfig で押さえる項目は次のとおり。
 公開ルーティングで割り当てた接頭辞は、アプリ側で受ける。Vercel Services はサービスに元のリクエストパスをそのまま渡すため、`/api/v1/games` は `/games` に縮まらない。
 
 ```typescript
-// apps/api/src/main.ts
-const app = await NestFactory.create(AppModule);
-app.setGlobalPrefix("api/v1");
-await app.listen(process.env.PORT ?? 3001);
+// apps/api/src/configure-app.ts（main.ts とテストから呼ぶ）
+app.setGlobalPrefix("/api/v1");
 ```
+
+先頭の `/` は省かない。理由と、起動点の組み立ては [nestjs.md](nestjs.md) の「起動点を書く」を参照する。
 
 ## 7. 共有パッケージを繋ぐ
 

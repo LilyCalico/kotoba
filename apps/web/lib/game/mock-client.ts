@@ -43,7 +43,7 @@ function createGameId(): string {
 }
 
 function resultOf(word: Word, outcome: Outcome): GameResult {
-  return { outcome, word: word.word, definition: word.definition.en };
+  return { outcome, wordId: word.id, word: word.word, definition: word.definition.en };
 }
 
 /**
@@ -77,7 +77,7 @@ export function createMockGameClient(options: MockGameClientOptions = {}): GameC
       return { gameId, language: word.language, teaser: word.teaser.en };
     },
 
-    async sendInput({ gameId, text }) {
+    async sendInput(gameId, { text }) {
       await wait(delayMs);
 
       const word = wordOf(gameId);
