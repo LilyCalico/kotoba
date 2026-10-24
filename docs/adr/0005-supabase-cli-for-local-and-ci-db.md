@@ -21,7 +21,7 @@ CI では PR ごとに、空の DB へ migration と seed が最後まで通る�
 | CLI の入れ方 | `apps/api` の devDependency（npm の `supabase`）。`pnpm install` で全員が同じバージョンになり、Renovate が更新する |
 | 設定 | `apps/api/supabase/config.toml`。Postgres のメジャーバージョンは本番に合わせる |
 | テーブルの定義 | Prisma の migration（`apps/api/prisma/migrations`）だけが持つ。Supabase CLI の migration と seed は無効にする |
-| CI | `db` ジョブで `supabase start` → `prisma migrate deploy` → `prisma migrate diff` → `prisma db seed` |
+| CI | `db` ジョブで `supabase start` → `prisma migrate deploy` → `prisma migrate diff` → `prisma db seed` → DB を使うテスト（`pnpm test:db`） |
 
 本番の Supabase プロジェクトと、本番 DB への `prisma migrate deploy` は、Vercel へのデプロイの仕組みを作るときに用意する。
 

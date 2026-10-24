@@ -63,9 +63,12 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],
+    exclude: ["src/**/*.db.test.ts"],
   },
 });
 ```
+
+DB を使うテストは `*.db.test.ts` と名付けて通常のユニットテストから外し、DB を立てた環境でだけ別の設定で流す。手順は [prisma-supabase.md「DB を使うテスト」](prisma-supabase.md#10-db-を使うテスト) を参照する。
 
 `swc.vite()` に引数は要らない。`unplugin-swc` は変換対象ファイルの位置から `tsconfig.json` を探し、`experimentalDecorators` が有効なら SWC の `legacyDecorator` と `decoratorMetadata` を自動で立てる。
 
@@ -212,6 +215,7 @@ const nextConfig: NextConfig = {
 pnpm test           # 全ワークスペースのユニットテスト
 pnpm test:coverage  # カバレッジ付き
 pnpm test:e2e       # E2E（web と api は Playwright が起動する）
+pnpm test:db        # DB を使うテスト（ローカルの Supabase に seed 済みであること）
 ```
 
 `e2e` には `test` スクリプトがないため、`pnpm test` に E2E は含まれない。

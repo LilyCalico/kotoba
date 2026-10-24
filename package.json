@@ -16,7 +16,8 @@
     "db:stop": "pnpm --filter @kotoba/api db:stop",
     "db:migrate": "pnpm --filter @kotoba/api db:migrate",
     "db:deploy": "pnpm --filter @kotoba/api db:deploy",
-    "db:seed": "turbo run db:seed"
+    "db:seed": "turbo run db:seed",
+    "test:db": "turbo run test:db"
   },
   "devDependencies": {
     "turbo": "^2"
