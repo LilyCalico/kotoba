@@ -258,7 +258,7 @@ constructor(private readonly prisma: PrismaService) {}
 const word = await this.prisma.word.findUnique({ where: { id: "lagom" } });
 ```
 
-起動時に `$connect()` は呼ばない。接続は最初のクエリで張られるため、DB を使わないユニットテストや E2E は DB なしで起動できる。
+起動時に `$connect()` は呼ばない。接続は最初のクエリで張られるため、DB を使わないユニットテストは DB なしで起動できる。
 
 出題する単語は `WordsModule` の `WordsService` から引く。`findById(id)` と、ゲーム開始時の 1 語を選ぶ `pick({ language, excludeWordIds })` を持つ。
 
@@ -290,7 +290,7 @@ const word = await this.prisma.word.findUnique({ where: { id: "lagom" } });
 | `db:seed` | 単語プールが `wordSchema` の形のまま DB に入り、件数が合う |
 | `test:db` | seed した単語を、アプリ（`WordsService`）が seed データと同じ形で読み出せる |
 
-ほかのジョブは DB を使わない。`prisma generate` は DB につながないため、`DIRECT_URL` のない `pnpm install` でも `postinstall` が通る。
+`e2e` ジョブも、実際の api を相手にするため同じ手順で seed 済みの DB を用意する（[testing.md](testing.md)）。`ci` ジョブは DB を使わない。`prisma generate` は DB につながないため、`DIRECT_URL` のない `pnpm install` でも `postinstall` が通る。
 
 ## 10. DB を使うテスト
 
@@ -382,7 +382,7 @@ pnpm test:db
 
 ### .env がないと API が起動しない
 
-**症状**: `nest start --env-file .env` にすると、`.env` のない環境（CI の E2E など）で `node: .env: not found` と出て起動しない。
+**症状**: `nest start --env-file .env` にすると、`.env` のない環境（DB を使わずに api を起動するときなど）で `node: .env: not found` と出て起動しない。
 
 **原因**: Nest CLI の `--env-file` は Node.js の `--env-file` に渡され、ファイルがないと Node.js が起動を拒む。
 
