@@ -109,7 +109,15 @@ export interface components {
             outcome: "cleared" | "gave_up";
             wordId: string;
             word: string;
+            /** @enum {string} */
+            partOfSpeech: "noun" | "verb" | "adjective" | "phrase";
             definition: string;
+            literal?: string;
+            note?: string;
+            example?: {
+                sv: string;
+                translation: string;
+            };
         };
         HintRequest: {
             index: number;

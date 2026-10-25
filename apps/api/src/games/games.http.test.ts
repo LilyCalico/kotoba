@@ -120,7 +120,10 @@ describe("ゲーム 1 周", () => {
         outcome: "cleared",
         wordId: "lagom",
         word: "Lagom",
+        partOfSpeech: "adjective",
         definition: lagom.definition.en,
+        note: lagom.note?.en,
+        example: { sv: lagom.example?.sv, translation: lagom.example?.translations.en },
       },
     });
   });
@@ -134,7 +137,10 @@ describe("ゲーム 1 周", () => {
       outcome: "gave_up",
       wordId: "lagom",
       word: "Lagom",
+      partOfSpeech: "adjective",
       definition: lagom.definition.ja,
+      note: lagom.note?.ja,
+      example: { sv: lagom.example?.sv, translation: lagom.example?.translations.ja },
     });
   });
 });

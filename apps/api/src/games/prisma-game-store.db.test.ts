@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import type { GameResult } from "@kotoba/shared";
 import { afterAll, describe, expect, it } from "vitest";
 import { PrismaService } from "../prisma/prisma.service.js";
 import { GAME_TTL_MS, type Game } from "./game-store.js";
@@ -37,6 +38,15 @@ function createStore(start = Date.now()) {
   };
 }
 
+const cleared: GameResult = {
+  outcome: "cleared",
+  wordId: "lagom",
+  word: "lagom",
+  partOfSpeech: "adjective",
+  definition: "ちょうどよい",
+  example: { sv: "Precis lagom!", translation: "ちょうどいい！" },
+};
+
 describe("PrismaGameStore（DB）", () => {
   it("保存したゲームを同じ形で読み出す", async () => {
     const { store } = createStore();
@@ -50,11 +60,11 @@ describe("PrismaGameStore（DB）", () => {
           result: {
             kind: "answer",
             correct: true,
-            result: { outcome: "cleared", wordId: "lagom", word: "lagom", definition: "ちょうどよい" },
+            result: cleared,
           },
         },
       ],
-      result: { outcome: "cleared", wordId: "lagom", word: "lagom", definition: "ちょうどよい" },
+      result: cleared,
     });
 
     await store.create(finished);

@@ -1,12 +1,14 @@
 import { z } from "zod";
-import { languageSchema } from "./game.js";
+import {
+  type GameResult,
+  languageSchema,
+  type Outcome,
+  partOfSpeechSchema,
+  type UiLocale,
+} from "./game.js";
 
 /** UI 言語ごとに書き分けるテキスト。どちらかが欠けた単語はスキーマ検証で落ちる。 */
 const localized = <T extends z.ZodType>(schema: T) => z.object({ ja: schema, en: schema });
-
-/** 単語の品詞。ヒントの書き分けと終了カードの表示に使う。 */
-export const partOfSpeechSchema = z.enum(["noun", "verb", "adjective", "phrase"]);
-export type PartOfSpeech = z.infer<typeof partOfSpeechSchema>;
 
 export const HINT_COUNT = 3;
 
@@ -83,4 +85,23 @@ export function isAcceptedAnswer(word: Word, input: string): boolean {
   return [word.word, ...word.acceptedAnswers].some(
     (candidate) => normalizeAnswer(candidate) === normalized,
   );
+}
+
+/**
+ * 終了時に返す単語の一項目。テキストは `locale` の言語に絞り、持たない項目は省く。
+ * api の応答と、web のモックの `GameClient` の両方がこれで組み立てる。
+ */
+export function gameResultOf(word: Word, outcome: Outcome, locale: UiLocale): GameResult {
+  return {
+    outcome,
+    wordId: word.id,
+    word: word.word,
+    partOfSpeech: word.partOfSpeech,
+    definition: word.definition[locale],
+    ...(word.literal && { literal: word.literal[locale] }),
+    ...(word.note && { note: word.note[locale] }),
+    ...(word.example && {
+      example: { sv: word.example.sv, translation: word.example.translations[locale] },
+    }),
+  };
 }

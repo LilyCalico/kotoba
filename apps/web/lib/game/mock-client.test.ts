@@ -1,4 +1,4 @@
-import { type Word, gameStartSchema } from "@kotoba/shared";
+import { type Word, gameResultOf, gameStartSchema } from "@kotoba/shared";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { GameClientError } from "./client";
 import { findWordById, words } from "./fixtures";
@@ -57,12 +57,7 @@ describe("createMockGameClient", () => {
     await expect(client.sendInput(gameId, { text: "Fredagsmys" })).resolves.toEqual({
       kind: "answer",
       correct: true,
-      result: {
-        outcome: "cleared",
-        wordId: fredagsmys.id,
-        word: fredagsmys.word,
-        definition: fredagsmys.definition.en,
-      },
+      result: gameResultOf(fredagsmys, "cleared", "en"),
     });
   });
 
@@ -127,12 +122,7 @@ describe("createMockGameClient", () => {
     const client = clientFor("fredagsmys");
     const { gameId } = await client.startGame({ language: "sv" });
 
-    await expect(client.giveUp(gameId)).resolves.toEqual({
-      outcome: "gave_up",
-      wordId: fredagsmys.id,
-      word: fredagsmys.word,
-      definition: fredagsmys.definition.en,
-    });
+    await expect(client.giveUp(gameId)).resolves.toEqual(gameResultOf(fredagsmys, "gave_up", "en"));
   });
 });
 

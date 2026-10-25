@@ -461,14 +461,46 @@
           "word": {
             "type": "string"
           },
+          "partOfSpeech": {
+            "type": "string",
+            "enum": [
+              "noun",
+              "verb",
+              "adjective",
+              "phrase"
+            ]
+          },
           "definition": {
             "type": "string"
+          },
+          "literal": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "example": {
+            "type": "object",
+            "properties": {
+              "sv": {
+                "type": "string"
+              },
+              "translation": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "sv",
+              "translation"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
           "outcome",
           "wordId",
           "word",
+          "partOfSpeech",
           "definition"
         ],
         "additionalProperties": false

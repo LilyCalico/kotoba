@@ -81,7 +81,7 @@
 ```json
 { "kind": "question", "verdict": "yes" }
 { "kind": "answer", "correct": false }
-{ "kind": "answer", "correct": true, "result": { "outcome": "cleared", "wordId": "fredagsmys", "word": "Fredagsmys", "definition": "…" } }
+{ "kind": "answer", "correct": true, "result": { "outcome": "cleared", "wordId": "fredagsmys", "word": "Fredagsmys", "partOfSpeech": "noun", "definition": "…", "literal": "Friday coziness", "example": { "sv": "Vad ska vi ha till fredagsmyset?", "translation": "…" } } }
 { "kind": "unsupported_language" }
 ```
 
@@ -127,7 +127,7 @@
 レスポンス（200）: `GameResult`（`outcome: "gave_up"`）
 
 ```json
-{ "outcome": "gave_up", "wordId": "fredagsmys", "word": "Fredagsmys", "definition": "…" }
+{ "outcome": "gave_up", "wordId": "fredagsmys", "word": "Fredagsmys", "partOfSpeech": "noun", "definition": "…", "literal": "Friday coziness", "example": { "sv": "Vad ska vi ha till fredagsmyset?", "translation": "…" } }
 ```
 
 終了済みのゲームへのギブアップは、終了時の `GameResult` を `outcome` もそのままに 200 で返す。ギブアップの再送は同じ結果になり、正解の応答を受け取り損ねたあとのギブアップではクリアの結果が届く。
@@ -155,10 +155,20 @@
 | `inputResultSchema` | `questionResultSchema` / `answerResultSchema` / `unsupportedLanguageResultSchema` の判別共用体（`kind`） | 入力のレスポンス |
 | `hintRequestSchema` | `{ index }`（1 以上の整数） | ヒントのリクエスト |
 | `hintSchema` | `{ index, text }` | ヒントのレスポンス |
-| `gameResultSchema` | `{ outcome, wordId, word, definition }` | 正解時の `result` とギブアップのレスポンス |
+| `gameResultSchema` | `{ outcome, wordId, word, partOfSpeech, definition, literal?, note?, example? }`。`example` は `{ sv, translation }` | 正解時の `result` とギブアップのレスポンス |
 | `problemSchema` | `{ type, title, status, code, detail? }`。`code` はサーバーが返すエラーの `code` の enum | エラーのレスポンス |
 
 `gameId` はパスで受けるため、リクエスト本文のスキーマには含めない。
+
+`gameResultSchema` は、終了の画面に単語を辞書の一項目として見せるための項目を持つ。
+
+| フィールド | 内容 |
+| --- | --- |
+| `partOfSpeech` | 品詞（`noun` / `verb` / `adjective` / `phrase`） |
+| `definition` | `locale` の言語の定義 |
+| `literal` | `locale` の言語の直訳。合成語など、成り立ちが答えの核心になる語だけが持つ |
+| `note` | `locale` の言語の文化的な補足。持つ語だけ |
+| `example` | 例文。`sv` はスウェーデン語の原文、`translation` は `locale` の言語の訳。持つ語だけ |
 
 `gameResultSchema` が `wordId` を持つのは、クライアントが出題済みの単語を記録するためである。`GameStart` は単語の id を返さず（id は多くの場合単語そのものなので答えが漏れる）、終了後に届く `GameResult` が id を知る唯一の機会になる。
 
@@ -166,7 +176,7 @@
 
 ゲームが終わる（クリアかギブアップ）まで、どの応答にも次を含めない。
 
-- 単語そのもの（`word`）・単語の id（`wordId`）・読み・定義
+- 単語そのもの（`word`）・単語の id（`wordId`）・読み・品詞・定義・直訳・補足・例文
 - 開示していないヒント
 - Q&A 履歴と、AI に渡したプロンプト
 

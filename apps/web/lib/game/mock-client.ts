@@ -1,10 +1,4 @@
-import {
-  type GameResult,
-  MAX_HINTS,
-  type Outcome,
-  type UiLocale,
-  type Word,
-} from "@kotoba/shared";
+import { MAX_HINTS, type UiLocale, type Word, gameResultOf } from "@kotoba/shared";
 
 import { type GameClient, GameClientError } from "./client";
 import { findWordById, words } from "./fixtures";
@@ -61,10 +55,6 @@ export function pickWord<T extends { id: string }>(
   return candidates[index] as T;
 }
 
-function resultOf({ word, locale }: MockGame, outcome: Outcome): GameResult {
-  return { outcome, wordId: word.id, word: word.word, definition: word.definition[locale] };
-}
-
 /**
  * fixtures だけで `GameClient` を満たす実装。`apps/api` とは通信しない。
  * Storybook とユニットテストのフィクスチャとして使い、失敗は API と同じ `code` で投げる。
@@ -101,7 +91,7 @@ export function createMockGameClient(options: MockGameClientOptions = {}): GameC
       const game = gameOf(gameId);
       const result = resolveInput(game.word, text);
       if (result.kind === "answer" && result.correct) {
-        return { ...result, result: resultOf(game, "cleared") };
+        return { ...result, result: gameResultOf(game.word, "cleared", game.locale) };
       }
       return result;
     },
@@ -123,7 +113,8 @@ export function createMockGameClient(options: MockGameClientOptions = {}): GameC
     async giveUp(gameId) {
       await wait(delayMs);
 
-      return resultOf(gameOf(gameId), "gave_up");
+      const game = gameOf(gameId);
+      return gameResultOf(game.word, "gave_up", game.locale);
     },
   };
 }

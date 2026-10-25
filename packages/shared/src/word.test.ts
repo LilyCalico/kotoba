@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type Word, isAcceptedAnswer, normalizeAnswer, wordSchema } from "./word.js";
+import { type Word, gameResultOf, isAcceptedAnswer, normalizeAnswer, wordSchema } from "./word.js";
 
 const word: Word = {
   id: "kura-skymning",
@@ -62,5 +62,39 @@ describe("wordSchema", () => {
 
   it("使用頻度の範囲外を弾く", () => {
     expect(wordSchema.safeParse({ ...word, frequency: 6 }).success).toBe(false);
+  });
+});
+
+describe("gameResultOf", () => {
+  it("テキストを locale の言語に絞って、単語の一項目を組み立てる", () => {
+    const full: Word = {
+      ...word,
+      literal: { ja: "薄暗がりにうずくまる", en: "to huddle in the dusk" },
+      note: { ja: "冬の長い北欧の習慣。", en: "A habit of the long Nordic winter." },
+      example: { sv: "Vi kurar skymning.", translations: { ja: "薄闇で過ごそう。", en: "Let us sit in the dusk." } },
+    };
+
+    expect(gameResultOf(full, "cleared", "ja")).toEqual({
+      outcome: "cleared",
+      wordId: "kura-skymning",
+      word: "Kura skymning",
+      partOfSpeech: "phrase",
+      definition: full.definition.ja,
+      literal: "薄暗がりにうずくまる",
+      note: "冬の長い北欧の習慣。",
+      example: { sv: "Vi kurar skymning.", translation: "薄闇で過ごそう。" },
+    });
+  });
+
+  it("単語が持たない項目は省く", () => {
+    const { literal: _literal, note: _note, example: _example, ...bare } = word;
+
+    expect(gameResultOf(bare, "gave_up", "en")).toEqual({
+      outcome: "gave_up",
+      wordId: "kura-skymning",
+      word: "Kura skymning",
+      partOfSpeech: "phrase",
+      definition: word.definition.en,
+    });
   });
 });

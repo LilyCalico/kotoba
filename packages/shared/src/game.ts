@@ -16,6 +16,10 @@ export type Language = z.infer<typeof languageSchema>;
 export const uiLocaleSchema = z.enum(["ja", "en"]);
 export type UiLocale = z.infer<typeof uiLocaleSchema>;
 
+/** 単語の品詞。ヒントの書き分けと終了の画面の表示に使う。 */
+export const partOfSpeechSchema = z.enum(["noun", "verb", "adjective", "phrase"]);
+export type PartOfSpeech = z.infer<typeof partOfSpeechSchema>;
+
 /** AI が返す 5 種の回答。これ以外の文字列は返さない。 */
 export const verdictSchema = z.enum([
   "yes",
@@ -78,14 +82,22 @@ export const outcomeSchema = z.enum(["cleared", "gave_up"]);
 export type Outcome = z.infer<typeof outcomeSchema>;
 
 /**
- * 終了時にチャット末尾へ積むカードの中身。
+ * 終了時にチャット末尾へ積むカードの中身。単語を辞書の一項目として見せる。
+ * テキストはゲームの `locale` の言語で返す。`example.sv` だけは UI 言語によらずスウェーデン語の原文である。
  * `wordId` はクライアントが出題済みの単語を記録するために使う。開始時には id を返さないため、ここが id を知る唯一の機会になる。
  */
 export const gameResultSchema = z.object({
   outcome: outcomeSchema,
   wordId: z.string(),
   word: z.string(),
+  partOfSpeech: partOfSpeechSchema,
   definition: z.string(),
+  /** 直訳。合成語など、語の成り立ちが答えの核心になる語だけが持つ */
+  literal: z.string().optional(),
+  /** 文化的な補足。持つ語だけ */
+  note: z.string().optional(),
+  /** 例文。持つ語だけ */
+  example: z.object({ sv: z.string(), translation: z.string() }).optional(),
 }).meta({ id: "GameResult" });
 export type GameResult = z.infer<typeof gameResultSchema>;
 

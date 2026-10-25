@@ -21,6 +21,7 @@ const cleared: GameResult = {
   outcome: "cleared",
   wordId: "fredagsmys",
   word: "Fredagsmys",
+  partOfSpeech: "noun",
   definition: "The habit of settling onto the sofa on a Friday night.",
 };
 
