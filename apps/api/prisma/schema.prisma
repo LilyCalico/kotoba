@@ -63,6 +63,7 @@ model Word {
 
 /// 進行中ゲーム。形は src/games/game-store.ts の Game と 1 対 1 に対応する。
 /// 秘密の単語と Q&A 履歴を含むため、クライアントには送らない。
+/// Supabase の Data API から読み書きされないよう、migration で RLS を有効にしている（Prisma のスキーマでは表せない）。
 model Game {
   id            String   @id @db.Uuid
   wordId        String   @map("word_id")

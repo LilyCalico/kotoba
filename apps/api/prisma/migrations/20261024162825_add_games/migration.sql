@@ -21,3 +21,8 @@ CREATE INDEX "games_expires_at_idx" ON "games"("expires_at");
 
 -- AddForeignKey
 ALTER TABLE "games" ADD CONSTRAINT "games_word_id_fkey" FOREIGN KEY ("word_id") REFERENCES "words"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- EnableRowLevelSecurity
+-- ポリシーを置かず、Supabase の Data API（anon / authenticated ロール）からは読み書きできなくする。
+-- api はテーブルの所有者のロールで接続するため、RLS の対象にならない。
+ALTER TABLE "games" ENABLE ROW LEVEL SECURITY;

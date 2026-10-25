@@ -284,6 +284,7 @@ const word = await this.prisma.word.findUnique({ where: { id: "lagom" } });
 | `get` は `id` と `expires_at > 現在` で絞り、同じ UPDATE で `expires_at` を 1 時間先へ延ばす（`updateManyAndReturn`） | 期限内かの判定と期限の延長の間に、期限が切れる隙間を作らない |
 | `create` は同じトランザクションで期限切れの行を消してから作る | 読まれないまま放置されたゲームを、定期実行なしで片付ける |
 | 読んだ `history` と `result` を `packages/shared` のスキーマで検証する | `jsonb` の中身の形は DB が保証しない |
+| migration で `games` の RLS をポリシーなしで有効にする | Supabase の Data API から、publishable key で秘密の単語を読まれたり行を書き換えられたりしないようにする。api はテーブルの所有者のロールで接続するため影響を受けない。Prisma のスキーマは RLS を表せないため、migration の SQL に書く |
 | `useFactory` で組み立てる | テストが時刻を差し替える `now` 引数を、NestJS の注入の対象から外す |
 
 DB を使わないユニットテストと HTTP のテストは、`overrideProvider(GAME_STORE)` でメモリ内の `MemoryGameStore` に差し替える。
