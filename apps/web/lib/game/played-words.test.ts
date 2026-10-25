@@ -1,10 +1,10 @@
+import { MAX_EXCLUDE_WORD_IDS } from "@kotoba/shared";
 import { describe, expect, it } from "vitest";
-import { words } from "./fixtures";
 import {
   PLAYED_WORDS_KEY,
   type PlayedWordsStorage,
+  excludedWordIds,
   getBrowserStorage,
-  pickWord,
   readPlayedWords,
   recordPlayedWord,
 } from "./played-words";
@@ -19,10 +19,6 @@ class MemoryStorage implements PlayedWordsStorage {
   setItem(key: string, value: string): void {
     this.items.set(key, value);
   }
-
-  removeItem(key: string): void {
-    this.items.delete(key);
-  }
 }
 
 /** どの操作も例外を投げる。アクセスを拒まれた `localStorage` を模す。 */
@@ -33,9 +29,6 @@ const brokenStorage: PlayedWordsStorage = {
   setItem: () => {
     throw new Error("denied");
   },
-  removeItem: () => {
-    throw new Error("denied");
-  },
 };
 
 function storageWith(value: string): MemoryStorage {
@@ -43,13 +36,6 @@ function storageWith(value: string): MemoryStorage {
   storage.setItem(PLAYED_WORDS_KEY, value);
   return storage;
 }
-
-const pool = [{ id: "a" }, { id: "b" }, { id: "c" }];
-
-/** 候補の先頭を選ぶ乱数。 */
-const first = () => 0;
-/** 候補の末尾を選ぶ乱数。 */
-const last = () => 0.999_999;
 
 describe("readPlayedWords", () => {
   it("保存が無ければ空を返す", () => {
@@ -83,6 +69,27 @@ describe("readPlayedWords", () => {
   });
 });
 
+describe("excludedWordIds", () => {
+  it("記録を新しいものから並べて返す", () => {
+    expect(excludedWordIds(storageWith('["a","b","c"]'))).toEqual(["c", "b", "a"]);
+  });
+
+  it("新しいものから最大 100 件に絞る", () => {
+    const played = Array.from({ length: MAX_EXCLUDE_WORD_IDS + 5 }, (_, index) => `w${index}`);
+    const storage = storageWith(JSON.stringify(played));
+
+    const excluded = excludedWordIds(storage);
+
+    expect(excluded).toHaveLength(MAX_EXCLUDE_WORD_IDS);
+    expect(excluded[0]).toBe(`w${MAX_EXCLUDE_WORD_IDS + 4}`);
+    expect(excluded.at(-1)).toBe("w5");
+  });
+
+  it("storage が無ければ空を返す", () => {
+    expect(excludedWordIds(null)).toEqual([]);
+  });
+});
+
 describe("recordPlayedWord", () => {
   it("id を追記する", () => {
     const storage = new MemoryStorage();
@@ -93,13 +100,42 @@ describe("recordPlayedWord", () => {
     expect(storage.getItem(PLAYED_WORDS_KEY)).toBe('["a","b"]');
   });
 
-  it("同じ id を重ねない", () => {
-    const storage = new MemoryStorage();
+  it("記録済みの id が届いたら、記録をその 1 件に戻す", () => {
+    const storage = storageWith('["a","b","c"]');
+
+    recordPlayedWord(storage, "b");
+
+    expect(readPlayedWords(storage)).toEqual(["b"]);
+  });
+
+  it("戻したあとは、次の一巡の記録として追記を続ける", () => {
+    const storage = storageWith('["a","b"]');
 
     recordPlayedWord(storage, "a");
-    recordPlayedWord(storage, "a");
+    recordPlayedWord(storage, "b");
 
-    expect(readPlayedWords(storage)).toEqual(["a"]);
+    expect(readPlayedWords(storage)).toEqual(["a", "b"]);
+  });
+
+  it("新しいものから最大 100 件だけを残す", () => {
+    const ids = Array.from({ length: MAX_EXCLUDE_WORD_IDS }, (_, index) => `w${index}`);
+    const storage = storageWith(JSON.stringify(ids));
+
+    recordPlayedWord(storage, "new");
+
+    expect(readPlayedWords(storage)).toEqual([...ids.slice(1), "new"]);
+  });
+
+  it("100 件より古い単語が届いても、記録を 1 件に戻さない", () => {
+    const ids = Array.from({ length: MAX_EXCLUDE_WORD_IDS }, (_, index) => `w${index}`);
+    const storage = storageWith(JSON.stringify(ids));
+    recordPlayedWord(storage, "new");
+
+    // w0 は送る excludeWordIds から外れており、サーバーはプールを一巡しなくても出題し得る。
+    recordPlayedWord(storage, "w0");
+
+    expect(readPlayedWords(storage)).toHaveLength(MAX_EXCLUDE_WORD_IDS);
+    expect(readPlayedWords(storage).at(-1)).toBe("w0");
   });
 
   it("壊れた保存値は捨てて書き直す", () => {
@@ -113,82 +149,6 @@ describe("recordPlayedWord", () => {
   it("storage が無くても、書き込みが例外を投げても止まらない", () => {
     expect(() => recordPlayedWord(null, "a")).not.toThrow();
     expect(() => recordPlayedWord(brokenStorage, "a")).not.toThrow();
-  });
-});
-
-describe("pickWord", () => {
-  it("記録済みの単語を選定から除く", () => {
-    const storage = storageWith('["a","c"]');
-
-    expect(pickWord(pool, storage, first)).toEqual({ id: "b" });
-    expect(pickWord(pool, storage, last)).toEqual({ id: "b" });
-  });
-
-  it("乱数に応じて候補から 1 語選ぶ", () => {
-    const storage = storageWith('["b"]');
-
-    expect(pickWord(pool, storage, first)).toEqual({ id: "a" });
-    expect(pickWord(pool, storage, last)).toEqual({ id: "c" });
-  });
-
-  it("選んだだけでは記録しない", () => {
-    const storage = new MemoryStorage();
-
-    pickWord(pool, storage, first);
-
-    expect(readPlayedWords(storage)).toEqual([]);
-  });
-
-  it("全語が記録済みならリストを空に戻し、全語から選び直す", () => {
-    const storage = storageWith('["a","b","c"]');
-
-    expect(pickWord(pool, storage, last)).toEqual({ id: "c" });
-    expect(readPlayedWords(storage)).toEqual([]);
-    expect(pickWord(pool, storage, first)).toEqual({ id: "a" });
-  });
-
-  it("プールに無い id が残っていても、プールの全語が記録済みなら空に戻す", () => {
-    const storage = storageWith('["a","removed","b","c"]');
-
-    expect(pickWord(pool, storage, first)).toEqual({ id: "a" });
-    expect(readPlayedWords(storage)).toEqual([]);
-  });
-
-  it("壊れた保存値のときは全語から選ぶ", () => {
-    expect(pickWord(pool, storageWith("{not json"), last)).toEqual({ id: "c" });
-  });
-
-  it("storage が無ければ読み書きせず全語から選ぶ", () => {
-    expect(pickWord(pool, null, first)).toEqual({ id: "a" });
-    expect(pickWord(pool, null, last)).toEqual({ id: "c" });
-  });
-
-  it("storage が例外を投げても全語から選ぶ", () => {
-    expect(pickWord(pool, brokenStorage, last)).toEqual({ id: "c" });
-  });
-
-  it("乱数が 1 を返しても候補の範囲に収める", () => {
-    expect(pickWord(pool, null, () => 1)).toEqual({ id: "c" });
-  });
-
-  it("プールが空なら例外を投げる", () => {
-    expect(() => pickWord([], new MemoryStorage())).toThrow();
-  });
-
-  it("モックの単語プールを 1 周するまで同じ単語を選ばない", () => {
-    const storage = new MemoryStorage();
-    const seen = new Set<string>();
-
-    for (let round = 0; round < words.length; round++) {
-      const word = pickWord(words, storage);
-      expect(seen.has(word.id)).toBe(false);
-      seen.add(word.id);
-      recordPlayedWord(storage, word.id);
-    }
-
-    expect(seen.size).toBe(words.length);
-    pickWord(words, storage);
-    expect(readPlayedWords(storage)).toEqual([]);
   });
 });
 

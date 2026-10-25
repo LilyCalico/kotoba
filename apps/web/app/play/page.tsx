@@ -6,8 +6,6 @@ export const metadata: Metadata = {
   title: "Play",
 };
 
-/** `?word=<id>` が 1 つだけ指定されたときに限り、出題単語を固定する。 */
-export default async function Play({ searchParams }: PageProps<"/play">) {
-  const { word } = await searchParams;
-  return <PlayScreen wordId={typeof word === "string" ? word : undefined} />;
+export default function Play() {
+  return <PlayScreen />;
 }

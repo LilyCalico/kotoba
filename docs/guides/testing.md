@@ -171,29 +171,36 @@ webServer: [
 
 ## 6. 開発時だけ `/api/v1` を api へ中継する
 
-本番では Vercel Services が `/api/v1/(.*)` を api サービスへ直接振り分けるため、リクエストは Next.js に届かない。ローカルと E2E では Next.js が肩代わりする。
+本番では Vercel Services が `/api/v1/(.*)` を api サービスへ直接振り分けるため、リクエストは Next.js に届かない。ローカルと E2E では Next.js の rewrites が肩代わりする。
 
 ```typescript
 // apps/web/next.config.ts
-const apiProxyOrigin = process.env.API_PROXY_ORIGIN;
+function apiProxyOrigin(phase: string): string | undefined {
+  if (process.env.API_PROXY_ORIGIN) return process.env.API_PROXY_ORIGIN;
+  return phase === PHASE_DEVELOPMENT_SERVER ? DEV_API_ORIGIN : undefined;
+}
 
-const nextConfig: NextConfig = {
-  async rewrites() {
-    if (!apiProxyOrigin) {
-      return [];
-    }
+export default function config(phase: string): NextConfig {
+  const origin = apiProxyOrigin(phase);
 
-    return [
-      {
-        source: "/api/v1/:path*",
-        destination: `${apiProxyOrigin}/api/v1/:path*`,
-      },
-    ];
-  },
-};
+  return {
+    async rewrites() {
+      if (!origin) {
+        return [];
+      }
+
+      return [
+        {
+          source: "/api/v1/:path*",
+          destination: `${origin}/api/v1/:path*`,
+        },
+      ];
+    },
+  };
+}
 ```
 
-環境変数で切り替えるのは、本番でこの中継が働くと `localhost:3001` へ送ろうとして壊れるためである。Vercel では `API_PROXY_ORIGIN` を設定しない。
+`next dev` では `API_PROXY_ORIGIN` がなくても `http://localhost:3001` へ中継し、`next build` では中継しない。本番でこの中継が働くと `localhost:3001` へ送ろうとして壊れるためである。Vercel では `API_PROXY_ORIGIN` を設定しない。E2E は `webServer` の `env` で中継先を明示する。
 
 ## 7. Turborepo に繋ぐ
 
@@ -209,12 +216,40 @@ const nextConfig: NextConfig = {
 
 `test:e2e` が `^build` ではなく `@kotoba/shared#build` を指すのは、web と api が dev サーバーとして自分で再コンパイルするためである。事前に要るのは、両者が `dist/` 経由で読み込む `packages/shared` のビルドだけになる。
 
-## 8. 実行する
+## 8. E2E を seed 済みの DB で流す
+
+E2E はモックを使わず、実際の api を相手にする。api は出題する単語を DB から引くため、E2E の前に seed 済みのローカル DB が要る（[local-development.md](local-development.md) の「1. DB を用意する」）。
+
+CI の `e2e` ジョブも、`db` ジョブと同じ手順で DB を用意してから流す。
+
+```yaml
+- run: pnpm db:start
+- run: cp apps/api/.env.example apps/api/.env
+- run: pnpm db:deploy
+- run: pnpm db:seed
+- run: pnpm test:e2e
+```
+
+出題する単語は、`localStorage` の出題済みの記録で絞る。api は記録した単語を出題から除くので、seed の単語のうち 1 語以外を記録しておけば、その 1 語が出る。テスト専用の API の口は作らない。秘密の単語を固定・取得できる口を本番に載せないためである。
+
+```typescript
+// e2e/tests/game.spec.ts
+import { words } from "../../apps/api/src/prisma/seed/words.js";
+
+async function playWithOnly(page: Page, ...unplayed: string[]) {
+  const played = words.map((word) => word.id).filter((id) => !unplayed.includes(id));
+  await page.addInitScript(/* localStorage の kotoba:played-words に played を入れる */);
+}
+```
+
+単語の一覧は seed の入力データから読む。seed に単語を足しても、記録する id が自動で増えるため、出題は絞られたまま変わらない。
+
+## 9. 実行する
 
 ```bash
 pnpm test           # 全ワークスペースのユニットテスト
 pnpm test:coverage  # カバレッジ付き
-pnpm test:e2e       # E2E（web と api は Playwright が起動する）
+pnpm test:e2e       # E2E（web と api は Playwright が起動する。seed 済みの DB が要る）
 pnpm test:db        # DB を使うテスト（ローカルの Supabase に seed 済みであること）
 ```
 

@@ -17,7 +17,7 @@ export class WordsService implements OnApplicationBootstrap {
 
   /**
    * 起動時に全件を検証し、不正な行をログに出す。
-   * 起動を待たせず、DB に届かなくても起動を止めない。接続先がなければ何もしない（DB なしの E2E・テスト）。
+   * 起動を待たせず、DB に届かなくても起動を止めない。接続先がなければ何もしない（DB を使わないテスト）。
    */
   onApplicationBootstrap(): void {
     if (!process.env.DATABASE_URL) return;
