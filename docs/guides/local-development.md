@@ -38,7 +38,7 @@ pnpm db:seed
 pnpm dev
 ```
 
-Turborepo が web と api の `dev` を並べて起動する。`http://localhost:3000` を開き、START からゲームを始める。
+Turborepo が web と api の `dev` を並べて起動する。`http://localhost:3000` を開き、Start a game からゲームを始める。
 
 ## 3. `/api/v1` が api に届く仕組み
 
