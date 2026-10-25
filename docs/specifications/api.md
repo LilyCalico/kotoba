@@ -218,9 +218,10 @@
 | 保持する内容 | 単語の id・`locale`・開示済みヒントの数・Q&A 履歴（判定が成功した入力と返した結果の組）・終了状態と結果 |
 | 保持の口 | `GameStore` インターフェース。API のほかのコードは保存先を知らない |
 | 期限 | 最後の操作から 1 時間で破棄し、以降は `game_not_found` を返す |
-| 保存先 | `GameStore` の実装が決める。Vercel では関数のインスタンスが複数立つため、デプロイした環境では複数のインスタンスで共有できる保存先を使う |
+| 保存先 | Supabase の PostgreSQL の `games` テーブル。Vercel では関数のインスタンスが複数立つため、どのインスタンスからも同じゲームを読み書きできる保存先に置く |
+| 同時の操作 | 同じゲームへの書き込みが重なったときは、後に書いた方が残る。画面は送信中に入力を塞ぐため、通常は重ならない |
 
-保存先の選び方は `docs/adr/0003-game-session-store.md` に従う。
+`GameStore` の裏に保存先を隠す理由は `docs/adr/0003-game-session-store.md`、PostgreSQL を選んだ理由は `docs/adr/0007-game-store-on-postgresql.md` に置く。
 
 ## レートリミット
 
@@ -235,4 +236,4 @@ AI の呼び出しとストアの肥大を抑えるため、次の 2 つをク�
 
 - **数える単位**: IP ごと。`gameId` ごとに数えると、ゲームを始め直すだけで制限を逃れられる。同じ Wi-Fi や携帯回線の CGNAT の後ろにいる利用者は枠を分け合うが、上の値はその分の余裕を含む
 - **IP の取り方**: Vercel がクライアントの IP を入れる `x-forwarded-for` から取る。リクエストが持ち込んだ値は Vercel が上書きする。IPv6 は端末ごと・時間ごとにアドレスが変わるため、/64 のプレフィックスで数える
-- **実装の場所**: api の Guard で数える。インスタンスごとに数えるとインスタンスの数だけ上限が増えるため、カウンタは `GameStore` と同じ共有ストアに置く（`docs/adr/0003-game-session-store.md`）
+- **実装の場所**: api の Guard で数える。インスタンスごとに数えるとインスタンスの数だけ上限が増えるため、カウンタは `GameStore` と同じ共有ストア（Supabase の PostgreSQL）に置く（`docs/adr/0003-game-session-store.md`・`docs/adr/0007-game-store-on-postgresql.md`）

@@ -2,7 +2,7 @@
 
 `apps/api` から Prisma で PostgreSQL（Supabase）を使うための手順。ローカルの Supabase を立て、migration と seed を流し、NestJS から `PrismaService` で DB に触れ、DB を使うテストを流すところまでを扱う。NestJS 自体の組み立ては [nestjs.md](nestjs.md) を参照する。
 
-構成の判断は ADR に置いている。ローカルと CI の DB は [0005](../adr/0005-supabase-cli-for-local-and-ci-db.md)、単語の多言語テキストの持ち方は [0004](../adr/0004-localized-word-text-as-jsonb.md)。
+構成の判断は ADR に置いている。ローカルと CI の DB は [0005](../adr/0005-supabase-cli-for-local-and-ci-db.md)、単語の多言語テキストの持ち方は [0004](../adr/0004-localized-word-text-as-jsonb.md)、進行中ゲームの保存先は [0007](../adr/0007-game-store-on-postgresql.md)。
 
 ## このリポジトリでの前提
 
@@ -268,6 +268,27 @@ const word = await this.prisma.word.findUnique({ where: { id: "lagom" } });
 | 読んだ行を `wordSchema` で検証し、通らない行は候補から外して id 付きのエラーログを出す | `jsonb` の中身の形は DB が保証しない（ADR 0004）。不正な 1 語のためにゲーム全体を止めない |
 | 起動時、`DATABASE_URL` があれば全件を非同期に検証してログに出す | 不正な行にデプロイ直後に気づける。起動を待たせず、DB に届かなくても警告を出して起動を続ける |
 
+進行中ゲームは `games` テーブルに置き、`GamesModule` が `GameStore` の実装として `PrismaGameStore` を渡す。
+
+```typescript
+// apps/api/src/games/games.module.ts
+{
+  provide: GAME_STORE,
+  useFactory: (prisma: PrismaService) => new PrismaGameStore(prisma),
+  inject: [PrismaService],
+}
+```
+
+| 振る舞い | 理由 |
+| --- | --- |
+| `get` は `id` と `expires_at > 現在` で絞り、同じ UPDATE で `expires_at` を 1 時間先へ延ばす（`updateManyAndReturn`） | 期限内かの判定と期限の延長の間に、期限が切れる隙間を作らない |
+| `create` は同じトランザクションで期限切れの行を消してから作る | 読まれないまま放置されたゲームを、定期実行なしで片付ける |
+| 読んだ `history` と `result` を `packages/shared` のスキーマで検証する | `jsonb` の中身の形は DB が保証しない |
+| migration で `games` の RLS をポリシーなしで有効にする | Supabase の Data API から、publishable key で秘密の単語を読まれたり行を書き換えられたりしないようにする。api はテーブルの所有者のロールで接続するため影響を受けない。Prisma のスキーマは RLS を表せないため、migration の SQL に書く |
+| `useFactory` で組み立てる | テストが時刻を差し替える `now` 引数を、NestJS の注入の対象から外す |
+
+DB を使わないユニットテストと HTTP のテストは、`overrideProvider(GAME_STORE)` でメモリ内の `MemoryGameStore` に差し替える。
+
 ## 9. CI で確かめる
 
 `.github/workflows/ci.yml` の `db` ジョブが、PR ごとに次を流す。
@@ -288,7 +309,7 @@ const word = await this.prisma.word.findUnique({ where: { id: "lagom" } });
 | `db:deploy` | コミットされた migration が、空の DB に最初から最後まで通る |
 | `migrate diff --exit-code` | migration を流した DB と `schema.prisma` に差分がない。`schema.prisma` だけ変えて migration を作り忘れると、差分ありの終了コード 2 で失敗する |
 | `db:seed` | 単語プールが `wordSchema` の形のまま DB に入り、件数が合う |
-| `test:db` | seed した単語を、アプリ（`WordsService`）が seed データと同じ形で読み出せる |
+| `test:db` | seed した単語を、アプリ（`WordsService`）が seed データと同じ形で読み出せる。同じ DB を指す 2 つの api の間で、1 つのゲームを続けられる |
 
 `e2e` ジョブも、実際の api を相手にするため同じ手順で seed 済みの DB を用意する（[testing.md](testing.md)）。`ci` ジョブは DB を使わない。`prisma generate` は DB につながないため、`DIRECT_URL` のない `pnpm install` でも `postinstall` が通る。
 

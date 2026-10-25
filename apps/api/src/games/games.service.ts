@@ -44,7 +44,7 @@ export class GamesService {
     if (!word) throw new ApiError("validation_error", `No words are available for "${language}".`);
 
     const game: Game = { id: randomUUID(), wordId: word.id, locale, hintsRevealed: 0, history: [] };
-    await this.store.save(game);
+    await this.store.create(game);
     return { gameId: game.id, language: word.language, teaser: word.teaser[locale] };
   }
 
