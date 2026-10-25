@@ -78,7 +78,7 @@ async function giveUp(page: Page) {
 
 test("START から設問の提示を経て、質問に回答が返る", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("link", { name: "START" }).click();
+  await page.getByRole("link", { name: "Start a game" }).click();
 
   await expect(page).toHaveURL("/play");
   await enterChat(page);
@@ -107,13 +107,13 @@ test("ヒントを 3 回開示すると、ヒントボタンが無効になる",
   await enterChat(page);
 
   for (const [offset, text] of fredagsmys.hints.en.entries()) {
-    await page.getByRole("button", { name: /^Hint/ }).click();
+    await page.getByRole("button", { name: /^Show a hint/ }).click();
     const hint = page.getByRole("region", { name: `Hint ${offset + 1} of 3` });
     await expect(hint).toBeVisible();
     await expect(hint.getByText(text)).toBeVisible();
   }
 
-  const hint = page.getByRole("button", { name: "Hint (0 left)" });
+  const hint = page.getByRole("button", { name: "Show a hint, 0 left" });
   await expect(hint).toBeVisible();
   await expect(hint).toBeDisabled();
 });
@@ -127,7 +127,7 @@ test("正解すると結果カードに単語と定義が出て、単語が記�
 
   const result = page.getByRole("region", { name: "You found it" });
   await expect(result).toBeVisible();
-  await expect(result.getByText(fredagsmys.word)).toBeVisible();
+  await expect(result.getByText(fredagsmys.word, { exact: true })).toBeVisible();
   await expect(result.getByText(fredagsmys.definition.en)).toBeVisible();
   await expect(input(page)).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Play again" })).toBeVisible();
@@ -143,7 +143,7 @@ test("確認ダイアログを経てギブアップすると、結果カード�
 
   const result = page.getByRole("region", { name: "The word was" });
   await expect(result).toBeVisible();
-  await expect(result.getByText(fredagsmys.word)).toBeVisible();
+  await expect(result.getByText(fredagsmys.word, { exact: true })).toBeVisible();
   await expect(result.getByText(fredagsmys.definition.en)).toBeVisible();
 });
 
@@ -159,7 +159,7 @@ test("答えを見た単語は、次のゲームで出題されない", async ({
   const next = answered === first.id ? second : first;
 
   await page.getByRole("link", { name: "Play again" }).click();
-  await page.getByRole("link", { name: "START" }).click();
+  await page.getByRole("link", { name: "Start a game" }).click();
   await expect(page.getByText(next.teaser.en)).toBeVisible();
 });
 
