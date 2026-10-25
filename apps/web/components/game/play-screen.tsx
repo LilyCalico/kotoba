@@ -1,6 +1,6 @@
 "use client";
 
-import type { GameResult, GameStart, StartGameRequest } from "@kotoba/shared";
+import type { GameStart, StartGameRequest } from "@kotoba/shared";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useReducer, useRef, useState } from "react";
@@ -36,6 +36,7 @@ import {
   type GameState,
   createGameState,
   failureKind,
+  finishedResult,
   gameReducer,
   latestAnnouncement,
   remainingHints,
@@ -80,6 +81,8 @@ export function PlayScreen() {
  *
  * 答えを見た単語（クリアかギブアップで届いた `wordId`）を `storage` に記録し、次のゲームの開始で
  * `excludeWordIds` として送る。`storage` を省略するとブラウザの `localStorage` を使い、`null` なら記録しない。
+ * 記録は応答ではなく状態から 1 ゲームにつき 1 回だけ行う。正解の送信中にギブアップすると、どちらの応答も
+ * 同じ単語を返すため、応答ごとに記録すると 2 回目で記録済みと判定され、記録が 1 件に戻ってしまう。
  */
 export function GameScreen({
   client,
@@ -91,6 +94,7 @@ export function GameScreen({
   const [game, dispatch] = useReducer(playReducer, null);
   const [attempt, setAttempt] = useState(0);
   const [startFailed, setStartFailed] = useState(false);
+  const recordedGameId = useRef<string | null>(null);
 
   useEffect(() => {
     // 開発時の Strict Mode ではエフェクトが 2 回走る。先に始めたゲームの応答は捨てる。
@@ -125,6 +129,14 @@ export function GameScreen({
       cancelled = true;
     };
   }, [client, storage, attempt]);
+
+  const gameId = game?.gameId;
+  const finishedWordId = game && finishedResult(game)?.wordId;
+  useEffect(() => {
+    if (!gameId || !finishedWordId || recordedGameId.current === gameId) return;
+    recordedGameId.current = gameId;
+    recordPlayedWord(resolveStorage(storage), finishedWordId);
+  }, [gameId, finishedWordId, storage]);
 
   const phase = game?.phase;
   useEffect(() => {
@@ -165,12 +177,7 @@ export function GameScreen({
           )}
         </AnimatePresence>
         {game?.phase === "chat" ? (
-          <Chat
-            client={client}
-            dispatch={dispatch}
-            onFinished={(result) => recordPlayedWord(resolveStorage(storage), result.wordId)}
-            state={game}
-          />
+          <Chat client={client} dispatch={dispatch} state={game} />
         ) : (
           <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-5">
             <h1 className="sr-only">kotoba</h1>
@@ -201,19 +208,16 @@ export function GameScreen({
  * フォーカスは、回答と誤答ではその要素へ、ヒントの開示ではヒントカードへ、終了時は結果カードの見出しへ移す。
  * 失敗したときは、送信なら入力欄へ、ヒントならヒントボタンへ戻し、そのまま再試行できるようにする。
  * ゲームが見つからないときは案内を積んでゲームを終え、案内へフォーカスを移す。
- *
- * `onFinished` はクリアかギブアップの結果が届いたときに呼ぶ。
+ * ギブアップの確認中にゲームが終わったら、確認を閉じる。
  */
 function Chat({
   state,
   dispatch,
   client,
-  onFinished,
 }: {
   state: GameState;
   dispatch: (action: GameAction) => void;
   client: GameClient;
-  onFinished: (result: GameResult) => void;
 }) {
   const [text, setText] = useState("");
   const [giveUpOpen, setGiveUpOpen] = useState(false);
@@ -262,7 +266,6 @@ function Chat({
     try {
       const result = await client.sendInput(gameId, { text: input });
       dispatch({ type: "input-resolved", result });
-      if (result.kind === "answer" && result.result) onFinished(result.result);
     } catch (error) {
       if (!(error instanceof GameClientError)) throw error;
       dispatch({ type: "failed", code: error.code });
@@ -286,7 +289,6 @@ function Chat({
     try {
       const result = await client.giveUp(gameId);
       dispatch({ type: "gave-up", result });
-      onFinished(result);
       setGiveUpOpen(false);
     } catch (error) {
       if (!(error instanceof GameClientError)) throw error;
@@ -379,7 +381,7 @@ function Chat({
       </main>
       <div className="shrink-0 pb-[env(safe-area-inset-bottom)]" />
       <GiveUpDialog
-        isOpen={giveUpOpen}
+        isOpen={giveUpOpen && !finished}
         isPending={givingUp}
         onConfirm={giveUp}
         onOpenChange={setGiveUpOpen}

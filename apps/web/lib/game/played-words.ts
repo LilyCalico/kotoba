@@ -49,15 +49,16 @@ export function excludedWordIds(storage: PlayedWordsStorage | null): string[] {
 /**
  * 答えを見た単語の id を記録する。クリアとギブアップのときにだけ呼ぶ。
  *
- * 記録に無ければ末尾に追記する。既にあれば、サーバーが除外しきれずに出題したことになり、
- * プールを一巡したとわかる。このときは記録をその 1 件だけに戻し、次の一巡の重複除外をやり直す。
+ * 記録に無ければ末尾に追記し、新しいものから最大 100 件だけを残す。記録は送る `excludeWordIds` と同じ範囲に
+ * なり、記録にある単語はサーバーが除外しているため、出題されるのは除外しきれなかったとき、つまりプールを一巡したときに限る。
+ * このときは記録をその 1 件だけに戻し、次の一巡の重複除外をやり直す。
  * 書き込めなかったときは記録を諦め、出題は止めない。
  */
 export function recordPlayedWord(storage: PlayedWordsStorage | null, id: string): void {
   if (!storage) return;
 
   const played = readPlayedWords(storage);
-  const next = played.includes(id) ? [id] : [...played, id];
+  const next = played.includes(id) ? [id] : [...played, id].slice(-MAX_EXCLUDE_WORD_IDS);
   try {
     storage.setItem(PLAYED_WORDS_KEY, JSON.stringify(next));
   } catch {

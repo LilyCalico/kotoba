@@ -174,3 +174,42 @@ test("プールを一巡すると、記録をその単語 1 件に戻す", async
   expect(played).toHaveLength(1);
   expect(words.map((word) => word.id)).toContain(played[0]);
 });
+
+test("正解の送信中にギブアップしても、答えを見た単語を 1 回だけ記録する", async ({ page }) => {
+  await playWithOnly(page, fredagsmys.id);
+  const before = words.map((word) => word.id).filter((id) => id !== fredagsmys.id);
+
+  // 正解はサーバーで処理させたまま、応答だけをギブアップの応答のあとまで止める。
+  let inputProcessed = () => {};
+  const processed = new Promise<void>((resolve) => {
+    inputProcessed = resolve;
+  });
+  let releaseInput = () => {};
+  const held = new Promise<void>((resolve) => {
+    releaseInput = resolve;
+  });
+  await page.route("**/api/v1/games/*/inputs", async (route) => {
+    const response = await route.fetch();
+    inputProcessed();
+    await held;
+    await route.fulfill({ response });
+  });
+
+  await page.goto("/play");
+  await enterChat(page);
+  await input(page).fill(fredagsmys.id);
+  await input(page).press("Enter");
+  await processed;
+
+  // クリア済みのゲームへのギブアップには、クリアの結果が返し直される。
+  await page.getByRole("banner").getByRole("button", { name: "Give up" }).click();
+  const giveUpResponse = page.waitForResponse("**/api/v1/games/*/give-up");
+  await page.getByRole("dialog", { name: "Give up?" }).getByRole("button", { name: "Give up" }).click();
+  await giveUpResponse;
+  const inputResponse = page.waitForResponse("**/api/v1/games/*/inputs");
+  releaseInput();
+  await inputResponse;
+
+  await expect(page.getByRole("region", { name: "You found it" })).toBeVisible();
+  await expect.poll(() => playedWords(page)).toEqual([...before, fredagsmys.id]);
+});

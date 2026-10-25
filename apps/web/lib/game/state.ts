@@ -91,6 +91,19 @@ export function createGameState(start: GameStart): GameState {
   };
 }
 
+/**
+ * クリアかギブアップで終わったゲームの結果。進行中と期限切れでは何も返さない。
+ * 正解とギブアップの応答が重なっても、先に届いた方だけが結果として積まれるため、1 ゲームにつき 1 つに決まる。
+ */
+export function finishedResult(state: GameState): GameResult | undefined {
+  if (state.status !== "finished") return undefined;
+  for (let index = state.entries.length - 1; index >= 0; index--) {
+    const entry = state.entries[index];
+    if (entry?.kind === "result") return entry.result;
+  }
+  return undefined;
+}
+
 /** ヒントの残回数。 */
 export function remainingHints(hintsUsed: number): number {
   return MAX_HINTS - hintsUsed;

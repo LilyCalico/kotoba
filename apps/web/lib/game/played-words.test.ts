@@ -117,6 +117,27 @@ describe("recordPlayedWord", () => {
     expect(readPlayedWords(storage)).toEqual(["a", "b"]);
   });
 
+  it("新しいものから最大 100 件だけを残す", () => {
+    const ids = Array.from({ length: MAX_EXCLUDE_WORD_IDS }, (_, index) => `w${index}`);
+    const storage = storageWith(JSON.stringify(ids));
+
+    recordPlayedWord(storage, "new");
+
+    expect(readPlayedWords(storage)).toEqual([...ids.slice(1), "new"]);
+  });
+
+  it("100 件より古い単語が届いても、記録を 1 件に戻さない", () => {
+    const ids = Array.from({ length: MAX_EXCLUDE_WORD_IDS }, (_, index) => `w${index}`);
+    const storage = storageWith(JSON.stringify(ids));
+    recordPlayedWord(storage, "new");
+
+    // w0 は送る excludeWordIds から外れており、サーバーはプールを一巡しなくても出題し得る。
+    recordPlayedWord(storage, "w0");
+
+    expect(readPlayedWords(storage)).toHaveLength(MAX_EXCLUDE_WORD_IDS);
+    expect(readPlayedWords(storage).at(-1)).toBe("w0");
+  });
+
   it("壊れた保存値は捨てて書き直す", () => {
     const storage = storageWith("{not json");
 

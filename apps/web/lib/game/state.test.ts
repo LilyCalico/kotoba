@@ -5,6 +5,7 @@ import {
   type GameState,
   createGameState,
   failureKind,
+  finishedResult,
   gameReducer,
   latestAnnouncement,
   remainingHints,
@@ -262,6 +263,39 @@ describe("gameReducer", () => {
     gameReducer(chat, { type: "input-sent", text: "Is it a noun?" });
 
     expect(chat).toEqual(before);
+  });
+});
+
+describe("finishedResult", () => {
+  it("進行中のゲームでは何も返さない", () => {
+    expect(finishedResult(chat)).toBeUndefined();
+  });
+
+  it("クリアとギブアップの結果を返す", () => {
+    const clearedState = run(
+      chat,
+      { type: "input-sent", text: "fredagsmys" },
+      { type: "input-resolved", result: { kind: "answer", correct: true, result: cleared } },
+    );
+
+    expect(finishedResult(clearedState)).toBe(cleared);
+    expect(finishedResult(gameReducer(chat, { type: "gave-up", result: gaveUp }))).toBe(gaveUp);
+  });
+
+  it("期限切れで終わったゲームでは何も返さない", () => {
+    expect(finishedResult(gameReducer(chat, expired))).toBeUndefined();
+  });
+
+  it("正解の送信中にギブアップの応答も届いたとき、先に届いた結果だけを返す", () => {
+    const state = run(
+      chat,
+      { type: "input-sent", text: "fredagsmys" },
+      { type: "input-resolved", result: { kind: "answer", correct: true, result: cleared } },
+      { type: "gave-up", result: cleared },
+    );
+
+    expect(state.entries.filter((entry) => entry.kind === "result")).toHaveLength(1);
+    expect(finishedResult(state)).toBe(cleared);
   });
 });
 
