@@ -1,15 +1,14 @@
-import { cn } from "cn";
 import { TriangleAlertIcon } from "lucide-react";
 
 export const ERROR_TEXT = "Something went wrong. Please send it again.";
 export const EXPIRED_TEXT = "This game has expired. Start a new one.";
 
-const BUBBLE_CLASS =
-  "mr-auto flex w-fit max-w-[85%] items-center gap-2 rounded-md border border-input bg-card px-4 py-2 text-sm text-card-foreground";
+const NOTICE_CLASS = "mr-auto flex w-fit max-w-[85%] items-center gap-2 py-1 text-sm font-medium text-foreground";
 
+/** 送信とヒントの失敗の案内。塗りも枠も持たない、警告のアイコン付きの文字にする。 */
 export function ErrorMessage() {
   return (
-    <p className={BUBBLE_CLASS}>
+    <p className={NOTICE_CLASS}>
       <TriangleAlertIcon aria-hidden className="size-4 shrink-0" />
       {ERROR_TEXT}
     </p>
@@ -22,11 +21,7 @@ export function ErrorMessage() {
  */
 export function ExpiredMessage({ ref }: { ref?: React.Ref<HTMLParagraphElement> }) {
   return (
-    <p
-      className={cn(BUBBLE_CLASS, "outline-none focus-visible:ring-3 focus-visible:ring-ring/50")}
-      ref={ref}
-      tabIndex={-1}
-    >
+    <p className={`${NOTICE_CLASS} focus-ring`} ref={ref} tabIndex={-1}>
       <TriangleAlertIcon aria-hidden className="size-4 shrink-0" />
       {EXPIRED_TEXT}
     </p>

@@ -1,14 +1,19 @@
 "use client";
 
+import { MAX_HINTS } from "@kotoba/shared";
+import { cn } from "cn";
+import { LightbulbIcon } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 
+/** ヒントボタンの名前。残りの回数を含め、支援技術にも数が伝わるようにする。 */
 export function hintButtonText(remaining: number): string {
-  return `Hint (${remaining} left)`;
+  return `Show a hint, ${remaining} left`;
 }
 
 /**
- * 入力欄の上に置くヒントボタン。残りが 0 のとき、または送信中は押せない。
- * ヒントの要求が失敗したときのフォーカス先になるため、`ref` を受け付ける。
+ * 入力欄の下に置く副ボタン。残りの回数を 3 つの点で示し、塗った点が残りの数になる。
+ * 残りが 0 のとき、または送信中は押せない。ヒントの要求が失敗したときのフォーカス先になるため、`ref` を受け付ける。
  */
 export function HintButton({
   remaining,
@@ -23,14 +28,26 @@ export function HintButton({
 }) {
   return (
     <Button
-      className="h-auto gap-1.5 self-start rounded-md border-border bg-card px-3 py-2 text-sm text-card-foreground"
+      aria-label={hintButtonText(remaining)}
+      className="self-start"
       isDisabled={disabled || remaining <= 0}
       onPress={onPress}
       ref={ref}
       variant="outline"
     >
-      <span aria-hidden>💡</span>
-      {hintButtonText(remaining)}
+      <LightbulbIcon aria-hidden />
+      Show a hint
+      <span aria-hidden className="ml-0.5 inline-flex gap-1">
+        {Array.from({ length: MAX_HINTS }, (_, index) => (
+          <span
+            className={cn(
+              "size-2 rounded-full border border-foreground",
+              index >= MAX_HINTS - remaining && "bg-foreground",
+            )}
+            key={index}
+          />
+        ))}
+      </span>
     </Button>
   );
 }

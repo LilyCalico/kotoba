@@ -10,6 +10,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
   --font-heading: var(--font-sans);
   --color-ring: var(--ring);
   --color-input: var(--input);
@@ -28,57 +29,84 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  --color-bubble: var(--bubble);
+  --color-bubble-foreground: var(--bubble-foreground);
+  --color-label: var(--label);
+  --color-answer-yes: var(--answer-yes);
+  --color-answer-no: var(--answer-no);
+  --color-answer-unclear: var(--answer-unclear);
+  --color-answer-meta: var(--answer-meta);
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-xl: var(--radius);
+  --radius-2xl: var(--radius);
+  --radius-3xl: var(--radius);
+  --radius-4xl: var(--radius);
+  --shadow-press: 0.1875rem 0.1875rem 0 var(--foreground);
+  --shadow-press-lg: 0.25rem 0.25rem 0 var(--foreground);
 }
 
+/*
+ * 配色は Y2K パステル。役割ごとに色を割り当て、同じ色を別の役割に使わない（`docs/specifications/design.md`）。
+ * 文字の組み合わせはすべて WCAG 1.4.3 の 4.5:1、コントロールの輪郭は 1.4.11 の 3:1 を満たす。
+ */
 :root {
-  /* 背景と前景 */
-  --background: #f1f6ef;
-  --foreground: #1c1c1c;
+  /* 画面の地と、その上の文字 */
+  --background: #e1e3fd;
+  --foreground: #2d241b;
 
-  /* サーフェス（ヘッダー、設問カード、ヒントカード、AI の回答バブル、入力欄） */
-  --card: #fbfdfb;
-  --card-foreground: #1c1c1c;
-  --popover: #fbfdfb;
-  --popover-foreground: #1c1c1c;
+  /* 読ませるもの（設問・ヒント・結果のカード）と、入力欄・ダイアログ・トーストの面 */
+  --card: #ffffff;
+  --card-foreground: #2d241b;
+  --popover: #ffffff;
+  --popover-foreground: #2d241b;
 
-  /* アクセント（START ボタン、送信ボタン、ロゴ） */
-  --primary: #42823a;
-  --primary-foreground: #fbfdfb;
+  /* 主ボタン（送信・ゲームの開始・Play again） */
+  --primary: #c5e17a;
+  --primary-foreground: #2d241b;
 
-  /* アクセント（弱）。プレイヤーの発言バブルと、その上に乗るホバー面 */
-  --secondary: #dde8d7;
-  --secondary-foreground: #1c1c1c;
-  --accent: #dde8d7;
-  --accent-foreground: #1c1c1c;
+  /* 副ボタン（ヒント・Cancel） */
+  --secondary: #ffffff;
+  --secondary-foreground: #2d241b;
+  --accent: #f1e6db;
+  --accent-foreground: #2d241b;
 
-  /* 補足テキストとその下地 */
-  --muted: #e8eee6;
-  --muted-foreground: #6b6b6b;
+  /* 補足テキストと、例文の下地 */
+  --muted: #f1e6db;
+  --muted-foreground: #675d52;
 
-  /* 装飾的な区切り線と、コントロールの輪郭。後者は WCAG 1.4.11 の 3:1 を満たす */
-  --border: #dddddd;
-  --input: #7f8c7d;
+  /* カード・コントロールの輪郭。地とカードの両方に対して 3:1 を満たす */
+  --border: #382e24;
+  --input: #382e24;
 
-  /* フォーカスリング。アクセントと同値 */
-  --ring: #42823a;
+  /* フォーカスリング。地・カード・ライムのどの上でも見える */
+  --ring: #2d241b;
 
-  /* 取り消せない操作（ギブアップの確定など）。塗りの上の文字は 4.5:1 を満たす */
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: #fbfdfb;
+  /* 取り消せない操作（ギブアップの確定） */
+  --destructive: #ffc3c3;
+  --destructive-foreground: #2d241b;
 
-  --radius: 0.625rem;
+  /* プレイヤーの発言の吹き出し */
+  --bubble: #2d241b;
+  --bubble-foreground: #ffffff;
+
+  /* ラベル（Question・品詞）のピル */
+  --label: #dcd0ff;
+
+  /* 回答のピル。色だけに頼らず、文字とアイコンでも区別する */
+  --answer-yes: #c5e17a;
+  --answer-no: #ffbfd9;
+  --answer-unclear: #addbff;
+  --answer-meta: #ffe08a;
+
+  /* 角は四角。ピルと吹き出しだけを個別に丸める */
+  --radius: 0;
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring;
   }
   body {
     @apply bg-background text-foreground;
@@ -99,113 +127,48 @@
   }
 }
 
-/* 背景色で文字を縁取り、背景の装飾から文字を浮き上がらせる。文字の影を半径 1〜5px の同心円上に
-   ずらして重ね、角の尖りのない丸い 5px の縁にする。 */
-@utility text-outline {
-  --outline-color: var(--background);
-  text-shadow:
-    1px 0px 0 var(--outline-color),
-    0.71px 0.71px 0 var(--outline-color),
-    0px 1px 0 var(--outline-color),
-    -0.71px 0.71px 0 var(--outline-color),
-    -1px 0px 0 var(--outline-color),
-    -0.71px -0.71px 0 var(--outline-color),
-    0px -1px 0 var(--outline-color),
-    0.71px -0.71px 0 var(--outline-color),
-    2px 0px 0 var(--outline-color),
-    1.73px 1px 0 var(--outline-color),
-    1px 1.73px 0 var(--outline-color),
-    0px 2px 0 var(--outline-color),
-    -1px 1.73px 0 var(--outline-color),
-    -1.73px 1px 0 var(--outline-color),
-    -2px 0px 0 var(--outline-color),
-    -1.73px -1px 0 var(--outline-color),
-    -1px -1.73px 0 var(--outline-color),
-    0px -2px 0 var(--outline-color),
-    1px -1.73px 0 var(--outline-color),
-    1.73px -1px 0 var(--outline-color),
-    3px 0px 0 var(--outline-color),
-    2.85px 0.93px 0 var(--outline-color),
-    2.43px 1.76px 0 var(--outline-color),
-    1.76px 2.43px 0 var(--outline-color),
-    0.93px 2.85px 0 var(--outline-color),
-    0px 3px 0 var(--outline-color),
-    -0.93px 2.85px 0 var(--outline-color),
-    -1.76px 2.43px 0 var(--outline-color),
-    -2.43px 1.76px 0 var(--outline-color),
-    -2.85px 0.93px 0 var(--outline-color),
-    -3px 0px 0 var(--outline-color),
-    -2.85px -0.93px 0 var(--outline-color),
-    -2.43px -1.76px 0 var(--outline-color),
-    -1.76px -2.43px 0 var(--outline-color),
-    -0.93px -2.85px 0 var(--outline-color),
-    0px -3px 0 var(--outline-color),
-    0.93px -2.85px 0 var(--outline-color),
-    1.76px -2.43px 0 var(--outline-color),
-    2.43px -1.76px 0 var(--outline-color),
-    2.85px -0.93px 0 var(--outline-color),
-    4px 0px 0 var(--outline-color),
-    3.9px 0.89px 0 var(--outline-color),
-    3.6px 1.74px 0 var(--outline-color),
-    3.13px 2.49px 0 var(--outline-color),
-    2.49px 3.13px 0 var(--outline-color),
-    1.74px 3.6px 0 var(--outline-color),
-    0.89px 3.9px 0 var(--outline-color),
-    0px 4px 0 var(--outline-color),
-    -0.89px 3.9px 0 var(--outline-color),
-    -1.74px 3.6px 0 var(--outline-color),
-    -2.49px 3.13px 0 var(--outline-color),
-    -3.13px 2.49px 0 var(--outline-color),
-    -3.6px 1.74px 0 var(--outline-color),
-    -3.9px 0.89px 0 var(--outline-color),
-    -4px 0px 0 var(--outline-color),
-    -3.9px -0.89px 0 var(--outline-color),
-    -3.6px -1.74px 0 var(--outline-color),
-    -3.13px -2.49px 0 var(--outline-color),
-    -2.49px -3.13px 0 var(--outline-color),
-    -1.74px -3.6px 0 var(--outline-color),
-    -0.89px -3.9px 0 var(--outline-color),
-    0px -4px 0 var(--outline-color),
-    0.89px -3.9px 0 var(--outline-color),
-    1.74px -3.6px 0 var(--outline-color),
-    2.49px -3.13px 0 var(--outline-color),
-    3.13px -2.49px 0 var(--outline-color),
-    3.6px -1.74px 0 var(--outline-color),
-    3.9px -0.89px 0 var(--outline-color),
-    5px 0px 0 var(--outline-color),
-    4.92px 0.87px 0 var(--outline-color),
-    4.7px 1.71px 0 var(--outline-color),
-    4.33px 2.5px 0 var(--outline-color),
-    3.83px 3.21px 0 var(--outline-color),
-    3.21px 3.83px 0 var(--outline-color),
-    2.5px 4.33px 0 var(--outline-color),
-    1.71px 4.7px 0 var(--outline-color),
-    0.87px 4.92px 0 var(--outline-color),
-    0px 5px 0 var(--outline-color),
-    -0.87px 4.92px 0 var(--outline-color),
-    -1.71px 4.7px 0 var(--outline-color),
-    -2.5px 4.33px 0 var(--outline-color),
-    -3.21px 3.83px 0 var(--outline-color),
-    -3.83px 3.21px 0 var(--outline-color),
-    -4.33px 2.5px 0 var(--outline-color),
-    -4.7px 1.71px 0 var(--outline-color),
-    -4.92px 0.87px 0 var(--outline-color),
-    -5px 0px 0 var(--outline-color),
-    -4.92px -0.87px 0 var(--outline-color),
-    -4.7px -1.71px 0 var(--outline-color),
-    -4.33px -2.5px 0 var(--outline-color),
-    -3.83px -3.21px 0 var(--outline-color),
-    -3.21px -3.83px 0 var(--outline-color),
-    -2.5px -4.33px 0 var(--outline-color),
-    -1.71px -4.7px 0 var(--outline-color),
-    -0.87px -4.92px 0 var(--outline-color),
-    0px -5px 0 var(--outline-color),
-    0.87px -4.92px 0 var(--outline-color),
-    1.71px -4.7px 0 var(--outline-color),
-    2.5px -4.33px 0 var(--outline-color),
-    3.21px -3.83px 0 var(--outline-color),
-    3.83px -3.21px 0 var(--outline-color),
-    4.33px -2.5px 0 var(--outline-color),
-    4.7px -1.71px 0 var(--outline-color),
-    4.92px -0.87px 0 var(--outline-color);
+/*
+ * 押せるもの。1px の枠とずらしたベタの影を持ち、押すと影の分だけ沈んで影が消える。
+ * 影を持つのは押せるものだけで、カードや吹き出しには付けない。
+ */
+@utility pressable {
+  border-width: 1px;
+  border-color: var(--border);
+  box-shadow: var(--shadow-press);
+  transition-property: transform, box-shadow, background-color;
+  transition-duration: 100ms;
+  &:active:not([data-disabled]),
+  &[data-pressed] {
+    transform: translate(0.1875rem, 0.1875rem);
+    box-shadow: none;
+  }
+  &[data-disabled] {
+    box-shadow: none;
+  }
+}
+
+/* フォーカスリング。2px の濃い輪郭を 2px 離して描き、どの面の上でも見えるようにする。 */
+@utility focus-ring {
+  outline: none;
+  &:focus-visible,
+  &[data-focus-visible] {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+/*
+ * ホログラムのステッカーの虹色。正解とギブアップの結果、スタート画面の飾りだけに使う。
+ * 文字は直接載せず、白い円の上に置く。
+ */
+@utility holo {
+  background-image: conic-gradient(
+    from 140deg,
+    var(--answer-no),
+    var(--answer-unclear),
+    var(--answer-yes),
+    var(--answer-meta),
+    var(--label),
+    var(--answer-no)
+  );
 }

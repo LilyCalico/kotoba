@@ -1,7 +1,7 @@
 import { MAX_HINTS } from "@kotoba/shared";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, fn, within } from "storybook/test";
-import { HintButton } from "@/components/game/hint-button";
+import { HintButton, hintButtonText } from "@/components/game/hint-button";
 
 const meta = {
   title: "Game/HintButton",
@@ -32,8 +32,8 @@ export const Countdown: Story = {
     const canvas = within(canvasElement);
 
     for (const remaining of [3, 2, 1]) {
-      await expect(canvas.getByRole("button", { name: `Hint (${remaining} left)` })).toBeEnabled();
+      await expect(canvas.getByRole("button", { name: hintButtonText(remaining) })).toBeEnabled();
     }
-    await expect(canvas.getByRole("button", { name: "Hint (0 left)" })).toBeDisabled();
+    await expect(canvas.getByRole("button", { name: hintButtonText(0) })).toBeDisabled();
   },
 };
