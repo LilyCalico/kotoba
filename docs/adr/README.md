@@ -40,3 +40,4 @@
 | [0005](0005-supabase-cli-for-local-and-ci-db.md) | ローカル開発と CI の DB を Supabase CLI で立てる | 採用 |
 | [0006](0006-openapi-from-zod-via-nestjs-swagger.md) | OpenAPI 仕様を @nestjs/swagger と zod の Standard Schema から生成する | 採用 |
 | [0007](0007-game-store-on-postgresql.md) | 進行中ゲームを Supabase の PostgreSQL に保持する | 採用 |
+| [0008](0008-input-judging-with-gemini-structured-output.md) | 入力の分類と質問への回答を Gemini の structured output で行う | 採用 |
