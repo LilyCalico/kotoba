@@ -18,10 +18,13 @@ async function expectNoViolations(page: Page, include?: string) {
   expect(violations.map(({ id, nodes }) => ({ id, targets: nodes.map(({ target }) => target) }))).toEqual([]);
 }
 
-test("スタート画面に axe の違反がない", async ({ page }) => {
+test("起動画面とスタート画面に axe の違反がない", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("link", { name: "Start a game" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Skip" })).toBeVisible();
+  await expectNoViolations(page);
 
+  await page.getByRole("button", { name: "Skip" }).click();
+  await expect(page.getByRole("link", { name: "Start a game" })).toBeVisible();
   await expectNoViolations(page);
 });
 
@@ -40,10 +43,10 @@ test("プレイ中・ギブアップの確認・結果に axe の違反がない
   const input = page.getByRole("textbox", { name: "Ask a question or guess the word" });
   await input.fill("Is it a feeling?");
   await input.press("Enter");
-  await expect(page.getByText("Waiting for an answer")).toHaveCount(0);
+  await expect(page.getByText("Thinking…")).toHaveCount(0);
   await input.fill("hygge");
   await input.press("Enter");
-  await expect(page.getByText("Waiting for an answer")).toHaveCount(0);
+  await expect(page.getByText("Thinking…")).toHaveCount(0);
   await page.getByRole("button", { name: /^Show a hint/ }).click();
   await expect(page.getByRole("region", { name: "Hint 1 of 3" })).toBeVisible();
   await expectNoViolations(page);

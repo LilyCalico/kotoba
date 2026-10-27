@@ -46,6 +46,12 @@ function bubble(page: Page, text: string | RegExp) {
   return page.locator("main p:not([role=status] > p)").filter({ hasText: text });
 }
 
+/** 起動画面を Skip で飛ばし、スタート画面の Start a game からゲームを始める。 */
+async function startFromHome(page: Page) {
+  await page.getByRole("button", { name: "Skip" }).click();
+  await page.getByRole("link", { name: "Start a game" }).click();
+}
+
 function input(page: Page) {
   return page.getByRole("textbox", { name: INPUT_LABEL });
 }
@@ -65,7 +71,7 @@ async function send(page: Page, text: string) {
   await expect(input(page)).toBeEnabled();
   await input(page).fill(text);
   await input(page).press("Enter");
-  await expect(page.getByText("Waiting for an answer")).toHaveCount(0);
+  await expect(page.getByText("Thinking…")).toHaveCount(0);
 }
 
 async function giveUp(page: Page) {
@@ -76,9 +82,27 @@ async function giveUp(page: Page) {
   await expect(dialog).toHaveCount(0);
 }
 
+test("起動画面は打ち終えるとスタート画面に移り、同じタブでは 2 回目から出ない", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: "Skip" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Start a game" })).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole("button", { name: "Skip" })).toHaveCount(0);
+
+  await page.reload();
+  await expect(page.getByRole("link", { name: "Start a game" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Skip" })).toHaveCount(0);
+});
+
+test("Skip を押すとスタート画面の見出しへフォーカスが移る", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Skip" }).click();
+
+  await expect(page.getByRole("heading", { level: 1, name: "A word for a feeling you’ve never named" })).toBeFocused();
+});
+
 test("START から設問の提示を経て、質問に回答が返る", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("link", { name: "Start a game" }).click();
+  await startFromHome(page);
 
   await expect(page).toHaveURL("/play");
   await enterChat(page);
@@ -159,7 +183,7 @@ test("答えを見た単語は、次のゲームで出題されない", async ({
   const next = answered === first.id ? second : first;
 
   await page.getByRole("link", { name: "Play again" }).click();
-  await page.getByRole("link", { name: "Start a game" }).click();
+  await startFromHome(page);
   await expect(page.getByText(next.teaser.en)).toBeVisible();
 });
 
