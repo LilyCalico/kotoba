@@ -38,7 +38,7 @@ cd apps/web
 npx shadcn@latest init -b aria -p luma -y --no-monorepo
 ```
 
-Luma は大きな角丸と広めの余白をとるスタイルで、ボタンは両端が丸く、ダイアログは影を落として浮かぶ。各スタイルの見た目は https://ui.shadcn.com/create で切り替えて見比べられる。
+Luma は大きな角丸と広めの余白をとるスタイルで、各スタイルの見た目は https://ui.shadcn.com/create で切り替えて見比べられる。生成されたコンポーネントの見た目は、手順 3 と 4 で Kotoba のもの（角は四角、読ませるものはウィンドウ、主ボタンはキーキャップ、フォーカスリングは濃い輪郭）に寄せる。Luma は余白の取り方とコンポーネントの構成の土台として使う。
 
 どちらのフラグも省略すると対話プロンプトに落ちるため、非対話で流すなら両方渡す。`--no-monorepo` は「モノレポとして足場を組み直すか」の確認を抑える。`apps/web` は既に存在するワークスペースなので組み直しは要らない。
 
@@ -55,70 +55,92 @@ aria base に `text-field` という名前のコンポーネントは無い。�
 
 `dialog` は依存として `separator` も連れてくる。`FieldSeparator` の実体でもあるので取り除かない。
 
-## 3. フォーカスリングを `data-focus-visible` に移す
+## 3. フォーカスリングと入力欄の見た目を揃える
 
-生成されたコンポーネントは CSS 擬似クラスの `:focus-visible` を使う。React Aria は自前でキーボード操作を判定して `data-focus-visible` を付けるため、そちらに合わせる。
+生成されたコンポーネントは、フォーカスリングを `focus-visible:ring-*` の box-shadow で描く。このリポジトリでは、フォーカスリングをすべて `globals.css` の `focus-ring` ユーティリティ（手順 4）に揃える。2px の濃い輪郭を 2px 離して描き、地・ウィンドウ・キーキャップのどの面の上でも見える。
 
-```bash
-cd apps/web
-sed -i '' 's/focus-visible:/data-[focus-visible]:/g' components/ui/button.tsx components/ui/input.tsx
-sed -i '' 's/has-\[:focus-visible\]:/has-[[data-focus-visible]]:/g' components/ui/field.tsx
-```
+`focus-ring` は `:focus-visible` と、React Aria が自前でキーボード操作を判定して付ける `data-focus-visible` の両方に当たる。生成されたクラスのうち、フォーカスに関わるものを `focus-ring` 1 つに置き換える。
 
 | 生成された記述 | 置き換え後 |
 | --- | --- |
-| `focus-visible:border-ring` | `data-[focus-visible]:border-ring` |
-| `focus-visible:ring-3` | `data-[focus-visible]:ring-3` |
-| `has-[:focus-visible]:ring-ring/50` | `has-[[data-focus-visible]]:ring-ring/50` |
+| `outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50` | `focus-ring` |
+| `data-[focus-visible]:ring-3 data-[focus-visible]:ring-ring/30` | `focus-ring` |
 
 `shadcn add` でコンポーネントを足すたびに同じ置き換えが要る。取りこぼしは次で見つかる。
 
 ```bash
-grep -rn 'focus-visible:' apps/web/components/ui/
+grep -rn 'focus-visible:ring\|focus-visible\]:ring' apps/web/components/
 ```
 
 ### 入力欄の輪郭を残す
 
-Luma の `Input` は枠線を消し、`--input` を半透明にした塗りで入力欄を示す。このリポジトリの `--input` は、入力欄の輪郭がコントラスト比 3:1（WCAG 1.4.11）を満たすように濃くした色なので（手順 4）、塗りに回すと濃い灰緑の面になり、輪郭も失われる。`components/ui/input.tsx` の塗りを枠線に戻し、角丸・高さ・余白は Luma のまま使う。
+Luma の `Input` は枠線を消し、`--input` を半透明にした塗りで入力欄を示す。入力欄の輪郭はコントラスト比 3:1（WCAG 1.4.11）を満たす必要があるため、`components/ui/input.tsx` は塗りを白（`bg-card`）にして、`--input` の 1.5px の枠線で輪郭を示し、内側の左上に淡い影を落として凹んだ入力欄に見せる。角は四角（`rounded-none`）、高さは 48px（`h-12`）にする。
 
 | 生成された記述 | 置き換え後 |
 | --- | --- |
-| `border-transparent bg-input/50` | `border-input bg-transparent` |
+| `h-9 … rounded-3xl border border-transparent bg-input/50` | `h-12 … rounded-none border-[1.5px] border-input bg-card shadow-[inset_0.125rem_0.125rem_0_#e4e6f8]` |
 
-無効状態は `disabled:bg-input/50` で塗り、有効な入力欄と見分ける。
+無効状態は `disabled:opacity-60` で薄め、有効な入力欄と見分ける。
 
 ## 4. デザイントークンを差し替える
 
-`app/globals.css` の `:root` にある値を Kotoba のものにする。トークンの**名前は shadcn のものをそのまま使う**。追加するコンポーネントは無修正でこの語彙を参照するため、名前を変えると以後すべてのコンポーネントに手修正が要る。
+`app/globals.css` の `:root` にある値を Kotoba のものにする。トークンの**名前は shadcn のものをそのまま使う**。追加するコンポーネントは無修正でこの語彙を参照するため、名前を変えると以後すべてのコンポーネントに手修正が要る。shadcn の語彙にない役割（方眼・キーキャップ・プレイヤーの発言・ラベル・タイトルバー・読み込みバー・回答）だけを、名前を足して持つ。
+
+配色は Y2K パステルのデスクトップで、役割ごとに色を割り当てる（`docs/specifications/design.md`「デザイントークン」）。
 
 | トークン | 値 | 役割 |
 | --- | --- | --- |
-| `--background` | `#f1f6ef` | 画面全体の背景 |
-| `--foreground` | `#1c1c1c` | 本文 |
-| `--card` / `--popover` | `#fbfdfb` | ヘッダー、設問カード、ヒントカード、AI の回答バブル、入力欄 |
-| `--card-foreground` / `--popover-foreground` | `#1c1c1c` | サーフェス上の文字 |
-| `--primary` | `#42823a` | 送信ボタン、ロゴ |
-| `--primary-foreground` | `#fbfdfb` | アクセント上の文字 |
-| `--secondary` / `--accent` | `#dde8d7` | プレイヤーの発言バブルと、その上に乗るホバー面 |
-| `--secondary-foreground` / `--accent-foreground` | `#1c1c1c` | 同上の文字 |
-| `--muted` / `--muted-foreground` | `#e8eee6` / `#6b6b6b` | カードのラベル・補足テキストとその下地 |
-| `--border` | `#dddddd` | 装飾的な区切り線 |
-| `--input` | `#7f8c7d` | コントロールの輪郭 |
-| `--ring` | `#42823a` | フォーカスリング |
+| `--background` / `--grid` | `#fce7f3` / `#f5cbe6` | 画面の地と方眼の線 |
+| `--foreground` | `#2b2f5c` | 本文 |
+| `--card` / `--popover` | `#ffffff` | ウィンドウ、入力欄 |
+| `--card-foreground` / `--popover-foreground` | `#2b2f5c` | 面の上の文字 |
+| `--primary` / `--primary-hover` / `--primary-foreground` | `#f39fcb` / `#ee8cbf` / `#2b2f5c` | 主ボタンのキーキャップの縁、そのホバー、文字 |
+| `--keycap-face-from` / `--keycap-face-via` / `--keycap-face-to` | `#f6b2d6` / `#fad0e6` / `#ffeff7` | キーキャップの面のグラデーション |
+| `--keycap-shadow` | `#3a3f6e` | キーキャップの影 |
+| `--secondary` / `--secondary-foreground` | `#ffffff` / `#2b2f5c` | 副ボタン（ヒント・Cancel） |
+| `--accent` / `--accent-foreground` | `#fdf0f7` / `#2b2f5c` | 副ボタンのホバー |
+| `--muted` / `--muted-foreground` | `#fce7f3` / `#5c5f86` | 例文の下地と、補足テキスト |
+| `--border` / `--input` | `#2b2f5c` | ウィンドウとコントロールの輪郭 |
+| `--ring` | `#2b2f5c` | フォーカスリング |
+| `--destructive` / `--destructive-foreground` | `#b42350` / `#ffffff` | 入力の誤り |
+| `--bubble` / `--bubble-foreground` | `#2b2f5c` / `#ffffff` | プレイヤーの発言の吹き出し |
+| `--label` | `#dcd0ff` | 設問のタイトルバーと品詞のピル |
+| `--titlebar-hint` / `--titlebar-result` / `--titlebar-system` | `#f9d28f` / `#f4a9d2` / `#8f9bee` | ヒント／結果とスタート画面／応答待ちとダイアログのタイトルバー |
+| `--meter` | `#6f7fe0` | 読み込みバーとヒントの残りのブロック |
+| `--answer-yes` / `--answer-no` / `--answer-unclear` / `--answer-meta` | `#c5e17a` / `#ffb3a7` / `#addbff` / `#ffe08a` | 回答のピル |
+| `--radius` | `0` | 角は四角。キーキャップ・ピル・吹き出し・パソコンの筐体だけを個別に丸める |
 
-`--destructive` は配色にない役割なので shadcn 既定のまま残す。`chart-*` と `sidebar-*` は使う画面が無いので、`@theme inline` の割り当てごと消す。必要になった時点で `shadcn add` が書き戻す。
+足したトークンは `@theme inline` で `--color-*` に割り当て、`bg-bubble` や `bg-titlebar-hint` のように Tailwind から引けるようにする。`--grid` とキーキャップの値はユーティリティの中だけで使うため、割り当てない。`chart-*` と `sidebar-*` は使う画面が無いので、割り当てごと消す。必要になった時点で `shadcn add` が書き戻す。
 
-値は Figma の variables（`background` / `background-white` / `border` / `primary`）を出発点にし、コントラスト比が WCAG AA を満たすところまで詰めたもの。非機能要件が European Accessibility Act 準拠を意識すると定めているため、AA を下回る値は採らない。
+非機能要件が European Accessibility Act 準拠を意識すると定めているため、WCAG AA を下回る組み合わせは採らない。
 
 | ペア | 比 | 要求 |
 | --- | --- | --- |
-| `--foreground` / `--background` | 15.56 | 4.5（AA 通常テキスト） |
-| `--muted-foreground` / `--card` | 5.21 | 4.5 |
-| `--primary-foreground` / `--primary` | 4.58 | 4.5 — Figma の `#45873c` のままなら 4.29 で未達 |
-| `--ring` / `--background` | 4.27 | 3.0（AA 非テキスト） |
-| `--input` / `--card` | 3.45 | 3.0（WCAG 1.4.11）— Figma の `#dddddd` のままなら 1.33 で未達 |
+| `--foreground` / `--background` | 10.74 | 4.5（AA 通常テキスト） |
+| `--muted-foreground` / `--background` | 5.20 | 4.5 |
+| `--muted-foreground` / `--card` | 6.11 | 4.5 |
+| `--primary-foreground` / `--keycap-face-from`（面のいちばん濃いところ） | 7.37 | 4.5 |
+| `--bubble-foreground` / `--bubble` | 12.62 | 4.5 |
+| `--foreground` / 回答・ラベル・タイトルバーの各色 | 4.86〜9.79 | 4.5 |
+| `--destructive` / `--card` | 6.37 | 4.5 |
+| `--border` / `--background` | 10.74 | 3.0（WCAG 1.4.11） |
+| `--meter` / `--card` | 3.63 | 3.0（WCAG 1.4.11） |
+| `--ring` / `--background` | 10.74 | 3.0（AA 非テキスト） |
 
-境界色を `--border` と `--input` に分けているのは、要求が異なるためである。カードの縁や区切り線は装飾であり比の要求を受けないが、入力欄の輪郭は「コントロールを識別するための境界」にあたり 3:1 を満たす必要がある。shadcn がこの 2 つを別トークンとして持っているので、カードの淡い縁を保ったまま入力欄だけ濃くできる。
+いちばん低い 4.86 はペリウィンクルのタイトルバー（`--titlebar-system`）の上の「Thinking…」である。補足の文字が方眼の線（`--grid`）に重なる部分は 4.24 になるが、線は 1px で文字の大半は地の上に載る。方眼は `background-image` で描くため、axe はその上の文字のコントラストを判定できず「要確認」に回す。上の表の比で担保する。
+
+`globals.css` には、トークンのほかに 6 つのユーティリティを置く。
+
+| ユーティリティ | 中身 | 使う場所 |
+| --- | --- | --- |
+| `grid-paper` | 地の色に 26px 間隔の 1px の方眼を引く | `<body>`、Storybook の story を包む要素 |
+| `window` | 白い面、1.5px の紺の枠、4px ずらしたベタの影 | 設問・ヒント・応答待ち・ダイアログ・トースト。タイトルバーは `components/ui/window.tsx` の `WindowTitleBar` で載せる |
+| `keycap` | 紺の枠の内側にピンクの縁、`::before` で横向きのグラデーションの面を敷き、4px の紺の影。押すと影の分だけ沈む。丸みは `--keycap-radius`、面は `--keycap-face` で差し替える | 主ボタン（`buttonVariants` の `default` と、送信の四角いキー `key`） |
+| `pressable` | 1.5px の枠と、2px ずらしたベタの影（`--shadow-press`）。押すと影の分だけ沈んで影が消える | 副ボタン（`buttonVariants` の `outline` / `secondary`） |
+| `focus-ring` | 2px の濃い輪郭を 2px 離して描く | フォーカスを受けるすべての要素 |
+| `holo` | ピンク・空色・ライム・黄・ラベンダーを巡る円錐グラデーション | ホログラムのステッカー |
+
+`keycap` の面を `::before` で描くのは、`buttonVariants` を `Link` にも当てるためである。面を子要素で組むとリンクとボタンで中身の組み方を揃える必要が出るが、疑似要素なら class だけで済む。面は `z-index: -1` にし、キーキャップ自身に `isolation: isolate` を当てて、文字の下・キーキャップの縁の上に重ねる。
 
 トークンを足し引きしたら比を計り直す。
 
@@ -130,7 +152,7 @@ const L = (h) => { const n = parseInt(h.slice(1), 16);
 const [a, b] = process.argv.slice(1);
 const [hi, lo] = [L(a), L(b)].sort((x, y) => y - x);
 console.log(((hi + 0.05) / (lo + 0.05)).toFixed(2));
-' "#fbfdfb" "#42823a"
+' "#2b2f5c" "#8f9bee"
 ```
 
 ## 5. ライトテーマだけにする
@@ -145,21 +167,34 @@ console.log(((hi + 0.05) / (lo + 0.05)).toFixed(2));
 
 ## 6. フォントを差し替える
 
-和文・欧文を 1 書体でまかなう Zen Maru Gothic を使う。`app/fonts.ts` に置き、`app/layout.tsx` と Storybook の両方から読む。
+UI の文には Poppins、読ませる文（設問・ヒント・正解の単語と定義）には Crimson Text、画面の部品（ワードマーク・タイトルバー・ボタン・起動画面の文字）には Pixelify Sans を使う。`app/fonts.ts` に置き、`app/layout.tsx` と Storybook の両方から読む。
 
 ```ts
-import { Zen_Maru_Gothic } from "next/font/google";
+import { Crimson_Text, Pixelify_Sans, Poppins } from "next/font/google";
 
-export const zenMaruGothic = Zen_Maru_Gothic({
+export const poppins = Poppins({
   variable: "--font-sans",
-  weight: ["400", "500", "700"],
+  weight: ["400", "500", "600"],
+  subsets: ["latin"],
+});
+
+export const crimsonText = Crimson_Text({
+  variable: "--font-serif",
+  weight: ["400", "600"],
+  style: ["normal", "italic"],
+  subsets: ["latin"],
+});
+
+export const pixelifySans = Pixelify_Sans({
+  variable: "--font-pixel",
+  weight: ["400", "500", "600"],
   subsets: ["latin"],
 });
 ```
 
-可変フォントではないので `weight` の明示が要る。`variable` を `--font-sans` にすると、`globals.css` の `@theme inline` が持つ `--font-sans` の参照先になり、Tailwind の `font-sans` から引ける。
+Poppins と Crimson Text は可変フォントではないので `weight` の明示が要る。Pixelify Sans は可変フォントだが、使う太さに絞って読み込む量を減らす。`variable` を `--font-sans` / `--font-serif` / `--font-pixel` にすると、`globals.css` の `@theme inline` の参照先になり、Tailwind の `font-sans` / `font-serif` / `font-pixel` から引ける。
 
-`app/layout.tsx` で `<html>` に当て、あわせて `metadata` と `lang` を差し替える。UI の文言は英語なので、`lang` は `en`、`metadata` も英語で書く。
+`app/layout.tsx` で `<html>` に 3 つの変数を当て、あわせて `metadata` と `lang` を差し替える。UI の文言は英語なので、`lang` は `en`、`metadata` も英語で書く。
 
 ```tsx
 export const metadata: Metadata = {
@@ -170,7 +205,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${zenMaruGothic.variable} h-full antialiased`}>
+    <html lang="en" className={`${poppins.variable} ${crimsonText.variable} ${pixelifySans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <Providers>{children}</Providers>
       </body>
@@ -178,8 +213,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   );
 }
 ```
-
-scaffold が入れる `Geist` / `Geist_Mono` は落とす。`globals.css` の `@theme inline` にある `--font-mono: var(--font-geist-mono);` も一緒に消すと、`font-mono` は Tailwind 既定のスタックに戻る。
 
 ## 7. ルートにプロバイダを置く
 
@@ -207,63 +240,24 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
 1 つにまとめてあるので、Storybook からも同じものを当てられる。
 
-## 8. アセットを置き、scaffold の残骸を消す
+## 8. アイコンを置き、scaffold の残骸を消す
 
-[Figma の草案](https://www.figma.com/design/mWFhHDTqPHFBKhIMrkKj9B/Kotoba?node-id=112-16215) から**背景透過 PNG で @2x**（Figma の表示サイズの 2 倍）で書き出す。
+画像のアセットは持たない。ロゴは Pixelify Sans の文字で組み、起動画面のパソコン・ウィンドウ・ホログラムのステッカーは CSS で、マウスカーソルとウィンドウの箱の記号はインラインの SVG で描く。
 
-| 対象 | Figma ノード | 書き出すサイズ | 置き場所 |
-| --- | --- | --- | --- |
-| kotoba ロゴ | `112:15958` | 440 × 132 | `apps/web/public/kotoba-logo.png` |
-| 葉のイラスト | `112:15955` | 98 × 98 | `apps/web/public/leaf.png` |
-
-`app/favicon.ico` は葉から作る。16 / 32 / 48 の 3 サイズを束ねる。
-
-```bash
-cd apps/web
-for s in 16 32 48; do sips -z $s $s public/leaf.png --out "/tmp/leaf-$s.png"; done
-npx png-to-ico /tmp/leaf-16.png /tmp/leaf-32.png /tmp/leaf-48.png > /tmp/favicon-raw.ico
-```
-
-`png-to-ico` は渡していない 256 × 256 を勝手に足す。そのままだと 285KB になるので落とす。
-
-```bash
-node --input-type=module -e '
-import { readFileSync, writeFileSync } from "node:fs";
-const ico = readFileSync("/tmp/favicon-raw.ico");
-const entries = [];
-for (let i = 0; i < ico.readUInt16LE(4); i++) {
-  const dir = ico.subarray(6 + i * 16, 22 + i * 16);
-  if ((dir[0] || 256) > 48) continue;
-  const at = dir.readUInt32LE(12);
-  entries.push({ dir, data: ico.subarray(at, at + dir.readUInt32LE(8)) });
-}
-entries.sort((a, b) => (a.dir[0] || 256) - (b.dir[0] || 256));
-const header = Buffer.alloc(6);
-header.writeUInt16LE(1, 2);
-header.writeUInt16LE(entries.length, 4);
-let at = 6 + entries.length * 16;
-const dirs = entries.map(({ dir, data }) => {
-  const out = Buffer.from(dir);
-  out.writeUInt32LE(data.length, 8);
-  out.writeUInt32LE(at, 12);
-  at += data.length;
-  return out;
-});
-writeFileSync("app/favicon.ico", Buffer.concat([header, ...dirs, ...entries.map((e) => e.data)]));
-'
-file app/favicon.ico   # MS Windows icon resource - 3 icons, 16x16, 32 bits/pixel, ...
-```
+タブのアイコンは `app/icon.svg` に置く。Next.js はこのファイル名を見て `<link rel="icon">` を出す。方眼のピンクの地に、ペリウィンクルの筐体のパソコンを置いた 32 × 32 の SVG で、配色はトークンの値と揃える。
 
 scaffold の残骸を消す。
 
 ```bash
 cd apps/web
-rm public/file.svg public/globe.svg public/next.svg public/vercel.svg public/window.svg
+rm app/favicon.ico public/file.svg public/globe.svg public/next.svg public/vercel.svg public/window.svg
 ```
 
-`app/page.tsx` は Next.js のテンプレートを捨て、スタート画面にする。ロゴ・リード文・区切り線・説明文・START ボタンを縦に積み、中央カラム（`max-w-[42rem]`）の中に葉のイラスト（`LeafScatter`）を散らす。中身はプロダクトのコードとして `apps/web/app/page.tsx` にある。
+`app/page.tsx` は Next.js のテンプレートを捨て、`components/game/start-screen.tsx` の `StartScreen` を描くだけにする。起動画面（パソコンへの打ち込みと Skip）からスタート画面（welcome.txt のウィンドウ）へ移る状態を持つため、`StartScreen` はクライアントコンポーネントにする。起動画面を見たかは `sessionStorage` に記録し、サーバーでは読めないので、ハイドレーションが終わるまでは中身を描かない。
 
-ロゴは `<h1>` に入れる。E2E の smoke テストが見出しの存在を確かめている。
+起動画面とスタート画面のどちらにも `<h1>` を置く。E2E の smoke テストが見出しの存在を確かめている。
+
+`buttonVariants` は `components/ui/button-variants.ts` に置く。`"use client"` を持たないので、サーバーコンポーネントからも `Link` に当てられる。
 
 ## 9. eslint-plugin-jsx-a11y を足す
 
@@ -320,7 +314,6 @@ const config: StorybookConfig = {
   stories: ["../components/**/*.stories.tsx"],
   addons: [],
   framework: { name: "@storybook/nextjs-vite", options: {} },
-  staticDirs: ["../public"],
 };
 
 export default config;
@@ -330,21 +323,28 @@ export default config;
 
 ```tsx
 import type { Preview } from "@storybook/nextjs-vite";
-import { zenMaruGothic } from "../app/fonts";
+import { crimsonText, pixelifySans, poppins } from "../app/fonts";
 import { Providers } from "../app/providers";
 import "../app/globals.css";
 
-document.documentElement.classList.add(zenMaruGothic.variable);
+document.documentElement.classList.add(poppins.variable, crimsonText.variable, pixelifySans.variable);
 document.documentElement.lang = "en";
 
 const preview: Preview = {
   parameters: { layout: "fullscreen" },
   decorators: [
-    (Story) => (
+    // 画面全体を描く story は `parameters.page: true` を指定し、中央寄せと余白を当てずに描く。
+    (Story, { parameters }) => (
       <Providers>
-        <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background p-8 font-sans text-foreground">
-          <Story />
-        </div>
+        {parameters.page ? (
+          <div className="grid-paper flex min-h-screen flex-col font-sans text-foreground">
+            <Story />
+          </div>
+        ) : (
+          <div className="grid-paper flex min-h-screen flex-col items-center justify-center gap-6 p-8 font-sans text-foreground">
+            <Story />
+          </div>
+        )}
       </Providers>
     ),
   ],
@@ -406,11 +406,11 @@ pnpm storybook  # http://localhost:6006
 
 目で見て確かめるのは次の 5 点。
 
-1. トップページの背景が緑みを帯びた淡いオフホワイトで、本文が丸ゴシックで描かれている
+1. トップページの地が淡いピンクの方眼で、起動画面のパソコンの文字とワードマークが Pixelify Sans、スタート画面の見出しが Crimson Text、説明文が Poppins で描かれている
 2. OS の外観をダークにしても配色が変わらない
-3. Storybook で **Tab キー**を押すとフォーカスされたボタンに緑のリングが出る。マウスでクリックした場合は出ない
+3. Storybook で **Tab キー**を押すとフォーカスされたボタンに濃い輪郭のリングが出る。マウスでクリックした場合は出ない
 4. `UI/Dialog` が Esc で閉じ、Tab がダイアログ内に閉じ込められる
-5. `UI/Dialog` を開いたとき、ダイアログの中の文字も丸ゴシックで描かれている
+5. `UI/Dialog` を開いたとき、ダイアログの中の文字も Poppins・Crimson Text・Pixelify Sans で描かれている
 
 ## つまずきポイント
 
@@ -446,22 +446,6 @@ pnpm storybook  # http://localhost:6006
 
 **対処**: `render` で組み立てる story では、meta 側に `args: { children: null }` のような既定値を 1 度だけ置く。
 
-### 生成した favicon.ico が 285KB になる
-
-**症状**: 16 / 32 / 48 の PNG しか渡していないのに、`png-to-ico` の出力が 285KB ある。
-
-**原因**: `png-to-ico` は入力に無い 256 × 256 を足す。その 1 枚だけで 270KB を占める。
-
-**対処**: 手順 8 のスクリプトで ICO のディレクトリから 48 より大きいエントリを落とす。3 エントリ・15KB になる。
-
-### フォーカスリングの太さを測ると 0.1px になる
-
-**症状**: Tab を押した直後に `getComputedStyle` で `boxShadow` を読むと、幅が 3px ではなく 0.1px 前後になる。
-
-**原因**: ボタンの基底クラスに `transition-all` が入っており、リングが描き切るまでに時間がかかる。
-
-**対処**: 測る前に待つ。自動で確かめるなら 500ms 程度置いてから読む。
-
 ### `pnpm install` が `Ignored build scripts: esbuild` と言い続ける
 
 **症状**: インストールのたびに警告が出る。`pnpm-workspace.yaml` の `ignoredBuiltDependencies` に足しても消えない。
@@ -470,18 +454,18 @@ pnpm storybook  # http://localhost:6006
 
 **対処**: 放置してよい。esbuild のネイティブバイナリは `@esbuild/<platform>` として `optionalDependencies` 経由で入るため、postinstall を走らせなくても解決する。`pnpm approve-builds` で許可する必要はない。
 
-### 日本語が別のフォントで描かれる
+### Storybook でダイアログの中だけ書体が変わる
 
-**症状**: 欧文は Zen Maru Gothic なのに和文だけ OS 既定の書体になる。
-
-**原因**: フォントを `<html>` に当てていない。
-
-**対処**: `subsets` はプリロードする範囲の指定であって、self-host する範囲の指定ではない。日本語のグリフは unicode-range で分割された別ファイルとして必ず落ちてくる（`next build` 後に `.next/static/media` へ 200 個以上の `.woff2` が並ぶ）。`subsets: ["latin"]` のままでよく、確認すべきは `zenMaruGothic.variable` が `<html>` の `className` に入っているかどうか。
-
-### Storybook でダイアログの中だけ明朝体になる
-
-**症状**: story の本文は丸ゴシックなのに、`UI/Dialog` を開くとダイアログの中の文字がブラウザ既定の明朝体で描かれる。
+**症状**: story の本文は Poppins なのに、`UI/Dialog` を開くとダイアログの中の文字がブラウザ既定の書体で描かれる。
 
 **原因**: フォントの変数を story を包む要素にだけ当てている。ダイアログは `<body>` の直下に描画されるため、変数が届かず `font-sans` が解決できない。
 
-**対処**: 手順 10 のとおり、`.storybook/preview.tsx` で `<html>` に `zenMaruGothic.variable` を当てる。
+**対処**: 手順 10 のとおり、`.storybook/preview.tsx` で `<html>` に `poppins.variable`・`crimsonText.variable`・`pixelifySans.variable` を当てる。
+
+### ボタンの角や枠が `keycap` の指定どおりにならない
+
+**症状**: `buttonVariants` に `rounded-none` や `border-transparent` を残すと、キーキャップの角が丸くならず、紺の枠も消える。
+
+**原因**: `keycap` も `rounded-none` も同じ utilities レイヤーのクラスで、同じプロパティを指定する。どちらが勝つかは class の並びではなく、生成された CSS の並びで決まる。`--radius` を 0 にしているため、`rounded-xl` のような名前付きの丸みも 0 になる。
+
+**対処**: `buttonVariants` の共通部分には角と枠の指定を置かない。キーキャップの丸みは `--keycap-radius` で、ほかの丸い部品は `rounded-[0.75rem]` のような値の直書きで指定する。

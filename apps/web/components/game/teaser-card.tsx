@@ -4,14 +4,14 @@ import { cn } from "cn";
 import { motion } from "motion/react";
 import { useId } from "react";
 
-/** 設問の提示からチャットへ移るとき、設問カードが収まるまでの動き。 */
+import { WINDOW_TITLE_CLASS, WindowTitleBar } from "@/components/ui/window";
+
+/** 設問の提示からチャットへ移るとき、設問のウィンドウが収まるまでの動き。 */
 export const TEASER_LAYOUT_TRANSITION = { duration: 0.4, ease: [0.22, 1, 0.36, 1] } as const;
 
-const FLOATING_RADIUS_PX = 18;
-
 /**
- * 設問。`floating` は設問の提示で画面中央に浮かべる様式、
- * `pinned` はチャットでヘッダー直下に固定するフル幅の様式。
+ * 設問。ラベンダーのタイトルバー「Question」を持つウィンドウに、明朝の設問を載せる。
+ * `floating` は設問の提示で画面中央に浮かべる様式、`pinned` はチャットでヘッダー直下に固定する様式。
  *
  * 2 つの様式に同じ `layoutId` を渡すと、様式が切り替わるとき位置と大きさを保ったまま変形してつなぐ。
  * 文字の大きさは切り替わった時点で新しい様式に移し、位置だけを動かす。文字を拡大縮小でつなぐと字が歪むため。
@@ -27,35 +27,30 @@ export function TeaserCard({
 }) {
   const labelId = useId();
   const floating = variant === "floating";
+  const layout = layoutId ? "position" : undefined;
 
   return (
     <motion.section
       aria-labelledby={labelId}
-      className={cn(
-        "flex w-full flex-col gap-3 border border-border bg-card",
-        floating ? "p-4" : "px-5 py-4",
-      )}
+      className="window flex w-full flex-col"
       layoutId={layoutId}
-      // 角丸は style に px で与えると、変形の途中でも歪まずに補間される。
-      // Motion は calc() や rem を補間できないため、base 段階の rounded-2xl（1.125rem）を px で置く。
-      style={{ borderRadius: floating ? FLOATING_RADIUS_PX : 0 }}
+      // 変形の間に影が引き伸ばされないよう、Motion が補正できる px の値で `style` に渡す。値は `window` の影と同じ。
+      style={{ boxShadow: "4px 4px 0 #2b2f5c" }}
       transition={TEASER_LAYOUT_TRANSITION}
     >
+      <motion.div layout={layout} transition={TEASER_LAYOUT_TRANSITION}>
+        <WindowTitleBar controls={["minimize", "maximize"]} tone="question">
+          <p className={WINDOW_TITLE_CLASS} id={labelId}>
+            Question
+          </p>
+        </WindowTitleBar>
+      </motion.div>
       <motion.p
         className={cn(
-          "flex items-center text-foreground",
-          floating ? "gap-2 text-base" : "gap-1.5 text-[0.625rem] tracking-[0.4px]",
+          "font-serif leading-tight text-balance",
+          floating ? "px-6 pt-5 pb-7 text-[2rem]" : "px-4 pt-3 pb-4 text-[1.5rem]",
         )}
-        id={labelId}
-        layout={layoutId ? "position" : undefined}
-        transition={TEASER_LAYOUT_TRANSITION}
-      >
-        <span aria-hidden>🌿</span>
-        Question
-      </motion.p>
-      <motion.p
-        className={cn("text-foreground", floating ? "text-lg" : "text-sm")}
-        layout={layoutId ? "position" : undefined}
+        layout={layout}
         transition={TEASER_LAYOUT_TRANSITION}
       >
         {teaser}

@@ -6,19 +6,15 @@ import {
   type InputResult,
   type Language,
   MAX_HINTS,
-  type Outcome,
   type UiLocale,
   type Word,
+  gameResultOf,
 } from "@kotoba/shared";
 import { Inject, Injectable } from "@nestjs/common";
 import { ApiError } from "../common/api-error.js";
 import { WordsService } from "../words/words.service.js";
 import { classifyInput } from "./classify-input.js";
 import { GAME_STORE, type Game, type GameStore } from "./game-store.js";
-
-function resultOf(word: Word, outcome: Outcome, locale: UiLocale): GameResult {
-  return { outcome, wordId: word.id, word: word.word, definition: word.definition[locale] };
-}
 
 /**
  * ゲーム 1 周の進行を担う。秘密の単語と Q&A 履歴は `GameStore` に置き、応答には
@@ -63,7 +59,7 @@ export class GamesService {
     const classified = classifyInput(word, text);
     const result: InputResult =
       classified.kind === "answer" && classified.correct
-        ? { ...classified, result: resultOf(word, "cleared", game.locale) }
+        ? { ...classified, result: gameResultOf(word, "cleared", game.locale) }
         : classified;
 
     game.history.push({ text, result });
@@ -96,7 +92,7 @@ export class GamesService {
     if (game.result) return game.result;
 
     const word = await this.wordOf(game);
-    game.result = resultOf(word, "gave_up", game.locale);
+    game.result = gameResultOf(word, "gave_up", game.locale);
     await this.store.save(game);
     return game.result;
   }

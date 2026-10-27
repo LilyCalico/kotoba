@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { zenMaruGothic } from "./fonts";
+import { crimsonText, pixelifySans, poppins } from "./fonts";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${zenMaruGothic.variable} h-full antialiased`}>
+    <html lang="en" className={`${poppins.variable} ${crimsonText.variable} ${pixelifySans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <Providers>{children}</Providers>
       </body>

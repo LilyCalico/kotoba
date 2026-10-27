@@ -72,7 +72,7 @@ export const Chat: Story = {
     ]) {
       await send(question);
     }
-    await userEvent.click(await screen.findByRole("button", { name: /^Hint/ }));
+    await userEvent.click(await screen.findByRole("button", { name: /^Show a hint/ }));
 
     await screen.findByRole("region", { name: "Hint 1 of 3" });
   },
@@ -86,7 +86,7 @@ export const Sending: Story = {
     await send("Is it about Friday?");
 
     await expect(screen.getByRole("textbox", { name: INPUT_LABEL })).toBeDisabled();
-    await expect(screen.getByRole("button", { name: /^Hint/ })).toBeDisabled();
+    await expect(screen.getByRole("button", { name: /^Show a hint/ })).toBeDisabled();
   },
 };
 
@@ -135,7 +135,7 @@ export const HintFailed: Story = {
   args: { client: mockClient({ revealHint: fail() }) },
   play: async () => {
     await enterChat();
-    const hint = screen.getByRole("button", { name: /^Hint/ });
+    const hint = screen.getByRole("button", { name: /^Show a hint/ });
     await userEvent.click(hint);
 
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(ERROR_TEXT));
@@ -174,7 +174,7 @@ export const Expired: Story = {
 
     await waitFor(() => expect(screen.getByText(EXPIRED_TEXT)).toHaveFocus());
     await expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
-    await expect(screen.queryByRole("button", { name: /^Hint/ })).not.toBeInTheDocument();
+    await expect(screen.queryByRole("button", { name: /^Show a hint/ })).not.toBeInTheDocument();
     await expect(screen.getByRole("link", { name: "Play again" })).toHaveAttribute("href", "/");
   },
 };
@@ -199,7 +199,7 @@ export const IgnoredFailure: Story = {
   args: { client: mockClient({ revealHint: fail("hint_out_of_order") }) },
   play: async () => {
     await enterChat();
-    const hint = screen.getByRole("button", { name: /^Hint/ });
+    const hint = screen.getByRole("button", { name: /^Show a hint/ });
     await userEvent.click(hint);
 
     await waitFor(() => expect(hint).toBeEnabled());

@@ -42,7 +42,7 @@ export function Toaster() {
     >
       {({ toast: item }) => (
         <ToastPrimitive
-          className="flex w-full max-w-[40rem] items-center gap-3 rounded-2xl bg-foreground py-2 pr-2 pl-4 text-sm text-background shadow-xl outline-none data-[focus-visible]:ring-3 data-[focus-visible]:ring-ring/50"
+          className="window flex w-full max-w-[40rem] items-center gap-3 bg-popover py-2 pr-2 pl-4 text-sm font-medium text-popover-foreground focus-ring"
           toast={item}
         >
           <ToastContentPrimitive className="min-w-0 flex-1 py-1">
@@ -50,7 +50,6 @@ export function Toaster() {
           </ToastContentPrimitive>
           {item.content.action && (
             <Button
-              className="h-11 bg-background px-4 text-foreground hover:bg-background/90"
               onPress={() => {
                 item.content.action?.onAction()
                 toastQueue.close(item.key)
@@ -61,7 +60,8 @@ export function Toaster() {
           )}
           <Button
             aria-label="Close"
-            className="size-11 text-background hover:bg-background/15 hover:text-background"
+            className="no-underline"
+            size="icon"
             slot="close"
             variant="ghost"
           >

@@ -1,15 +1,17 @@
 "use client";
 
 import { MAX_HINTS } from "@kotoba/shared";
+import { LightbulbIcon } from "lucide-react";
 import { motion } from "motion/react";
 
 import { cardAppear } from "@/components/game/motion";
+import { WINDOW_TITLE_CLASS, WindowTitleBar } from "@/components/ui/window";
 
 /**
- * 開示したヒント。フル幅・枠線・💡 ラベルの 3 点で回答バブルと見分けられる。
+ * 開示したヒント。ピーチのタイトルバー「Hint N of 3」を持つウィンドウに、明朝のヒントを載せる。
+ * タイトルバーの色で、設問（ラベンダー）や結果（ピンク）のウィンドウと見分ける。
  * ヒントはライブリージョンに載せないため、開示したときのフォーカス先になって読み上げさせる。
- * そのため `ref` を受け付けて `tabIndex={-1}` を持つ。
- * 描画された時点で、わずかに拡大しながら現れる。
+ * そのため `ref` を受け付けて `tabIndex={-1}` を持つ。描画された時点で、わずかに拡大しながら現れる。
  */
 export function HintCard({
   index,
@@ -24,15 +26,17 @@ export function HintCard({
     <motion.section
       {...cardAppear}
       aria-label={`Hint ${index} of ${MAX_HINTS}`}
-      className="flex w-full flex-col gap-3 rounded-2xl border border-border bg-card p-4 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      className="window mr-1 mb-1 flex flex-col focus-ring"
       ref={ref}
       tabIndex={-1}
     >
-      <p className="flex items-center gap-1.5 text-[0.625rem] tracking-[0.4px] text-foreground">
-        <span aria-hidden>💡</span>
-        Hint {index}/{MAX_HINTS}
-      </p>
-      <p className="text-sm text-foreground">{text}</p>
+      <WindowTitleBar controls={["close"]} tone="hint">
+        <p className={`${WINDOW_TITLE_CLASS} flex items-center gap-1.5`}>
+          <LightbulbIcon aria-hidden className="size-3.5" />
+          Hint {index} of {MAX_HINTS}
+        </p>
+      </WindowTitleBar>
+      <p className="px-3.5 pt-2.5 pb-3.5 font-serif text-xl leading-snug">{text}</p>
     </motion.section>
   );
 }

@@ -1,6 +1,13 @@
 import type { Verdict } from "@kotoba/shared";
 import { cn } from "cn";
-import { MessageCircleQuestionMarkIcon } from "lucide-react";
+import {
+  CheckIcon,
+  type LucideIcon,
+  MessageCircleQuestionMarkIcon,
+  MinusIcon,
+  UnlinkIcon,
+  XIcon,
+} from "lucide-react";
 
 const VERDICT_TEXT: Record<Verdict, string> = {
   yes: "Yes",
@@ -14,10 +21,19 @@ export function verdictText(verdict: Verdict): string {
   return VERDICT_TEXT[verdict];
 }
 
+/** 回答ごとの見た目。色だけに頼らず、文字とアイコンでも区別する。 */
+const VERDICT_STYLE: Record<Verdict, { icon: LucideIcon; className: string }> = {
+  yes: { icon: CheckIcon, className: "bg-answer-yes" },
+  no: { icon: XIcon, className: "bg-answer-no" },
+  unclear: { icon: MinusIcon, className: "bg-answer-unclear" },
+  irrelevant: { icon: UnlinkIcon, className: "border border-dashed border-border bg-card" },
+  not_a_question: { icon: MessageCircleQuestionMarkIcon, className: "bg-answer-meta" },
+};
+
 /**
- * 質問への 5 値の回答。
- * `not_a_question` は単語についての答えではなく質問の形への指摘なので、
- * 破線の枠とアイコンで他の 4 値と見分けられるようにする。
+ * 質問への 5 値の回答。画面で唯一の、アイコン付きの太字の丸いピル。平たく影を持たず、立体のボタンと形で見分ける。
+ * Yes はライム、No はコーラル、Hard to say は空色、That's not related は白に破線の枠、
+ * Try a yes-or-no question（質問の形への指摘）は黄にする。
  */
 export function VerdictMessage({
   verdict,
@@ -26,18 +42,18 @@ export function VerdictMessage({
   verdict: Verdict;
   ref?: React.Ref<HTMLParagraphElement>;
 }) {
-  const meta = verdict === "not_a_question";
+  const { icon: Icon, className } = VERDICT_STYLE[verdict];
 
   return (
     <p
       className={cn(
-        "mr-auto flex w-fit max-w-[85%] items-center gap-2 rounded-md bg-card px-4 py-2 text-sm text-card-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-        meta && "border border-dashed border-input",
+        "mr-auto inline-flex min-h-9 w-fit max-w-[85%] items-center gap-1.5 rounded-full px-4 py-1.5 text-[0.9375rem] font-semibold text-foreground focus-ring",
+        className,
       )}
       ref={ref}
       tabIndex={-1}
     >
-      {meta && <MessageCircleQuestionMarkIcon aria-hidden className="size-4 shrink-0" />}
+      <Icon aria-hidden className="size-4 shrink-0" strokeWidth={2.6} />
       {verdictText(verdict)}
     </p>
   );

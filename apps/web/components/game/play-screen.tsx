@@ -1,7 +1,7 @@
 "use client";
 
 import type { GameStart, StartGameRequest } from "@kotoba/shared";
-import { AnimatePresence, motion } from "motion/react";
+import { motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useReducer, useRef, useState } from "react";
 
@@ -12,12 +12,11 @@ import { Header } from "@/components/game/header";
 import { HintButton } from "@/components/game/hint-button";
 import { HintCard } from "@/components/game/hint-card";
 import { InputForm } from "@/components/game/input-form";
-import { LeafScatter } from "@/components/game/leaf-scatter";
 import { chatItemAppear, chromeAppear } from "@/components/game/motion";
 import { PendingIndicator } from "@/components/game/pending-indicator";
 import { HINT_REQUEST_TEXT, PlayerMessage } from "@/components/game/player-message";
 import { ResultCard } from "@/components/game/result-card";
-import { TEASER_LAYOUT_TRANSITION, TeaserCard } from "@/components/game/teaser-card";
+import { TeaserCard } from "@/components/game/teaser-card";
 import { VerdictMessage, verdictText } from "@/components/game/verdict-message";
 import { buttonVariants } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
@@ -164,22 +163,10 @@ export function GameScreen({
   return (
     <div className="flex h-dvh justify-center overflow-hidden">
       <div className="relative flex w-full max-w-[42rem] flex-col">
-        <AnimatePresence>
-          {phase !== "chat" && (
-            <motion.div
-              className="pointer-events-none absolute inset-0"
-              exit={{ opacity: 0 }}
-              key="leaves"
-              transition={TEASER_LAYOUT_TRANSITION}
-            >
-              <LeafScatter variant="teaser" />
-            </motion.div>
-          )}
-        </AnimatePresence>
         {game?.phase === "chat" ? (
           <Chat client={client} dispatch={dispatch} state={game} />
         ) : (
-          <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-5">
+          <main className="flex flex-1 flex-col items-center justify-center px-5">
             <h1 className="sr-only">kotoba</h1>
             {game ? (
               <>
@@ -308,7 +295,7 @@ function Chat({
     <>
       {!finished && (
         <a
-          className="sr-only rounded-md bg-card px-3 py-2 text-sm text-card-foreground outline-none focus:not-sr-only focus:absolute focus:top-2 focus:left-4 focus:z-20 focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="sr-only border-[1.5px] border-border bg-card px-3 py-2 text-sm font-medium text-card-foreground focus-ring focus:not-sr-only focus:absolute focus:top-2 focus:left-4 focus:z-20"
           href={`#${PLAYER_INPUT_ID}`}
           onClick={(event) => {
             event.preventDefault();
@@ -321,10 +308,13 @@ function Chat({
       <motion.div {...chromeAppear} className="shrink-0 pt-[env(safe-area-inset-top)]">
         <Header onGiveUp={finished ? undefined : () => setGiveUpOpen(true)} />
       </motion.div>
-      <main className="flex min-h-0 flex-1 flex-col pt-4">
-        <TeaserCard layoutId={TEASER_LAYOUT_ID} teaser={state.teaser} variant="pinned" />
+      <main className="flex min-h-0 flex-1 flex-col pt-1">
+        <div className="shrink-0 px-5">
+          <TeaserCard layoutId={TEASER_LAYOUT_ID} teaser={state.teaser} variant="pinned" />
+        </div>
         <div
-          className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto px-4 pt-10 pb-6"
+          // 上端をぼかし、スクロールした要素が設問カードの下へ消えていくように見せる。
+          className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-5 pt-6 pb-6 [mask-image:linear-gradient(to_bottom,transparent,black_1.5rem)]"
           ref={logRef}
         >
           {entries.map((entry) => (
@@ -348,7 +338,7 @@ function Chat({
           )}
           {finished && (
             <ChatItem>
-              <Link className={buttonVariants({ className: "h-11 self-center px-6" })} href="/">
+              <Link className={buttonVariants({ size: "lg", className: "mt-4 mr-1" })} href="/">
                 Play again
               </Link>
             </ChatItem>
@@ -357,16 +347,18 @@ function Chat({
         {!finished && (
           <motion.div
             {...chromeAppear}
-            className="flex shrink-0 flex-col gap-3 px-4 pb-3"
+            className="shrink-0 px-5 pt-2 pb-4"
             id={PLAYER_INPUT_ID}
           >
-            <HintButton
-              disabled={sending}
-              onPress={requestHint}
-              ref={hintRef}
-              remaining={remainingHints(hintsUsed)}
-            />
             <InputForm
+              actions={
+                <HintButton
+                  disabled={sending}
+                  onPress={requestHint}
+                  ref={hintRef}
+                  remaining={remainingHints(hintsUsed)}
+                />
+              }
               disabled={sending}
               onSubmit={send}
               onValueChange={setText}
@@ -439,12 +431,7 @@ function Entry({
       return <HintCard index={entry.hint.index} ref={ref} text={entry.hint.text} />;
     case "result":
       return (
-        <ResultCard
-          definition={entry.result.definition}
-          outcome={entry.result.outcome}
-          ref={ref}
-          word={entry.result.word}
-        />
+        <ResultCard ref={ref} result={entry.result} />
       );
     case "error":
       return <ErrorMessage />;

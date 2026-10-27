@@ -14,6 +14,7 @@ import {
 } from "react-aria-components"
 
 import { Button } from "@/components/ui/button"
+import { WindowTitleBar } from "@/components/ui/window"
 import { XIcon } from "lucide-react"
 
 const DialogDescriptionContext = React.createContext<{
@@ -55,7 +56,7 @@ function DialogOverlay({
     <ModalOverlayPrimitive
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-black/30 duration-100 data-entering:animate-in data-entering:fade-in-0 data-exiting:animate-out data-exiting:fade-out-0 supports-backdrop-filter:backdrop-blur-sm",
+        "fixed inset-0 isolate z-50 bg-foreground/40 duration-100 data-entering:animate-in data-entering:fade-in-0 data-exiting:animate-out data-exiting:fade-out-0",
         className
       )}
       {...props}
@@ -89,14 +90,16 @@ function Dialog({
       <ModalPrimitive
         data-slot="dialog-content"
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-4xl bg-popover p-6 text-sm text-popover-foreground shadow-xl ring-1 ring-foreground/5 duration-100 outline-none data-entering:animate-in data-entering:fade-in-0 data-entering:zoom-in-95 data-exiting:animate-out data-exiting:fade-out-0 data-exiting:zoom-out-95 sm:max-w-md dark:ring-foreground/10",
+          "window fixed top-1/2 left-1/2 z-50 flex w-full max-w-[calc(100%-2.5rem)] -translate-x-1/2 -translate-y-1/2 flex-col bg-popover text-sm text-popover-foreground duration-100 outline-none data-entering:animate-in data-entering:fade-in-0 data-entering:zoom-in-95 data-exiting:animate-out data-exiting:fade-out-0 data-exiting:zoom-out-95 sm:max-w-md",
           className
         )}
       >
+        {/* ダイアログもウィンドウとして描く。タイトルバーは飾りで、ダイアログの名前は DialogTitle が持つ */}
+        <WindowTitleBar controls={["minimize", "maximize"]} tone="system" />
         <DialogPrimitive
           data-slot="dialog"
           className={cn(
-            "[display:inherit] [gap:inherit] outline-none",
+            "relative grid gap-5 p-6 outline-none",
             showCloseButton && "*:data-[slot=dialog-header]:pr-8"
           )}
           aria-describedby={hasDescription ? descriptionId : undefined}
@@ -107,8 +110,8 @@ function Dialog({
           {showCloseButton && (
             <DialogClose
               variant="ghost"
-              className="absolute top-4 right-4 bg-secondary"
-              size="icon-sm"
+              className="absolute top-3 right-3"
+              size="icon"
             >
               <XIcon
               />
@@ -163,7 +166,7 @@ function DialogTitle({
       slot="title"
       data-slot="dialog-title"
       className={cn(
-        "font-heading text-base leading-none font-medium",
+        "font-serif text-2xl leading-tight font-semibold",
         className
       )}
       {...props}
