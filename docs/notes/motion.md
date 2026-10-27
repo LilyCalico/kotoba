@@ -8,12 +8,14 @@
 
 | やりたいこと | 使う API | このリポジトリでの例 |
 | --- | --- | --- |
-| 要素が現れるときに動かす | `motion.*` の `initial` / `animate` / `transition` | ログの要素、ヒントカード、結果カード |
-| 弾むように収める・一拍おいて始める | `type: "spring"` と `delay` | 結果カードに貼られるホログラムのステッカー |
-| 別の要素どうしを 1 つながりの変形でつなぐ | `layoutId` | Floating の設問カード → Pinned の設問カード |
-| 変形の中で子要素の歪みを抑える | `layout="position"` | 設問カードの中のラベルと文言 |
-| ずっと繰り返す | キーフレーム配列と `repeat: Infinity` | 応答待ちの点 |
+| 要素が現れるときに動かす | `motion.*` の `initial` / `animate` / `transition` | ログの要素、ヒントと結果のウィンドウ |
+| 弾むように収める・一拍おいて始める | `type: "spring"` と `delay` | 結果のウィンドウに貼られるホログラムのステッカー |
+| 条件によって出現の動きを省く | `initial={false}` | 開き直したときのスタート画面のウィンドウ |
+| 別の要素どうしを 1 つながりの変形でつなぐ | `layoutId` | Floating の設問のウィンドウ → Pinned の設問のウィンドウ |
+| 変形の中で子要素の歪みを抑える | `layout="position"` | 設問のウィンドウの中のタイトルバーと文言 |
+| ずっと繰り返す | キーフレーム配列と `repeat: Infinity` | 応答待ちの読み込みバー |
 | OS の「視差効果を減らす」に従う | `MotionConfig reducedMotion="user"` | `app/providers.tsx` |
+| Motion を使わない動きで、視差効果を減らす設定を読む | `useReducedMotion` | 起動画面の打ち込み |
 
 ## 1. motion コンポーネントと出現の動き
 
@@ -56,35 +58,35 @@ export const cardAppear = {
 ### 包んで当てるか、コンポーネント自身に持たせるか
 
 - **ログの全要素に共通の動き**は、`play-screen.tsx` の `ChatItem` で包んで当てる。回答・発言・エラーなど中身の種類を問わず同じ動きになり、各コンポーネントは動きを知らなくてよい
-- **ヒントカード・結果カード・ステッカーの動き**は、コンポーネント自身（`motion.section` / `motion.div`）に持たせる。Storybook でコンポーネント単体を開いたときにも動きを確認できる
+- **ヒントと結果のウィンドウ、ステッカーの動き**は、コンポーネント自身（`motion.section` / `motion.div`）に持たせる。Storybook でコンポーネント単体を開いたときにも動きを確認できる
 
 包むときの注意として、包んだ `motion.div` がレイアウト上の親になる。中身の `ml-auto`（右寄せ）や `self-center`（中央寄せ）が効くよう、`ChatItem` 自身も `flex flex-col` にしている。
 
 ## 2. 弾む動きと遅延: spring と delay
 
-結果カードの右上には、ホログラムのステッカーが貼られる。画面で唯一の演出で、大きく傾いた状態から押し付けるように縮み、少し傾いた位置で弾んで止まる。
+結果のウィンドウの右上の角には、ホログラムのステッカーが貼られる。ゲームの見せ場で、大きく傾いた状態から押し付けるように縮み、少し傾いた位置で弾んで止まる。
 
 ```ts
 // components/game/motion.ts
 export const stickerStick = {
   initial: { opacity: 0, scale: 1.8, rotate: -40 },
-  animate: { opacity: 1, scale: 1, rotate: -10 },
+  animate: { opacity: 1, scale: 1, rotate: -12 },
   transition: { delay: 0.25, type: "spring", stiffness: 420, damping: 18, mass: 0.8 },
 } as const;
 ```
 
 ```tsx
 // components/game/result-card.tsx
-<motion.div {...stickerStick} aria-hidden className="holo absolute -top-7 -right-2 ...">
+<motion.div {...stickerStick} aria-hidden className="holo absolute -top-[1.375rem] -right-5 ...">
 ```
 
 - `type: "spring"` にすると、時間（`duration`）ではなくばねの物理で動く。`stiffness` が大きいほど速く戻り、`damping` が小さいほど行き過ぎて弾む
-- `delay` はカードの出現（`cardAppear`、0.25 秒）が終わるのを待つためのもの。カードが現れてから貼られるので、2 つの動きが重ならない
+- `delay` はウィンドウの出現（`cardAppear`、0.25 秒）が終わるのを待つためのもの。ウィンドウが現れてから貼られるので、2 つの動きが重ならない
 - `rotate` も transform なので、reduced motion では止まり、不透明度だけが変わる
 
 ## 3. 別の要素をつなぐ変形: layoutId
 
-設問の提示では、画面中央に Floating の設問カードがある。チャットへ移ると、それは消えてヘッダー直下に Pinned の設問カードが現れる。React から見ると**別のコンポーネントが外れて、別のコンポーネントが付いた**だけだが、両方に同じ `layoutId` を渡すと、Motion が 1 枚のカードが移動・変形したように見せる。
+設問の提示では、画面中央に Floating の設問のウィンドウがある。チャットへ移ると、それは消えてヘッダー直下に Pinned の設問のウィンドウが現れる。React から見ると**別のコンポーネントが外れて、別のコンポーネントが付いた**だけだが、両方に同じ `layoutId` を渡すと、Motion が 1 枚のウィンドウが移動・変形したように見せる。
 
 ```tsx
 // 設問の提示（GameScreen）
@@ -119,7 +121,14 @@ Motion は、消える要素の位置と大きさを覚えておき、新しく�
 
 scale で変形すると、CSS クラスで付けた角丸や影も一緒に引き伸ばされる。Motion が補正するのは `style` で渡した `borderRadius` と `boxShadow` だけで、値も px と % に限られる（`calc()` や rem は補間できない）。
 
-設問カードは角も影も持たないため、この問題は起きない。角丸や影を持つ要素を `layoutId` で変形させるときは、それらを `style` に px で渡す。
+設問のウィンドウは `window` の影を持つため、同じ影を `style` に px で渡し直している。インラインの `style` はクラスの指定より強いので、見た目は変わらず、Motion だけが補正できるようになる。
+
+```tsx
+// components/game/teaser-card.tsx
+<motion.section className="window ..." layoutId={layoutId} style={{ boxShadow: "4px 4px 0 #2b2f5c" }}>
+```
+
+`var(--foreground)` のような CSS 変数も補間できないため、色は値で書く。1.5px の枠は補正の対象にならず、変形の間だけわずかに太さが変わるが、0.4 秒の間なので目立たない。
 
 ## 4. 繰り返す動き: キーフレームと repeat
 
@@ -128,12 +137,20 @@ scale で変形すると、CSS クラスで付けた角丸や影も一緒に引�
 ```tsx
 // components/game/pending-indicator.tsx
 <motion.span
-  animate={{ opacity: [0.25, 1, 0.25] }}
-  transition={{ delay: index * 0.15, duration: 1.2, ease: "easeInOut", repeat: Infinity }}
+  animate={{ opacity: [0, 1, 1, 0] }}
+  initial={{ opacity: 0 }}
+  transition={{
+    delay: (index / BLOCK_COUNT) * SWEEP_SECONDS,
+    duration: SWEEP_SECONDS,
+    ease: "linear",
+    repeat: Infinity,
+    times: [0, 0.05, 0.6, 0.65],
+  }}
 />
 ```
 
-- 3 つの点に `delay` を 0.15 秒ずつずらして、波のように光らせている
+- 読み込みバーの 12 個のブロックに、1 周の長さを 12 等分した `delay` をずらして与え、左から順に灯っては消えるようにしている
+- `times` はキーフレームの配列と同じ長さで、各キーフレームに達する時刻を 0〜1 の割合で決める。すばやく灯り（0.05）、しばらく灯ったまま（0.6 まで）にしてから消す
 - 不透明度だけを動かすので、reduced motion でも止まらない
 
 ## 5. reduced motion: MotionConfig
@@ -153,17 +170,43 @@ OS の「視差効果を減らす」（`prefers-reduced-motion: reduce`）が有
 
 Motion の実装（`motion-dom` の `positionalKeys`）がこの区別をしている。そのため reduce のとき、スライドや拡大は止まり、フェードと応答待ちの点滅は残る。位置が動かないフェードは前庭障害の引き金になりにくい、という考え方による。
 
-- ルートで一括して従わせるので、個別のコンポーネントで reduce かどうかを判定しない
+- ルートで一括して従わせるので、Motion の動きは個別のコンポーネントで reduce かどうかを判定しない
+
+### Motion を使わない動きで reduce を読む: useReducedMotion
+
+起動画面の打ち込みは、`setTimeout` で 1 文字ずつ state を進める動きで、Motion の値の補間ではない。`MotionConfig` はここには効かないため、`useReducedMotion` で設定を読み、自分で分岐する。
+
+```tsx
+// components/game/start-screen.tsx
+const reduceMotion = useReducedMotion();
+const showAll = !autoplay || reduceMotion;
+<BootComputer text={showAll ? BOOT_TEXT : BOOT_TEXT.slice(0, typed)} />
+```
+
+`useReducedMotion` は OS の設定（`prefers-reduced-motion`）を返し、設定が変わると描き直す。reduce のときは文を最初から全部出し、一拍おいてスタート画面へ移る。カーソルの点滅は CSS のアニメーションなので、Tailwind の `motion-reduce:animate-none` で止める。
 
 ### 見えない 1 コマ
 
 reduce のとき、出現の最初の 1 コマだけは `initial` の transform（`y: 8` など）を持ったまま描かれることがある。このコマは不透明度が 0 なので目には見えず、次のコマで最終位置に移る。Playwright などで transform を記録して検証するときは、不透明度が 0 のコマを除いて判定する。
 
-## 6. アニメーションとフォーカス・読み上げ
+## 6. 条件によって出現の動きを省く: initial={false}
+
+`initial` に `false` を渡すと、マウントした時点から `animate` の値で描き、出現の動きを省く。スタート画面のウィンドウは、起動画面から移ったときだけ 0.92 倍から開き、同じタブで開き直したときは動かさない。
+
+```tsx
+// components/game/start-screen.tsx
+<motion.div
+  animate={{ opacity: 1, scale: 1 }}
+  initial={booted ? { opacity: 0, scale: 0.92 } : false}
+  transition={{ type: "spring", stiffness: 420, damping: 26 }}
+>
+```
+
+## 7. アニメーションとフォーカス・読み上げ
 
 フォーカスの移動とライブリージョンの更新は、要素が DOM に入った時点で行い、動きの完了を待たない。不透明度が 0 の間でも要素はフォーカスを受けられる。`onAnimationComplete` を待ってからフォーカスを移すと、キーボードやスクリーンリーダーの利用者だけが待たされるため、そうしない。
 
-## 7. 動きを確かめる
+## 8. 動きを確かめる
 
 ### Storybook
 
@@ -176,7 +219,7 @@ const [count, setCount] = useState(1);
 <HintCard {...args} key={count} />
 ```
 
-`Game/TeaserCard/Settle` は、同じ `layoutId` で Floating と Pinned を切り替え、変形を再生する。
+`Game/TeaserCard/Settle` は、同じ `layoutId` で Floating と Pinned を切り替え、変形を再生する。`Game/StartScreen/Boot` は起動画面の打ち込みを再生し、`Game/StartScreen/BootTyped` は打ち終えた状態で止める。
 
 ### ブラウザで reduce を試す
 
@@ -184,7 +227,7 @@ const [count, setCount] = useState(1);
 - Chrome DevTools: Rendering パネルの「Emulate CSS media feature prefers-reduced-motion」
 - Playwright: `browser.newContext({ reducedMotion: "reduce" })`
 
-## 8. つまずきやすい点
+## 9. つまずきやすい点
 
 | 症状 | 原因と対処 |
 | --- | --- |
@@ -200,7 +243,8 @@ const [count, setCount] = useState(1);
 | --- | --- |
 | `apps/web/app/providers.tsx` | `MotionConfig reducedMotion="user"` |
 | `apps/web/components/game/motion.ts` | 共有する出現の定義と、ステッカーのスプリング |
-| `apps/web/components/game/play-screen.tsx` | `ChatItem`、設問カードの `layoutId` |
-| `apps/web/components/game/teaser-card.tsx` | `layoutId`、`layout="position"` |
-| `apps/web/components/game/hint-card.tsx` / `result-card.tsx` | カードの出現、ステッカーの貼り付け |
-| `apps/web/components/game/pending-indicator.tsx` | キーフレームの繰り返し |
+| `apps/web/components/game/play-screen.tsx` | `ChatItem`、設問のウィンドウの `layoutId` |
+| `apps/web/components/game/teaser-card.tsx` | `layoutId`、`layout="position"`、`style` の影 |
+| `apps/web/components/game/hint-card.tsx` / `result-card.tsx` | ウィンドウの出現、ステッカーの貼り付け |
+| `apps/web/components/game/pending-indicator.tsx` | キーフレームの繰り返しと `times` |
+| `apps/web/components/game/start-screen.tsx` | `useReducedMotion`、`initial={false}` |
