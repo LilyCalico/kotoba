@@ -267,6 +267,20 @@ describe("gameReducer", () => {
   });
 });
 
+describe("対応外の言語", () => {
+  it("unsupported-language を積んで idle に戻り、続けて送れる", () => {
+    const state = run(
+      chat,
+      { type: "input-sent", text: "这是食物吗" },
+      { type: "input-resolved", result: { kind: "unsupported_language" } },
+    );
+
+    expect(state.status).toBe("idle");
+    expect(state.entries.at(-1)).toEqual({ id: "1", kind: "unsupported-language" });
+    expect(latestAnnouncement(state)).toEqual({ id: "1", kind: "unsupported-language" });
+  });
+});
+
 describe("finishedResult", () => {
   it("進行中のゲームでは何も返さない", () => {
     expect(finishedResult(chat)).toBeUndefined();

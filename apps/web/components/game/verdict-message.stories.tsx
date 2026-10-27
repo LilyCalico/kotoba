@@ -1,6 +1,6 @@
 import { verdictSchema } from "@kotoba/shared";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { VerdictMessage } from "@/components/game/verdict-message";
+import { UnsupportedLanguageMessage, VerdictMessage } from "@/components/game/verdict-message";
 
 const meta = {
   title: "Game/VerdictMessage",
@@ -29,4 +29,9 @@ export const AllVerdicts: Story = {
       ))}
     </>
   ),
+};
+
+/** 日本語・英語・スウェーデン語以外の入力への案内。 */
+export const UnsupportedLanguage: Story = {
+  render: () => <UnsupportedLanguageMessage />,
 };
