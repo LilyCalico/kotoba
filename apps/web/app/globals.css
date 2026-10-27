@@ -11,6 +11,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-serif: var(--font-serif);
+  --font-pixel: var(--font-pixel);
   --font-heading: var(--font-sans);
   --color-ring: var(--ring);
   --color-input: var(--input);
@@ -32,6 +33,10 @@
   --color-bubble: var(--bubble);
   --color-bubble-foreground: var(--bubble-foreground);
   --color-label: var(--label);
+  --color-titlebar-hint: var(--titlebar-hint);
+  --color-titlebar-result: var(--titlebar-result);
+  --color-titlebar-system: var(--titlebar-system);
+  --color-meter: var(--meter);
   --color-answer-yes: var(--answer-yes);
   --color-answer-no: var(--answer-no);
   --color-answer-unclear: var(--answer-unclear);
@@ -43,64 +48,88 @@
   --radius-2xl: var(--radius);
   --radius-3xl: var(--radius);
   --radius-4xl: var(--radius);
-  --shadow-press: 0.1875rem 0.1875rem 0 var(--foreground);
-  --shadow-press-lg: 0.25rem 0.25rem 0 var(--foreground);
+  --shadow-window: 0.25rem 0.25rem 0 var(--foreground);
+  --shadow-press: 0.125rem 0.125rem 0 var(--foreground);
+}
+
+/* 起動画面のカーソルの点滅。 */
+@theme {
+  --animate-caret: caret 1s steps(1, end) infinite;
+  @keyframes caret {
+    50% {
+      opacity: 0;
+    }
+  }
 }
 
 /*
- * 配色は Y2K パステル。役割ごとに色を割り当て、同じ色を別の役割に使わない（`docs/specifications/design.md`）。
+ * 配色は Y2K パステルのデスクトップ。役割ごとに色を割り当て、同じ色を別の役割に使わない（`docs/specifications/design.md`）。
  * 文字の組み合わせはすべて WCAG 1.4.3 の 4.5:1、コントロールの輪郭は 1.4.11 の 3:1 を満たす。
  */
 :root {
-  /* 画面の地と、その上の文字 */
-  --background: #e1e3fd;
-  --foreground: #2d241b;
+  /* 画面の地（方眼紙）と、その上の文字 */
+  --background: #fce7f3;
+  --grid: #f5cbe6;
+  --foreground: #2b2f5c;
 
-  /* 読ませるもの（設問・ヒント・結果のカード）と、入力欄・ダイアログ・トーストの面 */
+  /* ウィンドウ（設問・ヒント・結果・ダイアログ・トースト）の面と、入力欄の面 */
   --card: #ffffff;
-  --card-foreground: #2d241b;
+  --card-foreground: #2b2f5c;
   --popover: #ffffff;
-  --popover-foreground: #2d241b;
+  --popover-foreground: #2b2f5c;
 
-  /* 主ボタン（送信・ゲームの開始・Play again） */
-  --primary: #c5e17a;
-  --primary-foreground: #2d241b;
+  /* 主ボタンのキーキャップ。縁の色と、面のグラデーション、ずらした影の色 */
+  --primary: #f39fcb;
+  --primary-hover: #ee8cbf;
+  --primary-foreground: #2b2f5c;
+  --keycap-face-from: #f6b2d6;
+  --keycap-face-via: #fad0e6;
+  --keycap-face-to: #ffeff7;
+  --keycap-shadow: #3a3f6e;
 
-  /* 副ボタン（ヒント・Cancel） */
+  /* 副ボタン（ヒント・Cancel）。ダイアログのボタンの白い面 */
   --secondary: #ffffff;
-  --secondary-foreground: #2d241b;
-  --accent: #f1e6db;
-  --accent-foreground: #2d241b;
+  --secondary-foreground: #2b2f5c;
+  --accent: #fdf0f7;
+  --accent-foreground: #2b2f5c;
 
   /* 補足テキストと、例文の下地 */
-  --muted: #f1e6db;
-  --muted-foreground: #675d52;
+  --muted: #fce7f3;
+  --muted-foreground: #5c5f86;
 
-  /* カード・コントロールの輪郭。地とカードの両方に対して 3:1 を満たす */
-  --border: #382e24;
-  --input: #382e24;
+  /* ウィンドウ・コントロールの輪郭。地と面の両方に対して 3:1 を満たす */
+  --border: #2b2f5c;
+  --input: #2b2f5c;
 
-  /* フォーカスリング。地・カード・ライムのどの上でも見える */
-  --ring: #2d241b;
+  /* フォーカスリング。地・面・キーキャップのどの上でも見える */
+  --ring: #2b2f5c;
 
-  /* 取り消せない操作（ギブアップの確定） */
-  --destructive: #ffc3c3;
-  --destructive-foreground: #2d241b;
+  /* 入力の誤り */
+  --destructive: #b42350;
+  --destructive-foreground: #ffffff;
 
   /* プレイヤーの発言の吹き出し */
-  --bubble: #2d241b;
+  --bubble: #2b2f5c;
   --bubble-foreground: #ffffff;
 
-  /* ラベル（Question・品詞）のピル */
+  /* ラベル。設問のタイトルバーと、品詞のピル */
   --label: #dcd0ff;
+
+  /* ウィンドウのタイトルバー。ヒント、結果とスタート画面、応答待ちとダイアログ */
+  --titlebar-hint: #f9d28f;
+  --titlebar-result: #f4a9d2;
+  --titlebar-system: #8f9bee;
+
+  /* 読み込みバーのブロック（応答待ちと、ヒントの残り） */
+  --meter: #6f7fe0;
 
   /* 回答のピル。色だけに頼らず、文字とアイコンでも区別する */
   --answer-yes: #c5e17a;
-  --answer-no: #ffbfd9;
+  --answer-no: #ffb3a7;
   --answer-unclear: #addbff;
   --answer-meta: #ffe08a;
 
-  /* 角は四角。ピルと吹き出しだけを個別に丸める */
+  /* 角は四角。キーキャップ・ピル・吹き出し・パソコンの筐体だけを個別に丸める */
   --radius: 0;
 }
 
@@ -109,7 +138,7 @@
     @apply border-border outline-ring;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply grid-paper text-foreground;
   }
   html {
     @apply font-sans;
@@ -127,19 +156,79 @@
   }
 }
 
+/* 画面の地。淡いピンクに 1px の方眼を引く。 */
+@utility grid-paper {
+  background-color: var(--background);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 1.625rem 1.625rem;
+}
+
 /*
- * 押せるもの。1px の枠とずらしたベタの影を持ち、押すと影の分だけ沈んで影が消える。
- * 影を持つのは押せるものだけで、カードや吹き出しには付けない。
+ * 読ませるものの入れ物。白い面に 1.5px の紺の枠と、ずらしたベタの影をとる。
+ * タイトルバーは `WindowTitleBar` で載せる。
+ */
+@utility window {
+  border: 1.5px solid var(--border);
+  background-color: var(--card);
+  color: var(--card-foreground);
+  box-shadow: var(--shadow-window);
+}
+
+/*
+ * 主ボタンのキーキャップ。紺の枠の内側にピンクの縁をとり、その内側に横向きのグラデーションの面を敷く。
+ * 面は `::before` で描くので、`Link` にもそのまま当てられる。押すと影の分だけ沈んで影が消える。
+ * 角の丸みは `--keycap-radius`、面の模様は `--keycap-face` で差し替えられる（送信の四角いキーは丸みを大きく、面を放射状にする）。
+ */
+@utility keycap {
+  position: relative;
+  isolation: isolate;
+  border: 1.5px solid var(--border);
+  border-radius: var(--keycap-radius, 0.3125rem);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: 0.25rem 0.25rem 0 var(--keycap-shadow);
+  transition-property: transform, box-shadow, background-color;
+  transition-duration: 100ms;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0.25rem;
+    z-index: -1;
+    border-radius: calc(var(--keycap-radius, 0.3125rem) - 0.1875rem);
+    background-image: var(
+      --keycap-face,
+      linear-gradient(90deg, var(--keycap-face-from), var(--keycap-face-via) 55%, var(--keycap-face-to))
+    );
+    box-shadow: inset 1.5px 1.5px 0 rgb(255 255 255 / 0.8);
+    pointer-events: none;
+  }
+  &:hover:not([data-disabled]),
+  &[data-hovered] {
+    background-color: var(--primary-hover);
+  }
+  &:active:not([data-disabled]),
+  &[data-pressed] {
+    transform: translate(0.25rem, 0.25rem);
+    box-shadow: none;
+  }
+  &[data-disabled] {
+    box-shadow: none;
+  }
+}
+
+/*
+ * 副ボタン。ダイアログのボタンのように、白い面に 1.5px の枠と小さくずらした影をとる。押すと影の分だけ沈む。
  */
 @utility pressable {
-  border-width: 1px;
-  border-color: var(--border);
+  border: 1.5px solid var(--border);
   box-shadow: var(--shadow-press);
   transition-property: transform, box-shadow, background-color;
   transition-duration: 100ms;
   &:active:not([data-disabled]),
   &[data-pressed] {
-    transform: translate(0.1875rem, 0.1875rem);
+    transform: translate(0.125rem, 0.125rem);
     box-shadow: none;
   }
   &[data-disabled] {
@@ -158,17 +247,9 @@
 }
 
 /*
- * ホログラムのステッカーの虹色。正解とギブアップの結果、スタート画面の飾りだけに使う。
+ * ホログラムのステッカーの虹色。正解とギブアップの結果だけに使う。
  * 文字は直接載せず、白い円の上に置く。
  */
 @utility holo {
-  background-image: conic-gradient(
-    from 140deg,
-    var(--answer-no),
-    var(--answer-unclear),
-    var(--answer-yes),
-    var(--answer-meta),
-    var(--label),
-    var(--answer-no)
-  );
+  background-image: conic-gradient(from 140deg, #ffbfd9, #addbff, #c5e17a, #ffe08a, #dcd0ff, #ffbfd9);
 }

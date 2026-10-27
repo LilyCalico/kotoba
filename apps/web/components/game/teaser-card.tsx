@@ -4,13 +4,13 @@ import { cn } from "cn";
 import { motion } from "motion/react";
 import { useId } from "react";
 
-import { LabelPill } from "@/components/game/label-pill";
+import { WINDOW_TITLE_CLASS, WindowTitleBar } from "@/components/ui/window";
 
-/** 設問の提示からチャットへ移るとき、設問カードが収まるまでの動き。 */
+/** 設問の提示からチャットへ移るとき、設問のウィンドウが収まるまでの動き。 */
 export const TEASER_LAYOUT_TRANSITION = { duration: 0.4, ease: [0.22, 1, 0.36, 1] } as const;
 
 /**
- * 設問。白いカードに 1px の枠をとり、「Question」のラベルと、明朝の設問を載せる。
+ * 設問。ラベンダーのタイトルバー「Question」を持つウィンドウに、明朝の設問を載せる。
  * `floating` は設問の提示で画面中央に浮かべる様式、`pinned` はチャットでヘッダー直下に固定する様式。
  *
  * 2 つの様式に同じ `layoutId` を渡すと、様式が切り替わるとき位置と大きさを保ったまま変形してつなぐ。
@@ -27,26 +27,30 @@ export function TeaserCard({
 }) {
   const labelId = useId();
   const floating = variant === "floating";
+  const layout = layoutId ? "position" : undefined;
 
   return (
     <motion.section
       aria-labelledby={labelId}
-      className={cn(
-        "flex w-full flex-col border border-border bg-card text-card-foreground",
-        floating ? "gap-4 px-6 py-7" : "gap-2.5 px-4.5 pt-4 pb-4.5",
-      )}
+      className="window flex w-full flex-col"
       layoutId={layoutId}
+      // 変形の間に影が引き伸ばされないよう、Motion が補正できる px の値で `style` に渡す。値は `window` の影と同じ。
+      style={{ boxShadow: "4px 4px 0 #2b2f5c" }}
       transition={TEASER_LAYOUT_TRANSITION}
     >
-      <motion.div layout={layoutId ? "position" : undefined} transition={TEASER_LAYOUT_TRANSITION}>
-        <LabelPill id={labelId}>Question</LabelPill>
+      <motion.div layout={layout} transition={TEASER_LAYOUT_TRANSITION}>
+        <WindowTitleBar controls={["minimize", "maximize"]} tone="question">
+          <p className={WINDOW_TITLE_CLASS} id={labelId}>
+            Question
+          </p>
+        </WindowTitleBar>
       </motion.div>
       <motion.p
         className={cn(
           "font-serif leading-tight text-balance",
-          floating ? "text-[2rem]" : "text-[1.5rem]",
+          floating ? "px-6 pt-5 pb-7 text-[2rem]" : "px-4 pt-3 pb-4 text-[1.5rem]",
         )}
-        layout={layoutId ? "position" : undefined}
+        layout={layout}
         transition={TEASER_LAYOUT_TRANSITION}
       >
         {teaser}

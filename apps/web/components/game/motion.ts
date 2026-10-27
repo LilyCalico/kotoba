@@ -10,7 +10,7 @@ export const chatItemAppear = {
   transition: { duration: 0.2, ease: "easeOut" },
 } as const;
 
-/** ヒントカードの出現。わずかに拡大しながら現れる。 */
+/** ヒントと結果のウィンドウの出現。わずかに拡大しながら現れる。 */
 export const cardAppear = {
   initial: { opacity: 0, scale: 0.96 },
   animate: { opacity: 1, scale: 1 },
@@ -18,12 +18,12 @@ export const cardAppear = {
 } as const;
 
 /**
- * 結果のカードにホログラムのステッカーが貼られる動き。画面で唯一の演出。
- * 大きく傾いた状態から、押し付けるように縮んで少し傾いた位置に収まる。カードが現れてから一拍おいて始める。
+ * 結果のウィンドウの角にホログラムのステッカーが貼られる動き。ゲームの見せ場。
+ * 大きく傾いた状態から、押し付けるように縮んで少し傾いた位置に収まる。ウィンドウが現れてから一拍おいて始める。
  */
 export const stickerStick = {
   initial: { opacity: 0, scale: 1.8, rotate: -40 },
-  animate: { opacity: 1, scale: 1, rotate: -10 },
+  animate: { opacity: 1, scale: 1, rotate: -12 },
   transition: { delay: 0.25, type: "spring", stiffness: 420, damping: 18, mass: 0.8 },
 } as const;
 

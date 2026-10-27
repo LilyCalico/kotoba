@@ -7,16 +7,18 @@ import { useId } from "react";
 
 import { LabelPill } from "@/components/game/label-pill";
 import { cardAppear, stickerStick } from "@/components/game/motion";
+import { WINDOW_TITLE_CLASS, WindowStack, WindowTitleBar } from "@/components/ui/window";
 
 export function resultHeading(outcome: Outcome): string {
   return outcome === "cleared" ? "You found it" : "The word was";
 }
 
 /**
- * 正解の単語を辞書の一項目として見せるカード。見出し・単語・品詞・直訳・定義・補足・例文の順に組む。
+ * 正解の単語を辞書の一項目として見せるウィンドウ。ピンクのタイトルバーに見出しを置き、
+ * 単語・品詞・直訳・定義・補足・例文の順に組む。後ろに 2 枚のウィンドウを重ね、画面の主役にする。
  * クリアとギブアップで見出しとステッカーのアイコンを変える。
  *
- * カードの右上にホログラムのステッカーが貼られる。画面で唯一の演出で、カードが現れてから一拍おいて貼られる。
+ * ウィンドウの右上の角にホログラムのステッカーが貼られる。ゲームの見せ場で、ウィンドウが現れてから一拍おいて貼られる。
  * 見出しはゲーム終了時のフォーカス先になるため、`ref` を受け付けて `tabIndex={-1}` を持つ。
  */
 export function ResultCard({
@@ -31,50 +33,57 @@ export function ResultCard({
   const StickerIcon = outcome === "cleared" ? CheckIcon : FlagIcon;
 
   return (
-    <motion.section
-      {...cardAppear}
-      aria-labelledby={headingId}
-      className="relative mt-7 flex w-full flex-col gap-4 border border-border bg-card px-5 pt-6 pb-6 text-card-foreground"
-    >
-      <motion.div
-        {...stickerStick}
-        aria-hidden
-        className="holo absolute -top-9 -right-2 flex size-[5.75rem] items-center justify-center rounded-full border border-border"
-      >
-        <span className="flex size-[3.625rem] items-center justify-center rounded-full border border-border bg-card">
-          <StickerIcon className="size-6" strokeWidth={2.4} />
-        </span>
-      </motion.div>
-
-      <div className="flex flex-col gap-1.5">
-        {/* ステッカーと重ならないよう、見出しの行だけ右を空ける。単語は幅いっぱいに使う */}
-        <h2 className="mr-20 w-fit text-sm font-semibold focus-ring" id={headingId} ref={ref} tabIndex={-1}>
-          {resultHeading(outcome)}
-        </h2>
-        <p
-          className="font-serif text-[2.5rem] leading-none font-semibold hyphens-auto wrap-break-word md:text-[3.25rem]"
-          lang="sv"
+    <motion.div {...cardAppear} className="mt-7">
+      <WindowStack>
+        <section
+          aria-labelledby={headingId}
+          className="relative flex flex-col border-[1.5px] border-border bg-card text-card-foreground"
         >
-          {word}
-        </p>
-      </div>
-      <div className="-mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1">
-        <LabelPill>{partOfSpeech}</LabelPill>
-        {literal && <p className="text-sm text-muted-foreground">Literally “{literal}”</p>}
-      </div>
+          <WindowTitleBar tone="result">
+            <h2 className={`${WINDOW_TITLE_CLASS} focus-ring`} id={headingId} ref={ref} tabIndex={-1}>
+              {resultHeading(outcome)}
+            </h2>
+          </WindowTitleBar>
 
-      <p className="font-serif text-[1.375rem] leading-snug">{definition}</p>
-      {note && <p className="text-sm leading-relaxed text-muted-foreground">{note}</p>}
-      {example && (
-        <figure className="flex flex-col gap-0.5 bg-muted px-3.5 py-3">
-          <blockquote className="text-[0.9375rem] font-medium" lang="sv">
-            {example.sv}
-          </blockquote>
-          <figcaption className="text-[0.8125rem] leading-relaxed text-muted-foreground">
-            {example.translation}
-          </figcaption>
-        </figure>
-      )}
-    </motion.section>
+          <motion.div
+            {...stickerStick}
+            aria-hidden
+            className="holo absolute -top-[1.375rem] -right-5 flex size-[4.75rem] items-center justify-center rounded-full border-[1.5px] border-border shadow-[0.1875rem_0.1875rem_0_var(--foreground)]"
+          >
+            <span className="flex size-[2.875rem] items-center justify-center rounded-full border-[1.5px] border-border bg-card">
+              <StickerIcon className="size-[1.375rem]" strokeWidth={2.6} />
+            </span>
+          </motion.div>
+
+          <div className="flex flex-col gap-4 px-5 pt-6 pb-5.5">
+            <div className="flex flex-col gap-3">
+              <p
+                className="font-serif text-[2.5rem] leading-none font-semibold hyphens-auto wrap-break-word md:text-[3.25rem]"
+                lang="sv"
+              >
+                {word}
+              </p>
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                <LabelPill>{partOfSpeech}</LabelPill>
+                {literal && <p className="text-sm text-muted-foreground">Literally “{literal}”</p>}
+              </div>
+            </div>
+
+            <p className="font-serif text-[1.3125rem] leading-snug">{definition}</p>
+            {note && <p className="text-sm leading-relaxed text-muted-foreground">{note}</p>}
+            {example && (
+              <figure className="flex flex-col gap-0.5 border border-border bg-muted px-3.5 py-3 shadow-[inset_0.125rem_0.125rem_0_var(--grid)]">
+                <blockquote className="text-[0.9375rem] font-medium" lang="sv">
+                  {example.sv}
+                </blockquote>
+                <figcaption className="text-[0.8125rem] leading-relaxed text-muted-foreground">
+                  {example.translation}
+                </figcaption>
+              </figure>
+            )}
+          </div>
+        </section>
+      </WindowStack>
+    </motion.div>
   );
 }

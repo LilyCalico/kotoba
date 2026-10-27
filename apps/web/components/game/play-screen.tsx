@@ -295,7 +295,7 @@ function Chat({
     <>
       {!finished && (
         <a
-          className="sr-only border border-border bg-card px-3 py-2 text-sm font-medium text-card-foreground focus-ring focus:not-sr-only focus:absolute focus:top-2 focus:left-4 focus:z-20"
+          className="sr-only border-[1.5px] border-border bg-card px-3 py-2 text-sm font-medium text-card-foreground focus-ring focus:not-sr-only focus:absolute focus:top-2 focus:left-4 focus:z-20"
           href={`#${PLAYER_INPUT_ID}`}
           onClick={(event) => {
             event.preventDefault();

@@ -1,4 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { ArrowUpIcon } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 
 const meta = {
@@ -19,11 +21,13 @@ export const Variants: Story = {
   render: () => (
     <div className="flex flex-wrap items-center gap-3">
       <Button>Start a game</Button>
+      <Button aria-label="Send" size="icon-lg" variant="key">
+        <ArrowUpIcon aria-hidden className="size-5" strokeWidth={2.4} />
+      </Button>
       <Button variant="secondary">Give me a hint</Button>
       <Button variant="outline">Cancel</Button>
       <Button variant="ghost">Close</Button>
       <Button variant="link">How to play</Button>
-      <Button variant="destructive">Reset</Button>
     </div>
   ),
 };

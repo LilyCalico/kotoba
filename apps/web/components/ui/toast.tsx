@@ -42,7 +42,7 @@ export function Toaster() {
     >
       {({ toast: item }) => (
         <ToastPrimitive
-          className="flex w-full max-w-[40rem] items-center gap-3 border border-border bg-popover py-2 pr-2 pl-4 text-sm font-medium text-popover-foreground focus-ring"
+          className="window flex w-full max-w-[40rem] items-center gap-3 bg-popover py-2 pr-2 pl-4 text-sm font-medium text-popover-foreground focus-ring"
           toast={item}
         >
           <ToastContentPrimitive className="min-w-0 flex-1 py-1">

@@ -12,7 +12,7 @@ export function hintButtonText(remaining: number): string {
 }
 
 /**
- * 入力欄の下に置く副ボタン。残りの回数を 3 つの点で示し、塗った点が残りの数になる。
+ * 入力欄の下に置く副ボタン。残りの回数を読み込みバーの 3 つのブロックで示し、塗ったブロックが残りの数になる。
  * 残りが 0 のとき、または送信中は押せない。ヒントの要求が失敗したときのフォーカス先になるため、`ref` を受け付ける。
  */
 export function HintButton({
@@ -29,7 +29,7 @@ export function HintButton({
   return (
     <Button
       aria-label={hintButtonText(remaining)}
-      className="self-start"
+      className="mr-0.5 self-start"
       isDisabled={disabled || remaining <= 0}
       onPress={onPress}
       ref={ref}
@@ -37,15 +37,9 @@ export function HintButton({
     >
       <LightbulbIcon aria-hidden />
       Show a hint
-      <span aria-hidden className="ml-0.5 inline-flex gap-1">
+      <span aria-hidden className="ml-0.5 inline-flex gap-0.5 border-[1.5px] border-border p-0.5">
         {Array.from({ length: MAX_HINTS }, (_, index) => (
-          <span
-            className={cn(
-              "size-2 rounded-full border border-foreground",
-              index >= MAX_HINTS - remaining && "bg-foreground",
-            )}
-            key={index}
-          />
+          <span className={cn("h-[0.6875rem] w-2", index < remaining && "bg-meter")} key={index} />
         ))}
       </span>
     </Button>

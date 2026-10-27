@@ -31,8 +31,8 @@ const VERDICT_STYLE: Record<Verdict, { icon: LucideIcon; className: string }> = 
 };
 
 /**
- * 質問への 5 値の回答。画面で唯一の、アイコン付きの太字の丸いピル。
- * Yes はライム、No はピンク、Hard to say は空色、That's not related は白に破線の枠、
+ * 質問への 5 値の回答。画面で唯一の、アイコン付きの太字の丸いピル。平たく影を持たず、立体のボタンと形で見分ける。
+ * Yes はライム、No はコーラル、Hard to say は空色、That's not related は白に破線の枠、
  * Try a yes-or-no question（質問の形への指摘）は黄にする。
  */
 export function VerdictMessage({

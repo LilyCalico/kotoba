@@ -12,7 +12,7 @@ import { remainingLength, validateInput } from "@/lib/game/input";
 export const INPUT_LABEL = "Ask a question or guess the word";
 
 /**
- * 質問と解答を兼ねる単一の入力欄と、主ボタンの送信。
+ * 質問と解答を兼ねる単一の入力欄と、四角いキーキャップの送信。
  * 入力値は親が持ち、送信に失敗したときも同じ文字列を残して再送できるようにする。
  * `validateInput` が弾く入力は送信できず、送る文字列は `trim` する。
  * `actions` は残りの文字数と同じ行の左に置く副ボタン（ヒント）。
@@ -48,7 +48,7 @@ export function InputForm({
         <FieldLabel className="sr-only" htmlFor={inputId}>
           {INPUT_LABEL}
         </FieldLabel>
-        <div className="flex w-full items-stretch gap-2.5 pr-[0.1875rem]">
+        <div className="flex w-full items-stretch gap-2.5 pr-1">
           <Input
             aria-describedby={counterId}
             autoComplete="off"
@@ -61,7 +61,7 @@ export function InputForm({
             ref={ref}
             value={value}
           />
-          <Button aria-label="Send" className="size-12" isDisabled={!canSubmit} type="submit">
+          <Button aria-label="Send" className="size-12" isDisabled={!canSubmit} type="submit" variant="key">
             <ArrowUpIcon aria-hidden className="size-5" strokeWidth={2.4} />
           </Button>
         </div>

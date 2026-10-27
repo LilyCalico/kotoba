@@ -14,6 +14,7 @@ import {
 } from "react-aria-components"
 
 import { Button } from "@/components/ui/button"
+import { WindowTitleBar } from "@/components/ui/window"
 import { XIcon } from "lucide-react"
 
 const DialogDescriptionContext = React.createContext<{
@@ -89,14 +90,16 @@ function Dialog({
       <ModalPrimitive
         data-slot="dialog-content"
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-5 border border-border bg-popover p-6 text-sm text-popover-foreground duration-100 outline-none data-entering:animate-in data-entering:fade-in-0 data-entering:zoom-in-95 data-exiting:animate-out data-exiting:fade-out-0 data-exiting:zoom-out-95 sm:max-w-md",
+          "window fixed top-1/2 left-1/2 z-50 flex w-full max-w-[calc(100%-2.5rem)] -translate-x-1/2 -translate-y-1/2 flex-col bg-popover text-sm text-popover-foreground duration-100 outline-none data-entering:animate-in data-entering:fade-in-0 data-entering:zoom-in-95 data-exiting:animate-out data-exiting:fade-out-0 data-exiting:zoom-out-95 sm:max-w-md",
           className
         )}
       >
+        {/* ダイアログもウィンドウとして描く。タイトルバーは飾りで、ダイアログの名前は DialogTitle が持つ */}
+        <WindowTitleBar controls={["minimize", "maximize"]} tone="system" />
         <DialogPrimitive
           data-slot="dialog"
           className={cn(
-            "[display:inherit] [gap:inherit] outline-none",
+            "relative grid gap-5 p-6 outline-none",
             showCloseButton && "*:data-[slot=dialog-header]:pr-8"
           )}
           aria-describedby={hasDescription ? descriptionId : undefined}

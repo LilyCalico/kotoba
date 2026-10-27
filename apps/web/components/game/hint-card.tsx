@@ -5,10 +5,11 @@ import { LightbulbIcon } from "lucide-react";
 import { motion } from "motion/react";
 
 import { cardAppear } from "@/components/game/motion";
+import { WINDOW_TITLE_CLASS, WindowTitleBar } from "@/components/ui/window";
 
 /**
- * 開示したヒント。読ませるものなので、設問と同じ白いカードに 1px の枠をとり、明朝で組む。
- * 何番目かは塗りのない小さな文字とアイコンで添え、ラベルや回答のピルと見分ける。
+ * 開示したヒント。ピーチのタイトルバー「Hint N of 3」を持つウィンドウに、明朝のヒントを載せる。
+ * タイトルバーの色で、設問（ラベンダー）や結果（ピンク）のウィンドウと見分ける。
  * ヒントはライブリージョンに載せないため、開示したときのフォーカス先になって読み上げさせる。
  * そのため `ref` を受け付けて `tabIndex={-1}` を持つ。描画された時点で、わずかに拡大しながら現れる。
  */
@@ -25,15 +26,17 @@ export function HintCard({
     <motion.section
       {...cardAppear}
       aria-label={`Hint ${index} of ${MAX_HINTS}`}
-      className="flex w-full flex-col gap-1.5 border border-border bg-card px-4 pt-3 pb-4 text-card-foreground focus-ring"
+      className="window mr-1 mb-1 flex flex-col focus-ring"
       ref={ref}
       tabIndex={-1}
     >
-      <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-        <LightbulbIcon aria-hidden className="size-3.5" />
-        Hint {index} of {MAX_HINTS}
-      </p>
-      <p className="font-serif text-xl leading-snug">{text}</p>
+      <WindowTitleBar controls={["close"]} tone="hint">
+        <p className={`${WINDOW_TITLE_CLASS} flex items-center gap-1.5`}>
+          <LightbulbIcon aria-hidden className="size-3.5" />
+          Hint {index} of {MAX_HINTS}
+        </p>
+      </WindowTitleBar>
+      <p className="px-3.5 pt-2.5 pb-3.5 font-serif text-xl leading-snug">{text}</p>
     </motion.section>
   );
 }
