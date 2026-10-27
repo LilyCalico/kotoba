@@ -72,8 +72,21 @@ export const answerResultSchema = z.object({
   result: z.lazy(() => gameResultSchema).optional(),
 });
 
+/** 入力が日本語・英語・スウェーデン語以外だったときの応答。画面は対応言語で聞き直すよう案内する。 */
+export const unsupportedLanguageResultSchema = z.object({
+  kind: z.literal("unsupported_language"),
+});
+
+/**
+ * 入力の判定結果。`kind` で 3 種に分かれる。
+ * 対応言語の判定は分類の段で行い、AI の出力を縛る `verdictSchema` の enum は広げない。
+ */
 export const inputResultSchema = z
-  .discriminatedUnion("kind", [questionResultSchema, answerResultSchema])
+  .discriminatedUnion("kind", [
+    questionResultSchema,
+    answerResultSchema,
+    unsupportedLanguageResultSchema,
+  ])
   .meta({ id: "InputResult" });
 export type InputResult = z.infer<typeof inputResultSchema>;
 

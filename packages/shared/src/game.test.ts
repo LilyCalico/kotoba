@@ -49,7 +49,7 @@ describe("hintRequestSchema", () => {
 });
 
 describe("inputResultSchema", () => {
-  it("kind で質問と解答を判別する", () => {
+  it("kind で質問・解答・対応外言語を判別する", () => {
     expect(inputResultSchema.parse({ kind: "question", verdict: "yes" })).toEqual({
       kind: "question",
       verdict: "yes",
@@ -58,5 +58,12 @@ describe("inputResultSchema", () => {
       kind: "answer",
       correct: false,
     });
+    expect(inputResultSchema.parse({ kind: "unsupported_language" })).toEqual({
+      kind: "unsupported_language",
+    });
+  });
+
+  it("verdict は 5 値だけを受け付ける", () => {
+    expect(inputResultSchema.safeParse({ kind: "question", verdict: "maybe" }).success).toBe(false);
   });
 });
