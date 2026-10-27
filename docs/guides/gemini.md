@@ -118,3 +118,11 @@ const { $schema: _schema, ...RESPONSE_JSON_SCHEMA } = z.toJSONSchema(judgementRe
 | キーが誤っている・モデル名が誤っている・Gemini の障害 | 入力ごとに `Gemini の判定に失敗した（1/2 回目）` と `（2/2 回目）` の警告 |
 
 **対処**: `apps/api/.env` の `GEMINI_API_KEY` と `GEMINI_MODEL` を確かめ、api を再起動する。
+
+### 続けて送ると、途中から「Something went wrong.」になる
+
+**症状**: しばらくは回答が返るが、短い間に何問も送ると再送の案内が続く。api のログの警告に `429` と `generate_content_free_tier_requests` が出る。
+
+**原因**: Gemini API の無料枠のレートリミットに達している。`gemini-3.5-flash-lite` の無料枠は 1 分に 15 リクエストで、1 回の判定は失敗時の再試行を含めて最大 2 リクエストを使う。
+
+**対処**: 1 分ほど待ってから送り直す。続けて試すことが多いなら、キーのプロジェクトで課金を有効にする。
