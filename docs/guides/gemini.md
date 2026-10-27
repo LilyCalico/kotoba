@@ -106,9 +106,9 @@ const { $schema: _schema, ...RESPONSE_JSON_SCHEMA } = z.toJSONSchema(judgementRe
 
 ## つまずきポイント
 
-### 質問を送ると「Something went wrong.」が出る
+### 質問や誤答を送ると「Something went wrong.」が出る
 
-**症状**: ゲームは始まるが、質問を送るたびに再送の案内が出る。
+**症状**: ゲームは始まり、正解とヒント・ギブアップは動くが、質問や正解でない入力を送るたびに再送の案内が出る。正規化マッチで正解しなかった入力はすべて AI に回るためである。
 
 **原因**: api が `ai_unavailable` を返している。
 
