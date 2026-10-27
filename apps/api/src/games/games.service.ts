@@ -9,11 +9,12 @@ import {
   type UiLocale,
   type Word,
   gameResultOf,
+  isAcceptedAnswer,
 } from "@kotoba/shared";
 import { Inject, Injectable } from "@nestjs/common";
 import { ApiError } from "../common/api-error.js";
+import { INPUT_JUDGE, type InputJudge } from "../judge/input-judge.js";
 import { WordsService } from "../words/words.service.js";
-import { classifyInput } from "./classify-input.js";
 import { GAME_STORE, type Game, type GameStore } from "./game-store.js";
 
 /**
@@ -25,6 +26,7 @@ export class GamesService {
   constructor(
     private readonly words: WordsService,
     @Inject(GAME_STORE) private readonly store: GameStore,
+    @Inject(INPUT_JUDGE) private readonly judge: InputJudge,
   ) {}
 
   async start({
@@ -47,6 +49,7 @@ export class GamesService {
   /**
    * 入力を判定し、Q&A 履歴に積む。正解ならゲームを終える。
    * クリア済みのゲームにはクリア時の結果を返し直し、ギブアップ済みのゲームは `game_finished` にする。
+   * 判定に失敗した入力（`ai_unavailable` など）は履歴に積まない。
    */
   async input(gameId: string, text: string): Promise<InputResult> {
     const game = await this.load(gameId);
@@ -56,11 +59,7 @@ export class GamesService {
     }
 
     const word = await this.wordOf(game);
-    const classified = classifyInput(word, text);
-    const result: InputResult =
-      classified.kind === "answer" && classified.correct
-        ? { ...classified, result: gameResultOf(word, "cleared", game.locale) }
-        : classified;
+    const result = await this.classify(game, word, text);
 
     game.history.push({ text, result });
     if (result.kind === "answer" && result.result) game.result = result.result;
@@ -95,6 +94,26 @@ export class GamesService {
     game.result = gameResultOf(word, "gave_up", game.locale);
     await this.store.save(game);
     return game.result;
+  }
+
+  /**
+   * 入力を判定する。コードの正規化マッチで正解なら、AI を呼ばずにクリアにする。
+   * 外れた入力だけを AI に回し、質問か解答か対応外の言語かを分類させる。解答と分類した入力は誤答にする。
+   */
+  private async classify(game: Game, word: Word, text: string): Promise<InputResult> {
+    if (isAcceptedAnswer(word, text)) {
+      return { kind: "answer", correct: true, result: gameResultOf(word, "cleared", game.locale) };
+    }
+
+    const judgement = await this.judge.judge({ word, history: game.history, text });
+    switch (judgement.kind) {
+      case "question":
+        return { kind: "question", verdict: judgement.verdict };
+      case "answer":
+        return { kind: "answer", correct: false };
+      case "unsupported_language":
+        return { kind: "unsupported_language" };
+    }
   }
 
   private async load(gameId: string): Promise<Game> {
