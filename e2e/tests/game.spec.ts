@@ -112,6 +112,16 @@ test("START から設問の提示を経て、質問に回答が返る", async ({
   await expect(bubble(page, VERDICT)).toBeVisible();
 });
 
+test("対応外の言語で送ると、対応言語で聞き直すよう案内する", async ({ page }) => {
+  await page.goto("/play");
+  await enterChat(page);
+
+  await send(page, "Это еда?");
+
+  await expect(bubble(page, "Please ask in Japanese, English, or Swedish.")).toBeVisible();
+  await expect(input(page)).toBeEnabled();
+});
+
 test("誤答のフィードバックのあと、同じ入力欄から再び解答できる", async ({ page }) => {
   await playWithOnly(page, fredagsmys.id);
   await page.goto("/play");
