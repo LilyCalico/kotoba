@@ -18,7 +18,7 @@ export const Default: Story = {};
 export const Variants: Story = {
   render: () => (
     <div className="flex flex-wrap items-center gap-3">
-      <Button>START</Button>
+      <Button>Start a game</Button>
       <Button variant="secondary">Give me a hint</Button>
       <Button variant="outline">Cancel</Button>
       <Button variant="ghost">Close</Button>

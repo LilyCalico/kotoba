@@ -39,18 +39,22 @@ export function ResultCard({
       <motion.div
         {...stickerStick}
         aria-hidden
-        className="holo absolute -top-7 -right-2 flex size-[5.75rem] items-center justify-center rounded-full border border-border"
+        className="holo absolute -top-9 -right-2 flex size-[5.75rem] items-center justify-center rounded-full border border-border"
       >
         <span className="flex size-[3.625rem] items-center justify-center rounded-full border border-border bg-card">
           <StickerIcon className="size-6" strokeWidth={2.4} />
         </span>
       </motion.div>
 
-      <div className="flex flex-col gap-1.5 pr-20">
-        <h2 className="w-fit text-sm font-semibold focus-ring" id={headingId} ref={ref} tabIndex={-1}>
+      <div className="flex flex-col gap-1.5">
+        {/* ステッカーと重ならないよう、見出しの行だけ右を空ける。単語は幅いっぱいに使う */}
+        <h2 className="mr-20 w-fit text-sm font-semibold focus-ring" id={headingId} ref={ref} tabIndex={-1}>
           {resultHeading(outcome)}
         </h2>
-        <p className="font-serif text-[3.25rem] leading-none font-semibold wrap-anywhere" lang="sv">
+        <p
+          className="font-serif text-[2.5rem] leading-none font-semibold hyphens-auto wrap-break-word md:text-[3.25rem]"
+          lang="sv"
+        >
           {word}
         </p>
       </div>
