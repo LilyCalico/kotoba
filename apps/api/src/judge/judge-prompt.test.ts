@@ -42,6 +42,16 @@ describe("buildJudgePrompt", () => {
     expect(systemInstruction).toContain('4. "Is it \\"cozy\\"?" → question, answered "yes"');
   });
 
+  it("対応言語の判定を、質問と解答の分類より先に置く", () => {
+    const { systemInstruction } = buildJudgePrompt({ word: fredagsmys, history: [], text: "Is it food?" });
+
+    const language = systemInstruction.indexOf("First check the language");
+    const classification = systemInstruction.indexOf('"question": the player asks');
+    expect(language).toBeGreaterThan(-1);
+    expect(language).toBeLessThan(classification);
+    expect(systemInstruction).toContain("Japanese, English, and Swedish");
+  });
+
   it("履歴がなければ、そのことを書く", () => {
     const { systemInstruction } = buildJudgePrompt({ word: fredagsmys, history: [], text: "Is it food?" });
 

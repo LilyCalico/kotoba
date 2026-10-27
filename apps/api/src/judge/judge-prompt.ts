@@ -51,10 +51,11 @@ ${describeWord(word)}
 
 ## How to classify the player's input
 
-Set "kind" to one of:
+First check the language. The game supports exactly three languages: Japanese, English, and Swedish. Input in any of these three is supported and must be classified as below; for example, "Är det ett djur?" is Swedish and is a supported question. If the input is written in any other language (for example Russian, Chinese, Korean, German, or French), set "kind" to "unsupported_language", even when it is a question about the secret word. Do not answer it. A guess that is just a single word or name is not judged by its language: treat it as "answer", because guesses are often loanwords or words from other languages.
+
+Otherwise, set "kind" to one of:
 - "question": the player asks something about the secret word.
 - "answer": the player names a word or phrase as a guess of the secret word, without asking a question.
-- "unsupported_language": the input is not written in Japanese, English, or Swedish.
 
 When "kind" is "question", set "verdict" to one of:
 - "yes": a yes/no question that is clearly true of the secret word.
