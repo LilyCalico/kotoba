@@ -25,6 +25,11 @@ export const AiUnavailable: Story = {
   args: { code: "ai_unavailable" },
 };
 
+/** 入力がレートリミットを超えたとき。数え直されるまでの時間を分で出す。 */
+export const RateLimited: Story = {
+  args: { code: "rate_limited", retryAfterSeconds: 45 },
+};
+
 /** 無料枠の AI が 1 分あたりの上限に達したとき。上限が戻るまでの時間を分で出す。 */
 export const AiRateLimited: Story = {
   args: { code: "ai_rate_limited", retryAfterSeconds: 37 },
