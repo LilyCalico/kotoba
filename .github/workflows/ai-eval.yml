@@ -1,0 +1,41 @@
+name: AI eval
+
+# 実際の Gemini を呼ぶため、全 PR では流さない。判定のプロンプト・eval・単語のデータを変える PR と、毎晩の全件実行に絞る。
+on:
+  pull_request:
+    paths:
+      - apps/api/src/judge/**
+      - apps/api/src/prisma/seed/words.ts
+      - packages/shared/src/word.ts
+      - .github/workflows/ai-eval.yml
+  schedule:
+    # 毎日 03:00（日本時間）。スケジュール実行はデフォルトブランチのコードで流れる。
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-eval-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    # 60 件を 6.5 秒間隔で呼ぶと約 6 分半。無料枠の上限で待つ分を見込む。
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # 遊ぶ側の無料枠を食わないよう、eval 専用のキーを使う。
+      - run: pnpm run eval
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY_TEST }}
