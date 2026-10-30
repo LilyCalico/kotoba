@@ -41,3 +41,4 @@
 | [0006](0006-openapi-from-zod-via-nestjs-swagger.md) | OpenAPI 仕様を @nestjs/swagger と zod の Standard Schema から生成する | 採用 |
 | [0007](0007-game-store-on-postgresql.md) | 進行中ゲームを Supabase の PostgreSQL に保持する | 採用 |
 | [0008](0008-input-judging-with-gemini-structured-output.md) | 入力の分類と質問への回答を Gemini の structured output で行う | 採用 |
+| [0009](0009-answer-typo-rescue-in-the-judging-call.md) | 解答のスペルミス・音写ゆれの救済を、入力の分類と同じ Gemini の呼び出しで判定する | 採用 |

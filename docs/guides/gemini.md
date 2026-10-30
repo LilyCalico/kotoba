@@ -1,6 +1,6 @@
 # Gemini による入力の判定の手順
 
-`apps/api` がプレイヤーの入力を Gemini で分類し、質問に 5 値で答えるまでの手順。判定の流れと設計の理由は [ADR 0008](../adr/0008-input-judging-with-gemini-structured-output.md) を参照する。
+`apps/api` がプレイヤーの入力を Gemini で分類し、質問に 5 値で答え、解答のスペルミス・音写ゆれを救うまでの手順。判定の流れと設計の理由は [ADR 0008](../adr/0008-input-judging-with-gemini-structured-output.md) と [ADR 0009](../adr/0009-answer-typo-rescue-in-the-judging-call.md) を参照する。
 
 ## このリポジトリでの前提
 
