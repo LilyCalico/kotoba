@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { type Page, expect, test } from "@playwright/test";
+import { type Page, expect, test } from "./fixtures.js";
 
 /** 検証する WCAG の達成基準。2.2 の AA までを対象にする。 */
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
