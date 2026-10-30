@@ -147,13 +147,20 @@ pnpm --filter @kotoba/e2e add -D @playwright/test typescript@^6 @types/node@^24
 pnpm --filter @kotoba/e2e exec playwright install --with-deps chromium
 ```
 
-`playwright.config.ts` の `webServer` で web と api を両方起動する。
+`playwright.config.ts` の `webServer` で、Gemini のスタブ・api・web を起動する。api の Gemini の接続先はスタブへ向ける（[gemini.md](gemini.md) の「5. E2E ではスタブサーバーに向ける」）。
 
 ```typescript
 webServer: [
   {
+    command: "node gemini-stub.js",
+    port: 3002,
+    env: { GEMINI_STUB_PORT: "3002" },
+    reuseExistingServer: !isCI,
+  },
+  {
     command: "pnpm --filter @kotoba/api dev",
     cwd: "..",
+    env: { GEMINI_API_KEY: "e2e-stub", GEMINI_BASE_URL: "http://localhost:3002" },
     port: 3001,
     reuseExistingServer: !isCI,
     timeout: 120_000,
@@ -218,7 +225,7 @@ export default function config(phase: string): NextConfig {
 
 ## 8. E2E を seed 済みの DB で流す
 
-E2E はモックを使わず、実際の api を相手にする。api は出題する単語を DB から引くため、E2E の前に seed 済みのローカル DB が要る（[local-development.md](local-development.md) の「1. DB を用意する」）。
+E2E は web のモックを使わず、実際の api を相手にする。api は出題する単語を DB から引くため、E2E の前に seed 済みのローカル DB が要る（[local-development.md](local-development.md) の「1. DB を用意する」）。AI の判定だけは、決まった規則で応答する Gemini のスタブが受け持ち、Gemini のキーは要らない。
 
 CI の `e2e` ジョブも、`db` ジョブと同じ手順で DB を用意してから流す。
 

@@ -22,6 +22,7 @@ export type PlayerMessage = { type: "text"; text: string } | { type: "hint-reque
 export type ChatEntry =
   | { id: string; kind: "player"; message: PlayerMessage }
   | { id: string; kind: "verdict"; verdict: Verdict }
+  | { id: string; kind: "unsupported-language" }
   | { id: string; kind: "answer-feedback"; correct: boolean }
   | { id: string; kind: "hint"; hint: Hint }
   | { id: string; kind: "result"; result: GameResult }
@@ -158,6 +159,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           entries: append(state, { kind: "verdict", verdict: result.verdict }),
         };
       }
+      if (result.kind === "unsupported_language") {
+        return {
+          ...state,
+          status: "idle",
+          entries: append(state, { kind: "unsupported-language" }),
+        };
+      }
       if (!result.correct) {
         return {
           ...state,
@@ -212,14 +220,23 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
  * `error` はフォーカスを入力欄かヒントボタンへ戻すため表示そのものにフォーカスが当たらず、
  * 読み上げなければ非視覚では失敗に気づけないため対象に含める。
  */
-export type AnnouncedEntry = Extract<ChatEntry, { kind: "verdict" | "answer-feedback" | "error" }>;
+export type AnnouncedEntry = Extract<
+  ChatEntry,
+  { kind: "verdict" | "unsupported-language" | "answer-feedback" | "error" }
+>;
 
 function isAnnounced(entry: ChatEntry | undefined): entry is AnnouncedEntry {
-  return entry?.kind === "verdict" || entry?.kind === "answer-feedback" || entry?.kind === "error";
+  return (
+    entry?.kind === "verdict" ||
+    entry?.kind === "unsupported-language" ||
+    entry?.kind === "answer-feedback" ||
+    entry?.kind === "error"
+  );
 }
 
 /**
- * ライブリージョンに載せる要素。`entries` の中で最も新しい `verdict` か `answer-feedback` か `error` を返す。
+ * ライブリージョンに載せる要素。`entries` の中で最も新しい `verdict` か `unsupported-language` か
+ * `answer-feedback` か `error` を返す。
  * 正解時は `answer-feedback` の後ろに `result` が積まれるが、このときも `answer-feedback` を返す。
  * 画面側は返された要素の `id` が変わったときだけ読み上げを更新し、同じ要素を二度読み上げない。
  */

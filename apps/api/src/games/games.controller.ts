@@ -48,6 +48,7 @@ export class GamesController {
     HttpStatus.NOT_FOUND,
     HttpStatus.CONFLICT,
     HttpStatus.PAYLOAD_TOO_LARGE,
+    HttpStatus.SERVICE_UNAVAILABLE,
   )
   input(
     @Param("gameId", { schema: gameIdSchema }) gameId: string,

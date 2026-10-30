@@ -17,7 +17,12 @@ import { PendingIndicator } from "@/components/game/pending-indicator";
 import { HINT_REQUEST_TEXT, PlayerMessage } from "@/components/game/player-message";
 import { ResultCard } from "@/components/game/result-card";
 import { TeaserCard } from "@/components/game/teaser-card";
-import { VerdictMessage, verdictText } from "@/components/game/verdict-message";
+import {
+  UNSUPPORTED_LANGUAGE_TEXT,
+  UnsupportedLanguageMessage,
+  VerdictMessage,
+  verdictText,
+} from "@/components/game/verdict-message";
 import { buttonVariants } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { createApiGameClient } from "@/lib/game/api-client";
@@ -398,6 +403,8 @@ function announcementText(entry: AnnouncedEntry): string {
   switch (entry.kind) {
     case "verdict":
       return verdictText(entry.verdict);
+    case "unsupported-language":
+      return UNSUPPORTED_LANGUAGE_TEXT;
     case "answer-feedback":
       return answerText(entry.correct);
     case "error":
@@ -425,6 +432,8 @@ function Entry({
       );
     case "verdict":
       return <VerdictMessage ref={ref} verdict={entry.verdict} />;
+    case "unsupported-language":
+      return <UnsupportedLanguageMessage ref={ref} />;
     case "answer-feedback":
       return <AnswerFeedback correct={entry.correct} ref={ref} />;
     case "hint":

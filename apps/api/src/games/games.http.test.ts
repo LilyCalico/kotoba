@@ -3,7 +3,9 @@ import { Test } from "@nestjs/testing";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { AppModule } from "../app.module.js";
+import { ApiError } from "../common/api-error.js";
 import { configureApp } from "../configure-app.js";
+import { INPUT_JUDGE, type InputJudge } from "../judge/input-judge.js";
 import { words } from "../prisma/seed/words.js";
 import { WordsService } from "../words/words.service.js";
 import { GAME_STORE } from "./game-store.js";
@@ -18,6 +20,16 @@ const fakeWords = {
     language === lagom.language ? lagom : undefined,
   ),
   findById: vi.fn(async (id: string) => (id === lagom.id ? lagom : undefined)),
+};
+
+/**
+ * Gemini の代役。「?」で終わる入力は質問として `unclear`、`AI DOWN` は判定の失敗、それ以外は解答とする。
+ */
+const fakeJudge: InputJudge = {
+  async judge({ text }) {
+    if (text === "AI DOWN") throw new ApiError("ai_unavailable");
+    return text.endsWith("?") ? { kind: "question", verdict: "unclear" } : { kind: "answer" };
+  },
 };
 
 /** ゲームが終わるまで、どの応答にも現れてはならない文字列。 */
@@ -39,6 +51,8 @@ beforeAll(async () => {
     // 保存先もメモリ内の実装に差し替え、DB なしで流せるようにする。
     .overrideProvider(GAME_STORE)
     .useValue(new MemoryGameStore())
+    .overrideProvider(INPUT_JUDGE)
+    .useValue(fakeJudge)
     .compile();
 
   app = moduleRef.createNestApplication();
@@ -231,6 +245,14 @@ describe("エラー", () => {
 
     expect(broken.body.code).toBe("validation_error");
     expect(huge.body.code).toBe("validation_error");
+  });
+
+  it("AI の判定に失敗した入力は 503 の ai_unavailable", async () => {
+    const gameId = await startGame();
+
+    const response = await post(`/games/${gameId}/inputs`, { text: "AI DOWN" }).expect(503);
+
+    expect(response.body).toMatchObject({ status: 503, code: "ai_unavailable" });
   });
 
   it("存在しないルートとメソッド違いは 404 の internal_error", async () => {

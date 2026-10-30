@@ -10,6 +10,7 @@
 | api | `http://localhost:3001`（`nest start --watch`） | `apps/api/src/main.ts` の既定。`PORT` で変えられる |
 | `/api/v1` の届け方 | `next dev` が `/api/v1/*` を api へ中継する | 本番と同じく、画面は相対パス `/api/v1` だけを叩く |
 | DB | ローカルの Supabase（Docker） | api は出題する単語を DB から引く。seed 済みでないとゲームを始められない |
+| AI | Gemini API（`apps/api/.env` の `GEMINI_API_KEY`） | 質問への回答に使う。キーがなくてもゲームは始まるが、質問と誤答は「もう一度送ってね」になる |
 | 単語の出題 | 常に `apps/api` から。モックの `GameClient` は Storybook とユニットテストだけで使う | 画面と API のずれを開発中に気づける |
 
 ## 1. DB を用意する
@@ -32,7 +33,18 @@ pnpm db:seed
 
 2 回目以降は `pnpm db:start` だけでよい。DB の中身はコンテナを止めても残る。
 
-## 2. web と api を起動する
+## 2. Gemini の API キーを置く
+
+[Google AI Studio](https://aistudio.google.com/apikey) でキーを発行し、`apps/api/.env` の `GEMINI_API_KEY` に書く。設定できる項目は [gemini.md](gemini.md) を参照する。
+
+```bash
+# apps/api/.env
+GEMINI_API_KEY="<発行したキー>"
+```
+
+正規化マッチで正解する入力とヒント・ギブアップは AI を呼ばないため、キーがなくても動く。
+
+## 3. web と api を起動する
 
 ```bash
 pnpm dev
@@ -40,7 +52,7 @@ pnpm dev
 
 Turborepo が web と api の `dev` を並べて起動する。`http://localhost:3000` を開き、起動画面の打ち込みが終わるか Skip を押してから、Start a game でゲームを始める。
 
-## 3. `/api/v1` が api に届く仕組み
+## 4. `/api/v1` が api に届く仕組み
 
 本番では Vercel Services が `/api/v1/(.*)` を api サービスへ直接振り分けるため、リクエストは Next.js に届かない。ローカルではこの振り分けを Next.js の rewrites が肩代わりする。
 
@@ -60,7 +72,7 @@ function apiProxyOrigin(phase: string): string | undefined {
 
 ビルドで中継しないのは、本番でこの中継が働くと `localhost:3001` へ送ろうとして壊れるためである。Vercel では `API_PROXY_ORIGIN` を設定しない。
 
-## 4. 出題済みの記録を消す
+## 5. 出題済みの記録を消す
 
 答えを見た単語の id は、ブラウザの `localStorage` の `kotoba:played-words` に残り、次のゲームの開始で `excludeWordIds` として api に送られる。同じ単語を出したいときは、開発者ツールのコンソールで消す。
 
@@ -102,4 +114,8 @@ API_PROXY_ORIGIN=http://localhost:3101 pnpm --filter @kotoba/web dev
 
 **原因**: `apps/api/.env` は Git の管理外なので、worktree には作られない。
 
-**対処**: worktree の中で `cp apps/api/.env.example apps/api/.env` を流す。DB は Supabase のコンテナを共有するため、`db:start` / `db:seed` は流し直さなくてよい。
+**対処**: メインのチェックアウトの `apps/api/.env` を、worktree の同じ場所にシンボリックリンクで置く。`GEMINI_API_KEY` も含めて 1 か所で管理できる。DB は Supabase のコンテナを共有するため、`db:start` / `db:seed` は流し直さなくてよい。
+
+```bash
+ln -s <メインのチェックアウト>/apps/api/.env apps/api/.env
+```

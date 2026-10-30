@@ -103,6 +103,9 @@ export interface components {
             kind: "answer";
             correct: boolean;
             result?: components["schemas"]["GameResult"];
+        } | {
+            /** @enum {string} */
+            kind: "unsupported_language";
         };
         GameResult: {
             /** @enum {string} */
@@ -256,6 +259,15 @@ export interface operations {
             };
             /** @description Internal Server Error */
             500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };

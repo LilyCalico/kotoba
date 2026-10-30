@@ -2,6 +2,7 @@ import type { Verdict } from "@kotoba/shared";
 import { cn } from "cn";
 import {
   CheckIcon,
+  LanguagesIcon,
   type LucideIcon,
   MessageCircleQuestionMarkIcon,
   MinusIcon,
@@ -20,6 +21,11 @@ const VERDICT_TEXT: Record<Verdict, string> = {
 export function verdictText(verdict: Verdict): string {
   return VERDICT_TEXT[verdict];
 }
+
+export const UNSUPPORTED_LANGUAGE_TEXT = "Please ask in Japanese, English, or Swedish.";
+
+const PILL_CLASS =
+  "mr-auto inline-flex min-h-9 w-fit max-w-[85%] items-center gap-1.5 rounded-full px-4 py-1.5 text-[0.9375rem] font-semibold text-foreground focus-ring";
 
 /** 回答ごとの見た目。色だけに頼らず、文字とアイコンでも区別する。 */
 const VERDICT_STYLE: Record<Verdict, { icon: LucideIcon; className: string }> = {
@@ -45,16 +51,22 @@ export function VerdictMessage({
   const { icon: Icon, className } = VERDICT_STYLE[verdict];
 
   return (
-    <p
-      className={cn(
-        "mr-auto inline-flex min-h-9 w-fit max-w-[85%] items-center gap-1.5 rounded-full px-4 py-1.5 text-[0.9375rem] font-semibold text-foreground focus-ring",
-        className,
-      )}
-      ref={ref}
-      tabIndex={-1}
-    >
+    <p className={cn(PILL_CLASS, className)} ref={ref} tabIndex={-1}>
       <Icon aria-hidden className="size-4 shrink-0" strokeWidth={2.6} />
       {verdictText(verdict)}
+    </p>
+  );
+}
+
+/**
+ * 日本語・英語・スウェーデン語以外の入力への案内。単語についての答えではなく入力の仕方への指摘なので、
+ * Try a yes-or-no question と同じ黄のピルにし、言語のアイコンで見分ける。
+ */
+export function UnsupportedLanguageMessage({ ref }: { ref?: React.Ref<HTMLParagraphElement> }) {
+  return (
+    <p className={cn(PILL_CLASS, "bg-answer-meta")} ref={ref} tabIndex={-1}>
+      <LanguagesIcon aria-hidden className="size-4 shrink-0" strokeWidth={2.6} />
+      {UNSUPPORTED_LANGUAGE_TEXT}
     </p>
   );
 }

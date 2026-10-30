@@ -3,6 +3,7 @@ import { expect, screen, userEvent, waitFor, within } from "storybook/test";
 import { ERROR_TEXT, EXPIRED_TEXT } from "@/components/game/error-message";
 import { INPUT_LABEL } from "@/components/game/input-form";
 import { GIVE_UP_FAILED_TEXT, GameScreen, START_FAILED_TEXT } from "@/components/game/play-screen";
+import { UNSUPPORTED_LANGUAGE_TEXT } from "@/components/game/verdict-message";
 import { toastQueue } from "@/components/ui/toast";
 import { type GameClient, GameClientError, type GameClientErrorCode } from "@/lib/game/client";
 import { createMockGameClient } from "@/lib/game/mock-client";
@@ -204,5 +205,21 @@ export const IgnoredFailure: Story = {
 
     await waitFor(() => expect(hint).toBeEnabled());
     await expect(screen.queryByText(ERROR_TEXT)).not.toBeInTheDocument();
+  },
+};
+
+/** 対応外の言語の入力。案内を積んで読み上げ、同じ入力欄から続けて送れる。 */
+export const UnsupportedLanguage: Story = {
+  args: {
+    client: mockClient({ sendInput: async () => ({ kind: "unsupported_language" }) }),
+  },
+  play: async () => {
+    await enterChat();
+    await send("Är det mat? 这是食物吗");
+
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent(UNSUPPORTED_LANGUAGE_TEXT),
+    );
+    await expect(screen.getByRole("textbox", { name: INPUT_LABEL })).toBeEnabled();
   },
 };
