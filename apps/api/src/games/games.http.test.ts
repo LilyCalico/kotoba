@@ -30,7 +30,9 @@ const fakeJudge: InputJudge = {
   async judge({ text }) {
     if (text === "AI DOWN") throw new ApiError("ai_unavailable");
     if (text === "AI LIMIT") throw new ApiError("ai_rate_limited", undefined, 42);
-    return text.endsWith("?") ? { kind: "question", verdict: "unclear" } : { kind: "answer" };
+    return text.endsWith("?")
+      ? { kind: "question", verdict: "unclear" }
+      : { kind: "answer", correct: false };
   },
 };
 
@@ -123,10 +125,6 @@ describe("ゲーム 1 周", () => {
     for (const { text } of beforeEnd) {
       for (const secret of SECRETS) expect(text).not.toContain(secret);
     }
-
-    // スペルミスの救済判定（#29）までは、正規化マッチを外れた綴りは誤答になる。
-    const misspelled = await post(`/games/${gameId}/inputs`, { text: "laagom" }).expect(200);
-    expect(misspelled.body).toEqual({ kind: "answer", correct: false });
 
     const correct = await post(`/games/${gameId}/inputs`, { text: "Lagom" }).expect(200);
     expect(correct.body).toEqual({

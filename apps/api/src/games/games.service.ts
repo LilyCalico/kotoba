@@ -98,19 +98,24 @@ export class GamesService {
 
   /**
    * 入力を判定する。コードの正規化マッチで正解なら、AI を呼ばずにクリアにする。
-   * 外れた入力だけを AI に回し、質問か解答か対応外の言語かを分類させる。解答と分類した入力は誤答にする。
+   * 外れた入力だけを AI に回し、質問か解答か対応外の言語かを分類させる。
+   * 解答と分類した入力は、AI がスペルミス・音写ゆれとして救えば正解、救わなければ誤答にする。
+   * 救った正解も、正規化マッチの正解と同じ応答にする。
    */
   private async classify(game: Game, word: Word, text: string): Promise<InputResult> {
-    if (isAcceptedAnswer(word, text)) {
-      return { kind: "answer", correct: true, result: gameResultOf(word, "cleared", game.locale) };
-    }
+    const cleared = (): InputResult => ({
+      kind: "answer",
+      correct: true,
+      result: gameResultOf(word, "cleared", game.locale),
+    });
+    if (isAcceptedAnswer(word, text)) return cleared();
 
     const judgement = await this.judge.judge({ word, history: game.history, text });
     switch (judgement.kind) {
       case "question":
         return { kind: "question", verdict: judgement.verdict };
       case "answer":
-        return { kind: "answer", correct: false };
+        return judgement.correct ? cleared() : { kind: "answer", correct: false };
       case "unsupported_language":
         return { kind: "unsupported_language" };
     }
