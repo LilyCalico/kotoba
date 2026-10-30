@@ -7,6 +7,9 @@ import { ApiError } from "../common/api-error.js";
 import { configureApp } from "../configure-app.js";
 import { INPUT_JUDGE, type InputJudge } from "../judge/input-judge.js";
 import { words } from "../prisma/seed/words.js";
+import { MemoryRateLimitStore } from "../rate-limit/memory-rate-limit-store.js";
+import { RATE_LIMIT_CLOCK, RATE_LIMIT_STORE } from "../rate-limit/rate-limit-store.js";
+import { RATE_LIMITS } from "../rate-limit/rate-limit.guard.js";
 import { WordsService } from "../words/words.service.js";
 import { GAME_STORE } from "./game-store.js";
 import { MemoryGameStore } from "./memory-game-store.js";
@@ -46,6 +49,9 @@ const SECRETS = [
 
 let app: INestApplication;
 
+/** レートリミットの窓を決める時刻。窓の境目をまたいで数え直されないよう、テストの中で止めておく。 */
+let now = Date.UTC(2026, 9, 30, 12, 0, 15);
+
 beforeAll(async () => {
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(WordsService)
@@ -55,6 +61,10 @@ beforeAll(async () => {
     .useValue(new MemoryGameStore())
     .overrideProvider(INPUT_JUDGE)
     .useValue(fakeJudge)
+    .overrideProvider(RATE_LIMIT_STORE)
+    .useValue(new MemoryRateLimitStore())
+    .overrideProvider(RATE_LIMIT_CLOCK)
+    .useValue(() => now)
     .compile();
 
   app = moduleRef.createNestApplication();
@@ -66,8 +76,17 @@ afterAll(async () => {
   await app.close();
 });
 
-function post(path: string, body?: object) {
-  const req = request(app.getHttpServer()).post(`/api/v1${path}`);
+let requests = 0;
+
+/** 呼ぶたびに違う IP。レートリミットを見ないテストどうしが、同じ枠を分け合わないようにする。 */
+function nextIp(): string {
+  requests++;
+  return `10.${(requests >> 16) & 255}.${(requests >> 8) & 255}.${requests & 255}`;
+}
+
+/** `ip` を省くと、呼ぶたびに違う IP から送る。 */
+function post(path: string, body?: object, ip = nextIp()) {
+  const req = request(app.getHttpServer()).post(`/api/v1${path}`).set("x-forwarded-for", ip);
   return body === undefined ? req : req.send(body);
 }
 
@@ -279,5 +298,64 @@ describe("エラー", () => {
 
     expect(success.headers["cache-control"]).toBe("no-store");
     expect(failure.headers["cache-control"]).toBe("no-store");
+  });
+});
+
+describe("レートリミット", () => {
+  it("同じ IP からのゲーム開始は 1 分に 10 回まで。超えたら 429 の rate_limited と、窓が終わるまでの秒数の Retry-After", async () => {
+    const ip = "203.0.113.10";
+    for (let i = 0; i < RATE_LIMITS.start; i++) {
+      await post("/games", { language: "sv" }, ip).expect(201);
+    }
+
+    const limited = await post("/games", { language: "sv" }, ip).expect(429);
+
+    expect(limited.headers["retry-after"]).toBe("45");
+    expect(limited.body).toMatchObject({ status: 429, code: "rate_limited" });
+    await post("/games", { language: "sv" }, "203.0.113.11").expect(201);
+  });
+
+  it("同じ IP からの入力は 1 分に 30 回まで。ゲームを始め直しても枠は戻らない", async () => {
+    const ip = "203.0.113.20";
+    const first = await startGame();
+    for (let i = 0; i < RATE_LIMITS.input; i++) {
+      await post(`/games/${first}/inputs`, { text: "Is it a feeling?" }, ip).expect(200);
+    }
+    const second = await startGame();
+
+    const limited = await post(`/games/${second}/inputs`, { text: "Is it a feeling?" }, ip).expect(429);
+
+    expect(limited.body).toMatchObject({ code: "rate_limited" });
+  });
+
+  it("次の窓では数え直す", async () => {
+    const ip = "203.0.113.30";
+    for (let i = 0; i < RATE_LIMITS.start; i++) {
+      await post("/games", { language: "sv" }, ip).expect(201);
+    }
+    await post("/games", { language: "sv" }, ip).expect(429);
+
+    now += 60_000;
+
+    await post("/games", { language: "sv" }, ip).expect(201);
+  });
+
+  it("ヒント開示とギブアップは数えない", async () => {
+    const ip = "203.0.113.40";
+    const gameId = await startGame();
+
+    for (let i = 0; i < RATE_LIMITS.input + 1; i++) {
+      await post(`/games/${gameId}/hints`, { index: 1 }, ip).expect(200);
+    }
+    await post(`/games/${gameId}/give-up`, undefined, ip).expect(200);
+  });
+
+  it("IPv6 は /64 のプレフィックスで数える", async () => {
+    for (let i = 0; i < RATE_LIMITS.start; i++) {
+      await post("/games", { language: "sv" }, `2001:db8:1:2::${i + 1}`).expect(201);
+    }
+
+    await post("/games", { language: "sv" }, "2001:db8:1:2:ffff::1").expect(429);
+    await post("/games", { language: "sv" }, "2001:db8:1:3::1").expect(201);
   });
 });
