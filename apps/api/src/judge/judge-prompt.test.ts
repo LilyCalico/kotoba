@@ -60,12 +60,13 @@ describe("buildJudgePrompt", () => {
     );
   });
 
-  it("解答を救う基準に、2 文字程度までの綴りの間違いと音写を正解、意味の近い別の語を誤答と書く", () => {
+  it("解答を救う基準に、2 文字程度までの綴りの間違いと音写を正解、意味の近い別の語と語の前後に別の語をつけた解答を誤答と書く", () => {
     const { systemInstruction } = buildJudgePrompt({ word: fredagsmys, history: [], text: "fredagsmis" });
 
     expect(systemInstruction).toContain("about two characters or fewer");
     expect(systemInstruction).toContain("katakana or romaji");
     expect(systemInstruction).toContain("A different word is wrong, even when its meaning is close");
+    expect(systemInstruction).toContain("A guess must be the word alone");
     expect(systemInstruction).toContain('set "correct" to null');
   });
 
