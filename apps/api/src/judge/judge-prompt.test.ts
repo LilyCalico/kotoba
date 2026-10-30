@@ -52,6 +52,13 @@ describe("buildJudgePrompt", () => {
     expect(systemInstruction).toContain("Japanese, English, and Swedish");
   });
 
+  it("仮名のない漢字だけの文は中国語、ラテン文字の英語・スウェーデン語以外の文は対応外と書く", () => {
+    const { systemInstruction } = buildJudgePrompt({ word: fredagsmys, history: [], text: "Is it food?" });
+
+    expect(systemInstruction).toContain("Japanese always uses kana");
+    expect(systemInstruction).toContain("English and Swedish are not the only languages in the Latin alphabet");
+  });
+
   it("正解として受け付ける表記をすべて入れる", () => {
     const { systemInstruction } = buildJudgePrompt({ word: fredagsmys, history: [], text: "fredagsmis" });
 
