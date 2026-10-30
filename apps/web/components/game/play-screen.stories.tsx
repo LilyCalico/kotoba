@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, screen, userEvent, waitFor, within } from "storybook/test";
-import { ERROR_TEXT, EXPIRED_TEXT } from "@/components/game/error-message";
+import { AI_ERROR_TEXT, ERROR_TEXT, EXPIRED_TEXT, aiLimitText } from "@/components/game/error-message";
 import { INPUT_LABEL } from "@/components/game/input-form";
 import { GIVE_UP_FAILED_TEXT, GameScreen, START_FAILED_TEXT } from "@/components/game/play-screen";
 import { UNSUPPORTED_LANGUAGE_TEXT } from "@/components/game/verdict-message";
@@ -20,8 +20,11 @@ function never<T>(): Promise<T> {
   return new Promise(() => {});
 }
 
-function fail(code: GameClientErrorCode = "network_error"): () => Promise<never> {
-  return () => Promise.reject(new GameClientError(code, "モックの失敗"));
+function fail(
+  code: GameClientErrorCode = "network_error",
+  retryAfterSeconds?: number,
+): () => Promise<never> {
+  return () => Promise.reject(new GameClientError(code, "モックの失敗", { retryAfterSeconds }));
 }
 
 async function enterChat() {
@@ -128,6 +131,29 @@ export const InputFailed: Story = {
     const input = screen.getByRole("textbox", { name: INPUT_LABEL });
     await expect(input).toHaveValue("Is it about Friday?");
     await waitFor(() => expect(input).toHaveFocus());
+  },
+};
+
+/** AI の呼び出しの失敗。共通の文言の代わりに、無料枠のため送り直せば通ることが多いと伝える。 */
+export const InputFailedByAi: Story = {
+  args: { client: mockClient({ sendInput: fail("ai_unavailable") }) },
+  play: async () => {
+    await enterChat();
+    await send("Is it about Friday?");
+
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(AI_ERROR_TEXT));
+  },
+};
+
+/** 無料枠の AI の上限。上限が戻るまでの時間を添えて、そのころに送り直すよう伝える。 */
+export const InputRateLimited: Story = {
+  args: { client: mockClient({ sendInput: fail("ai_rate_limited", 37) }) },
+  play: async () => {
+    await enterChat();
+    await send("Is it about Friday?");
+
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(aiLimitText(37)));
+    await expect(screen.getByRole("status")).toHaveTextContent("in about a minute");
   },
 };
 

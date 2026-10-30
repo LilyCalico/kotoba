@@ -144,7 +144,7 @@ describe("gameReducer", () => {
     const state = run(chat, { type: "input-sent", text: "Is it a noun?" }, failed);
 
     expect(state.status).toBe("idle");
-    expect(state.entries.at(-1)).toEqual({ id: "1", kind: "error" });
+    expect(state.entries.at(-1)).toEqual({ id: "1", kind: "error", code: "network_error" });
 
     const retried = run(
       state,
@@ -158,6 +158,31 @@ describe("gameReducer", () => {
       "player",
       "verdict",
     ]);
+  });
+
+  it("error には失敗の code を持たせ、画面が案内の文言を選べるようにする", () => {
+    const state = run(
+      chat,
+      { type: "input-sent", text: "Is it a noun?" },
+      { type: "failed", code: "ai_unavailable" },
+    );
+
+    expect(state.entries.at(-1)).toEqual({ id: "1", kind: "error", code: "ai_unavailable" });
+  });
+
+  it("上限の失敗では、待つ秒数も error に持たせる", () => {
+    const state = run(
+      chat,
+      { type: "input-sent", text: "Is it a noun?" },
+      { type: "failed", code: "ai_rate_limited", retryAfterSeconds: 37 },
+    );
+
+    expect(state.entries.at(-1)).toEqual({
+      id: "1",
+      kind: "error",
+      code: "ai_rate_limited",
+      retryAfterSeconds: 37,
+    });
   });
 
   it("ヒントの要求の失敗では hintsUsed を増やさない", () => {
@@ -361,13 +386,13 @@ describe("latestAnnouncement", () => {
       failed,
     );
 
-    expect(latestAnnouncement(state)).toEqual({ id: "3", kind: "error" });
+    expect(latestAnnouncement(state)).toEqual({ id: "3", kind: "error", code: "network_error" });
   });
 
   it("ヒントの失敗も error として返す", () => {
     const state = run(chat, { type: "hint-requested" }, failed);
 
-    expect(latestAnnouncement(state)).toEqual({ id: "1", kind: "error" });
+    expect(latestAnnouncement(state)).toEqual({ id: "1", kind: "error", code: "network_error" });
   });
 
   it("verdict より新しい answer-feedback を返す", () => {
@@ -420,6 +445,7 @@ describe("failureKind", () => {
       "rate_limited",
       "internal_error",
       "ai_unavailable",
+      "ai_rate_limited",
       "network_error",
     ] as const) {
       expect(failureKind(code)).toBe("retry");

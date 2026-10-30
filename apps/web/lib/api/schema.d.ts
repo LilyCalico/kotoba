@@ -134,7 +134,7 @@ export interface components {
             title: string;
             status: number;
             /** @enum {string} */
-            code: "validation_error" | "game_not_found" | "game_finished" | "hint_out_of_order" | "hint_limit_reached" | "rate_limited" | "internal_error" | "ai_unavailable";
+            code: "validation_error" | "game_not_found" | "game_finished" | "hint_out_of_order" | "hint_limit_reached" | "rate_limited" | "internal_error" | "ai_unavailable" | "ai_rate_limited";
             detail?: string;
         };
     };

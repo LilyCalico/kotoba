@@ -26,7 +26,7 @@ export type ChatEntry =
   | { id: string; kind: "answer-feedback"; correct: boolean }
   | { id: string; kind: "hint"; hint: Hint }
   | { id: string; kind: "result"; result: GameResult }
-  | { id: string; kind: "error" }
+  | { id: string; kind: "error"; code: GameClientErrorCode; retryAfterSeconds?: number }
   | { id: string; kind: "expired" };
 
 type WithoutId<T> = T extends unknown ? Omit<T, "id"> : never;
@@ -51,13 +51,13 @@ export type GameAction =
   | { type: "hint-requested" }
   | { type: "input-resolved"; result: InputResult }
   | { type: "hint-revealed"; hint: Hint }
-  | { type: "failed"; code: GameClientErrorCode }
+  | { type: "failed"; code: GameClientErrorCode; retryAfterSeconds?: number }
   | { type: "gave-up"; result: GameResult };
 
 /**
  * 失敗の画面での扱い。`docs/specifications/api.md`「エラー」の「画面の扱い」に従う。
  *
- * - `retry`: 「もう一度送ってね」を出し、同じ操作をやり直せる状態に戻す
+ * - `retry`: 再送の案内を出し、同じ操作をやり直せる状態に戻す。案内の文言は `code` で変わる
  * - `expired`: ゲームが見つからない。案内を出してゲームを終え、始め直してもらう
  * - `ignored`: 画面側で操作を塞いでいるため通常は起きない。何も出さず応答待ちだけを解く
  */
@@ -75,6 +75,7 @@ export function failureKind(code: GameClientErrorCode): FailureKind {
     case "rate_limited":
     case "internal_error":
     case "ai_unavailable":
+    case "ai_rate_limited":
     case "network_error":
       return "retry";
   }
@@ -203,7 +204,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
       if (state.status !== "sending") return state;
       if (failureKind(action.code) === "ignored") return { ...state, status: "idle" };
-      return { ...state, status: "idle", entries: append(state, { kind: "error" }) };
+      return {
+        ...state,
+        status: "idle",
+        entries: append(state, {
+          kind: "error",
+          code: action.code,
+          ...(action.retryAfterSeconds === undefined
+            ? {}
+            : { retryAfterSeconds: action.retryAfterSeconds }),
+        }),
+      };
 
     case "gave-up":
       if (state.status === "finished") return state;

@@ -23,11 +23,13 @@ const fakeWords = {
 };
 
 /**
- * Gemini の代役。「?」で終わる入力は質問として `unclear`、`AI DOWN` は判定の失敗、それ以外は解答とする。
+ * Gemini の代役。「?」で終わる入力は質問として `unclear`、`AI DOWN` は判定の失敗、
+ * `AI LIMIT` は無料枠の上限、それ以外は解答とする。
  */
 const fakeJudge: InputJudge = {
   async judge({ text }) {
     if (text === "AI DOWN") throw new ApiError("ai_unavailable");
+    if (text === "AI LIMIT") throw new ApiError("ai_rate_limited", undefined, 42);
     return text.endsWith("?") ? { kind: "question", verdict: "unclear" } : { kind: "answer" };
   },
 };
@@ -253,6 +255,15 @@ describe("エラー", () => {
     const response = await post(`/games/${gameId}/inputs`, { text: "AI DOWN" }).expect(503);
 
     expect(response.body).toMatchObject({ status: 503, code: "ai_unavailable" });
+  });
+
+  it("無料枠の上限に達した入力は 503 の ai_rate_limited と、戻るまでの秒数の Retry-After", async () => {
+    const gameId = await startGame();
+
+    const response = await post(`/games/${gameId}/inputs`, { text: "AI LIMIT" }).expect(503);
+
+    expect(response.headers["retry-after"]).toBe("42");
+    expect(response.body).toMatchObject({ status: 503, code: "ai_rate_limited" });
   });
 
   it("存在しないルートとメソッド違いは 404 の internal_error", async () => {

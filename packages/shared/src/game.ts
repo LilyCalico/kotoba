@@ -144,6 +144,7 @@ export const errorCodeSchema = z.enum([
   "rate_limited",
   "internal_error",
   "ai_unavailable",
+  "ai_rate_limited",
 ]);
 export type ErrorCode = z.infer<typeof errorCodeSchema>;
 

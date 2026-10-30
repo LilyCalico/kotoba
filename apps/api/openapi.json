@@ -585,7 +585,8 @@
               "hint_limit_reached",
               "rate_limited",
               "internal_error",
-              "ai_unavailable"
+              "ai_unavailable",
+              "ai_rate_limited"
             ]
           },
           "detail": {

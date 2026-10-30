@@ -32,14 +32,20 @@ export interface GameClient {
  */
 export type GameClientErrorCode = ErrorCode | "network_error";
 
-/** 呼び出しの失敗。画面側はこれを捕らえ、`code` に応じて案内を出す。 */
+/**
+ * 呼び出しの失敗。画面側はこれを捕らえ、`code` に応じて案内を出す。
+ * `retryAfterSeconds` は応答の `Retry-After` が示す、送り直すまでに待つ秒数。
+ */
 export class GameClientError extends Error {
+  readonly retryAfterSeconds?: number;
+
   constructor(
     readonly code: GameClientErrorCode,
     message: string = code,
-    options?: ErrorOptions,
+    options?: ErrorOptions & { retryAfterSeconds?: number },
   ) {
     super(message, options);
     this.name = "GameClientError";
+    this.retryAfterSeconds = options?.retryAfterSeconds;
   }
 }

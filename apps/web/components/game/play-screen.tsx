@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useEffect, useReducer, useRef, useState } from "react";
 
 import { AnswerFeedback, answerText } from "@/components/game/answer-feedback";
-import { ERROR_TEXT, ErrorMessage, ExpiredMessage } from "@/components/game/error-message";
+import { ErrorMessage, ExpiredMessage, errorText } from "@/components/game/error-message";
 import { GiveUpDialog } from "@/components/game/give-up-dialog";
 import { Header } from "@/components/game/header";
 import { HintButton } from "@/components/game/hint-button";
@@ -260,7 +260,7 @@ function Chat({
       dispatch({ type: "input-resolved", result });
     } catch (error) {
       if (!(error instanceof GameClientError)) throw error;
-      dispatch({ type: "failed", code: error.code });
+      dispatch({ type: "failed", code: error.code, retryAfterSeconds: error.retryAfterSeconds });
       setText(input);
     }
   }
@@ -272,7 +272,7 @@ function Chat({
       dispatch({ type: "hint-revealed", hint });
     } catch (error) {
       if (!(error instanceof GameClientError)) throw error;
-      dispatch({ type: "failed", code: error.code });
+      dispatch({ type: "failed", code: error.code, retryAfterSeconds: error.retryAfterSeconds });
     }
   }
 
@@ -285,7 +285,7 @@ function Chat({
     } catch (error) {
       if (!(error instanceof GameClientError)) throw error;
       if (failureKind(error.code) === "expired") {
-        dispatch({ type: "failed", code: error.code });
+        dispatch({ type: "failed", code: error.code, retryAfterSeconds: error.retryAfterSeconds });
         setGiveUpOpen(false);
         return;
       }
@@ -408,7 +408,7 @@ function announcementText(entry: AnnouncedEntry): string {
     case "answer-feedback":
       return answerText(entry.correct);
     case "error":
-      return ERROR_TEXT;
+      return errorText(entry.code, entry.retryAfterSeconds);
   }
 }
 
@@ -443,7 +443,7 @@ function Entry({
         <ResultCard ref={ref} result={entry.result} />
       );
     case "error":
-      return <ErrorMessage />;
+      return <ErrorMessage code={entry.code} retryAfterSeconds={entry.retryAfterSeconds} />;
     case "expired":
       return <ExpiredMessage ref={ref} />;
   }

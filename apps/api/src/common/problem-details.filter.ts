@@ -29,9 +29,11 @@ export class ProblemDetailsFilter implements ExceptionFilter {
       ...(detail === undefined ? {} : { detail }),
     };
 
-    host
-      .switchToHttp()
-      .getResponse<Response>()
+    const response = host.switchToHttp().getResponse<Response>();
+    if (exception instanceof ApiError && exception.retryAfterSeconds !== undefined) {
+      response.setHeader("Retry-After", String(exception.retryAfterSeconds));
+    }
+    response
       .status(status)
       .type("application/problem+json")
       .json(problem);

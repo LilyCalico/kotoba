@@ -83,6 +83,34 @@ describe("createApiGameClient", () => {
     expect(await codeOf(client.giveUp(GAME_ID))).toBe("game_not_found");
   });
 
+  it("Retry-After があれば、その秒数を持たせる", async () => {
+    const limited = () =>
+      new Response(
+        JSON.stringify({ type: "about:blank", title: "Service Unavailable", status: 503, code: "ai_rate_limited" }),
+        { status: 503, headers: { "Content-Type": "application/problem+json", "Retry-After": "37" } },
+      );
+    const { client } = clientWith(limited);
+
+    const error = await client.sendInput(GAME_ID, { text: "fika" }).catch((reason: unknown) => reason);
+    expect(error).toBeInstanceOf(GameClientError);
+    expect(error).toMatchObject({ code: "ai_rate_limited", retryAfterSeconds: 37 });
+  });
+
+  it("Retry-After がない・秒数でないときは、秒数を持たせない", async () => {
+    const cases: Record<string, string>[] = [{}, { "Retry-After": "Wed, 21 Oct 2026 07:28:00 GMT" }];
+    for (const headers of cases) {
+      const { client } = clientWith(() =>
+        new Response(
+          JSON.stringify({ type: "about:blank", title: "Service Unavailable", status: 503, code: "ai_rate_limited" }),
+          { status: 503, headers: { "Content-Type": "application/problem+json", ...headers } },
+        ),
+      );
+
+      const error = await client.sendInput(GAME_ID, { text: "fika" }).catch((reason: unknown) => reason);
+      expect((error as GameClientError).retryAfterSeconds).toBeUndefined();
+    }
+  });
+
   it("Problem Details として読めない失敗は network_error にする", async () => {
     const html = () =>
       new Response("<html>Bad Gateway</html>", {
