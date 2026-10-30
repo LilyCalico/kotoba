@@ -57,7 +57,7 @@ export function createInputJudge(config: ConfigService): InputJudge {
 | 部品 | 置き場所 | 役割 |
 | --- | --- | --- |
 | `buildJudgePrompt` | `judge-prompt.ts` | 分類の規則・秘密の単語・全 Q&A 履歴をシステム指示に、プレイヤーの入力を本文に置く |
-| `GeminiInputJudge` | `gemini-input-judge.ts` | structured output で `{ kind, verdict }` を返させ、zod で検証する。失敗は 1 回だけ再試行する |
+| `GeminiInputJudge` | `gemini-input-judge.ts` | structured output で `{ kind, verdict }` を返させ、zod で検証する。失敗は 1 回だけ再試行する。無料枠の上限（429）だけは再試行せず、上限が戻るまでの秒数を添えて `ai_rate_limited` を投げる |
 | `createGenerateContent` | `gemini-input-judge.ts` | `GoogleGenAI` を作り、`models.generateContent` を返す。SDK の自動リトライは `retryOptions: { attempts: 1 }` で切る |
 | `UnavailableInputJudge` | `gemini-input-judge.ts` | キーがないときに差し込み、常に `ai_unavailable` を投げる |
 
@@ -106,7 +106,7 @@ const { $schema: _schema, ...RESPONSE_JSON_SCHEMA } = z.toJSONSchema(judgementRe
 
 ## つまずきポイント
 
-### 質問や誤答を送ると「Something went wrong.」が出る
+### 質問や誤答を送ると「Sorry, the free AI plan hiccupped.」が出る
 
 **症状**: ゲームは始まり、正解とヒント・ギブアップは動くが、質問や正解でない入力を送るたびに再送の案内が出る。正規化マッチで正解しなかった入力はすべて AI に回るためである。
 
@@ -119,10 +119,23 @@ const { $schema: _schema, ...RESPONSE_JSON_SCHEMA } = z.toJSONSchema(judgementRe
 
 **対処**: `apps/api/.env` の `GEMINI_API_KEY` と `GEMINI_MODEL` を確かめ、api を再起動する。
 
-### 続けて送ると、途中から「Something went wrong.」になる
+### 続けて送ると、途中から「The free AI plan hit its limit.」になる
 
-**症状**: しばらくは回答が返るが、短い間に何問も送ると再送の案内が続く。api のログの警告に `429` と `generate_content_free_tier_requests` が出る。
+**症状**: しばらくは回答が返るが、短い間に何問も送ると「The free AI plan hit its limit. Please try again in about a minute.」のように、待つ時間を添えた案内が出る。api のログに `Gemini の無料枠の上限に達した。N 秒後に戻る` の警告が出る。
 
-**原因**: Gemini API の無料枠のレートリミットに達している。`gemini-3.5-flash-lite` の無料枠は 1 分に 15 リクエストで、1 回の判定は失敗時の再試行を含めて最大 2 リクエストを使う。
+**原因**: Gemini API の無料枠のレートリミットに達している。`gemini-3.5-flash-lite` の無料枠は 1 分に 15 リクエストで、1 日あたりの上限もある。案内の待ち時間は次のとおり決まる。
 
-**対処**: 1 分ほど待ってから送り直す。続けて試すことが多いなら、キーのプロジェクトで課金を有効にする。
+| 上限 | 待ち時間 |
+| --- | --- |
+| 1 分あたり | Gemini が返す `RetryInfo.retryDelay` |
+| 1 日あたり | 太平洋時間の 0 時まで |
+
+**対処**: 案内の時間だけ待ってから送り直す。続けて試すことが多いなら、キーのプロジェクトで課金を有効にする。
+
+### 「Sorry, the free AI plan hiccupped.」がときどき出る
+
+**症状**: 回答はおおむね返るが、ときどき再送の案内が出る。api のログに `This model is currently experiencing high demand` を含む 503 か、`This operation was aborted` の警告が出る。
+
+**原因**: Gemini 側の混雑で、応答が 503 になるか 10 秒以内に返らない。無料枠の上限とは別の失敗である。
+
+**対処**: 送り直す。混雑はたいてい一時的で、何回か送れば通る。

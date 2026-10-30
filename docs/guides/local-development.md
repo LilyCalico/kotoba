@@ -10,7 +10,7 @@
 | api | `http://localhost:3001`（`nest start --watch`） | `apps/api/src/main.ts` の既定。`PORT` で変えられる |
 | `/api/v1` の届け方 | `next dev` が `/api/v1/*` を api へ中継する | 本番と同じく、画面は相対パス `/api/v1` だけを叩く |
 | DB | ローカルの Supabase（Docker） | api は出題する単語を DB から引く。seed 済みでないとゲームを始められない |
-| AI | Gemini API（`apps/api/.env` の `GEMINI_API_KEY`） | 質問への回答に使う。キーがなくてもゲームは始まるが、質問と誤答は「もう一度送ってね」になる |
+| AI | Gemini API（`apps/api/.env` の `GEMINI_API_KEY`） | 質問への回答に使う。キーがなくてもゲームは始まるが、質問と誤答は再送の案内（「Sorry, the free AI plan hiccupped. …」）になる |
 | 単語の出題 | 常に `apps/api` から。モックの `GameClient` は Storybook とユニットテストだけで使う | 画面と API のずれを開発中に気づける |
 
 ## 1. DB を用意する
