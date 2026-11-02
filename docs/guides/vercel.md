@@ -1,6 +1,6 @@
 # Vercel へのデプロイの手順
 
-`apps/web` と `apps/api` を、Vercel Services で 1 つのプロジェクトの 2 サービスとしてデプロイする手順。ブランチを push するとプレビューが、`main` にマージすると本番がデプロイされる。
+`apps/web` と `apps/api` を、Vercel Services で 1 つのプロジェクトの 2 サービスとしてデプロイする手順。`develop` にマージするとプレビューが、`main` にマージすると本番がデプロイされる。
 
 ## このリポジトリでの前提
 
@@ -9,7 +9,8 @@
 | プロジェクト | `yuriodas-projects/kotoba` | 個人スコープ（Hobby）に置く |
 | 構成 | Vercel Services（`vercel.json` の `services`） | web と api が同じ deployment としてシップされ、プレビューでもフロントとバックが常に揃う |
 | Root Directory | `.`（リポジトリのルート） | `vercel.json` をルートに置き、サービスごとの `root` で `apps/web` と `apps/api` を指す |
-| 本番ブランチ | `main` | それ以外のブランチの push はプレビューになる |
+| 本番ブランチ | `main` | Vercel の既定 |
+| デプロイするブランチ | `main`（本番）と `develop`（プレビュー） | プレビューと本番は同じ DB と Gemini のキーを使う。それらを使って動くのを、`develop` にマージしたコードに限る。機能ブランチは CI で確かめる |
 | Node.js | 24.x | CI（`.github/workflows/ci.yml`）と揃える。プロジェクトの設定で指定する |
 | 関数のリージョン | `hnd1`（東京） | DB（Supabase の東京リージョン）の近くで動かす。`vercel.json` の `regions` で指定する |
 | DB | Supabase（東京リージョン）。プレビューと本番で同じ DB を使う | 手順は [prisma-supabase.md](prisma-supabase.md) の「本番の Supabase につなぐ」 |
@@ -20,6 +21,9 @@
 ```json
 {
   "regions": ["hnd1"],
+  "git": {
+    "deploymentEnabled": { "**": false, "main": true, "develop": true }
+  },
   "services": {
     "web": {
       "root": "apps/web",
@@ -42,6 +46,7 @@
 
 | 設定 | 理由 |
 | --- | --- |
+| `git.deploymentEnabled` | `main` と `develop` 以外のブランチの push ではデプロイしない。`**` は `/` を含むブランチ名（`feat/...`）にも当たる。1 つでも `true` の規則に当たるブランチはデプロイされる |
 | `framework` | ルートに Next.js・Vite・Storybook が並び、自動検出では決まらない。サービスごとに明示する |
 | web の `buildCommand` | turbo の `dependsOn: ["^build"]` で、`next build` の前に `packages/shared` をビルドする |
 | api の `buildCommand` | `--filter=@kotoba/api^...` で、api が依存するパッケージ（`packages/shared`）だけをビルドする。api 本体は Vercel の NestJS ビルダーが `src/main.ts` から rolldown でバンドルする（「つまずきポイント」参照） |
@@ -112,10 +117,11 @@ vercel env ls
 
 | きっかけ | デプロイ |
 | --- | --- |
-| `main` 以外のブランチへの push | プレビュー。PR には Vercel のボットがプレビューの URL をコメントする |
-| `main` へのマージ | 本番 |
+| `develop` への push（PR のマージ） | プレビュー |
+| `main` への push（`develop` のマージ） | 本番 |
+| それ以外のブランチへの push | デプロイしない |
 
-プレビューの URL は 1 デプロイ 1 ホストで、web も api も同じホストに載る。フロントが相対パス `/api/v1` を叩くと、常に自分のデプロイの api に届く。
+プレビューの URL は 1 デプロイ 1 ホストで、web も api も同じホストに載る。フロントが相対パス `/api/v1` を叩くと、常に自分のデプロイの api に届く。`develop` の最新のプレビューは、ブランチごとに付く固定の URL（`vercel ls kotoba` や Vercel のダッシュボードで分かる）でも開ける。
 
 ## 6. 動作を確かめる
 
@@ -148,6 +154,7 @@ node --env-file=.env.local <スクリプト>
 | ビルドのログを見る | `vercel inspect <URL> --logs` |
 | 実行時のログを見る | `vercel logs --deployment <URL>` |
 | 手元で Vercel と同じビルドを試す | `vercel pull --yes --environment preview` のあと `vercel build` |
+| 機能ブランチをマージ前にプレビューで動かす | リポジトリのルートで `vercel deploy`。手元の作業ツリーからプレビューを作る。`git.deploymentEnabled` は Git の push だけに効く |
 | migration を足した変更を出す | develop にマージしたら、手順 4 の `pnpm db:deploy` を流す。プレビューと本番は同じ DB を使うため、流すまでは新しいテーブルを使う API が両方で落ちる |
 | 環境変数を変える | `apps/api/.env.production` を書き換え、手順 3 を流し直す。反映は次のデプロイから |
 
