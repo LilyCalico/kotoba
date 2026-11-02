@@ -1,0 +1,84 @@
+// テーブルの定義。変更したら `pnpm --filter @kotoba/api db:migrate` で migration を作る。
+
+generator client {
+  provider               = "prisma-client"
+  // tsconfig の rootDir が src のため、生成物も src の下に置く。
+  output                 = "../src/generated/prisma"
+  runtime                = "nodejs"
+  moduleFormat           = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Language {
+  sv
+  ja
+}
+
+/// 設問・ヒント・定義を返す言語。packages/shared の uiLocaleSchema と 1 対 1 に対応する
+enum UiLocale {
+  ja
+  en
+}
+
+enum PartOfSpeech {
+  noun
+  verb
+  adjective
+  phrase
+}
+
+/// 出題する単語。形は packages/shared の wordSchema と 1 対 1 に対応する。
+/// 絞り込みに使う項目は列に、UI 言語ごとに書き分けるテキストは { ja, en } の形のまま jsonb に置く。
+model Word {
+  id              String       @id
+  language        Language
+  word            String
+  reading         String
+  partOfSpeech    PartOfSpeech @map("part_of_speech")
+  /// 1 が最も稀で 5 が最も頻繁。出題の重み
+  frequency       Int
+  acceptedAnswers String[]     @map("accepted_answers")
+  /// { ja, en }
+  definition      Json
+  /// { ja, en }
+  teaser          Json
+  /// { ja: [3 つ], en: [3 つ] }
+  hints           Json
+  /// { ja, en }
+  literal         Json?
+  /// { ja, en }
+  note            Json?
+  /// { sv, translations: { ja, en } }
+  example         Json?
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+  games           Game[]
+
+  @@index([language])
+  @@map("words")
+}
+
+/// 進行中ゲーム。形は src/games/game-store.ts の Game と 1 対 1 に対応する。
+/// 秘密の単語と Q&A 履歴を含むため、クライアントには送らない。
+/// Supabase の Data API から読み書きされないよう、migration で RLS を有効にしている（Prisma のスキーマでは表せない）。
+model Game {
+  id            String   @id @db.Uuid
+  wordId        String   @map("word_id")
+  word          Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  locale        UiLocale
+  hintsRevealed Int      @map("hints_revealed")
+  /// 判定が成功した入力と、返した結果の組の配列
+  history       Json
+  /// 終了したゲームの結果（GameResult）
+  result        Json?
+  /// 最後の操作から 1 時間後。これを過ぎたゲームは読み出さず、新しいゲームを作るときに消す
+  expiresAt     DateTime @map("expires_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([expiresAt])
+  @@map("games")
+}

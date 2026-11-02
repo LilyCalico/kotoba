@@ -1,0 +1,26 @@
+# セットアップ手順
+
+このリポジトリで採用している構成を、最初から組み立て直せる形で記録する。
+
+`docs/specifications/` が「何を作るか」、`docs/adr/` が「なぜそう決めたか」を扱うのに対し、ここは「どう設定するか」を扱う。設定ファイルを読めば分かることではなく、**その設定に至る手順と、実際に踏む落とし穴**を書く。
+
+## 一覧
+
+| 手順書 | 対象 |
+| --- | --- |
+| [frontend-ui.md](frontend-ui.md) | デザイントークン、shadcn/ui、Storybook によるフロント UI 基盤 |
+| [gemini.md](gemini.md) | Gemini による入力の分類と質問への回答、E2E のスタブ |
+| [local-development.md](local-development.md) | `pnpm dev` で web と api を起動し、実際の API でゲームを遊ぶまで |
+| [monorepo-turborepo.md](monorepo-turborepo.md) | pnpm ワークスペースによるモノレポ構成と Turborepo |
+| [nestjs.md](nestjs.md) | NestJS による API アプリケーション |
+| [openapi.md](openapi.md) | OpenAPI 仕様の生成と、web の型付きクライアント |
+| [prisma-supabase.md](prisma-supabase.md) | Prisma と Supabase による DB（ローカル・CI・本番への接続） |
+| [renovate.md](renovate.md) | Renovate による依存関係の自動更新 |
+| [testing.md](testing.md) | Vitest によるユニットテストと Playwright による E2E |
+| [vercel.md](vercel.md) | Vercel Services による web と api のデプロイ（プレビュー・本番） |
+
+## 書き方
+
+- コマンドは、そのまま実行できる形で書く。プレースホルダーは `<...>` で囲んで明示する
+- 設定値は、このリポジトリの実際の値を載せる。一般論のサンプルは書かない
+- 各手順書は「つまずきポイント」の節を持ち、症状・原因・対処の順で記述する

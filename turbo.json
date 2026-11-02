@@ -1,0 +1,67 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "storybook": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
+    },
+    "build-storybook": {
+      "dependsOn": ["^build"],
+      "outputs": ["storybook-static/**"]
+    },
+    "lint": {
+      "dependsOn": ["^build"]
+    },
+    "typecheck": {
+      "dependsOn": ["^build"]
+    },
+    // web の型検査は、api の OpenAPI 仕様から生成した型を見る。api のビルド → 仕様の出力 → 型の生成 → 型検査の順に流す。
+    "@kotoba/web#typecheck": {
+      "dependsOn": ["^build", "generate:api"]
+    },
+    "openapi": {
+      // ビルドした dist からアプリを組み立てて仕様を書き出す。
+      "dependsOn": ["build"],
+      "outputs": ["openapi.json"]
+    },
+    "generate:api": {
+      "dependsOn": ["@kotoba/api#openapi"],
+      "outputs": ["lib/api/schema.d.ts"]
+    },
+    "test": {
+      "dependsOn": ["^build"]
+    },
+    "test:coverage": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
+    },
+    "test:e2e": {
+      // web と api は dev サーバーとして自分で再コンパイルする。事前に要るのは
+      // 両者が dist/ 経由で読み込む packages/shared のビルドだけ。
+      "dependsOn": ["@kotoba/shared#build"],
+      "cache": false
+    },
+    "db:seed": {
+      // seed は src/prisma/seed/words.ts 経由で packages/shared の dist を読み込む。
+      "dependsOn": ["^build"],
+      // Turborepo は宣言していない環境変数をタスクに渡さない。シェルで接続先を指定して流せるようにする。
+      "passThroughEnv": ["DATABASE_URL", "DIRECT_URL"],
+      "cache": false
+    },
+    "test:db": {
+      // DB の中身を相手にするため、結果をキャッシュしない。依存と環境変数の扱いは db:seed と同じ。
+      "dependsOn": ["^build"],
+      "passThroughEnv": ["DATABASE_URL", "DIRECT_URL"],
+      "cache": false
+    }
+  }
+}

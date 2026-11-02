@@ -2,6 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "description": "",
   "extends": ["config:recommended"],
+  "baseBranchPatterns": ["develop"],
   "dependencyDashboard": true,
   "mode": "full",
   "timezone": "Europe/Stockholm",
@@ -13,6 +14,21 @@
     "schedule": ["at any time"]
   },
   "packageRules": [
+    {
+      "description": "Group NestJS packages — they must move in lockstep",
+      "matchPackageNames": ["/^@nestjs//"],
+      "groupName": "nestjs"
+    },
+    {
+      "description": "Group Prisma packages — CLI, client and driver adapter must match",
+      "matchPackageNames": ["prisma", "/^@prisma//"],
+      "groupName": "prisma"
+    },
+    {
+      "description": "Group Vitest packages — the coverage provider must match the runner",
+      "matchPackageNames": ["vitest", "@vitest/coverage-v8"],
+      "groupName": "vitest"
+    },
     {
       "description": "Automerge patch updates (devDependencies only)",
       "matchDepTypes": ["devDependencies"],

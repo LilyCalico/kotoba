@@ -17,4 +17,72 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
+      - run: pnpm typecheck
       - run: pnpm build
+      - run: pnpm test
+      # コミットした OpenAPI 仕様と web の型が、いまのコードから生成したものと一致するか。
+      - name: Check generated API types are up to date
+        run: |
+          pnpm generate:api
+          git diff --exit-code -- apps/api/openapi.json apps/web/lib/api/schema.d.ts
+
+  db:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # 手元と同じ Supabase のローカル環境を立て、空の DB に migration と seed が通ることを確かめる。
+      - run: pnpm db:start
+      - run: cp apps/api/.env.example apps/api/.env
+      - run: pnpm db:deploy
+      # schema.prisma の変更に migration が追いついているか。差分があれば失敗する。
+      - name: Check migrations match the schema
+        working-directory: apps/api
+        run: pnpm exec prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
+      - run: pnpm db:seed
+      # seed した DB を相手に、アプリが単語を読み出せることを確かめる。
+      - run: pnpm test:db
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # ブラウザバイナリは約 100MB。Playwright のバージョンが変わるまで使い回す。
+      - name: Resolve Playwright version
+        id: playwright
+        run: echo "version=$(pnpm --filter @kotoba/e2e exec playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - name: Install Chromium
+        run: pnpm --filter @kotoba/e2e exec playwright install --with-deps chromium
+
+      # E2E は実 API を相手にし、api は出題する単語を DB から引く。db ジョブと同じ手順で seed 済みの DB を用意する。
+      - run: pnpm db:start
+      - run: cp apps/api/.env.example apps/api/.env
+      - run: pnpm db:deploy
+      - run: pnpm db:seed
+
+      - run: pnpm test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: e2e/playwright-report/
+          retention-days: 7
