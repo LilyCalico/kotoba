@@ -46,6 +46,7 @@ describe("createGameState", () => {
       teaser: start.teaser,
       phase: "teaser",
       status: "idle",
+      request: null,
       hintsUsed: 0,
       entries: [],
     });
@@ -69,9 +70,7 @@ describe("gameReducer", () => {
     const state = gameReducer(chat, { type: "input-sent", text: "Is it a noun?" });
 
     expect(state.status).toBe("sending");
-    expect(state.entries).toEqual([
-      { id: "0", kind: "player", message: { type: "text", text: "Is it a noun?" } },
-    ]);
+    expect(state.entries).toEqual([{ id: "0", kind: "player", text: "Is it a noun?" }]);
   });
 
   it("質問の応答は verdict を積んで idle に戻る", () => {
@@ -110,20 +109,18 @@ describe("gameReducer", () => {
     ]);
   });
 
-  it("ヒントの要求はプレイヤーの発言を積んでから hint を積み、hintsUsed を増やす", () => {
+  it("ヒントの要求はプレイヤーの発言を積まずに sending に入り、届いた hint だけを積んで hintsUsed を増やす", () => {
     const hint = { index: 1, text: "The word is tied to one particular day of the week" };
     const requested = gameReducer(chat, { type: "hint-requested" });
 
     expect(requested.status).toBe("sending");
-    expect(requested.entries).toEqual([
-      { id: "0", kind: "player", message: { type: "hint-request" } },
-    ]);
+    expect(requested.entries).toEqual([]);
 
     const revealed = gameReducer(requested, { type: "hint-revealed", hint });
 
     expect(revealed.status).toBe("idle");
     expect(revealed.hintsUsed).toBe(1);
-    expect(revealed.entries.at(-1)).toEqual({ id: "1", kind: "hint", hint });
+    expect(revealed.entries).toEqual([{ id: "0", kind: "hint", hint }]);
   });
 
   it("ヒントを使い切ると要求を受け付けない", () => {
@@ -144,7 +141,12 @@ describe("gameReducer", () => {
     const state = run(chat, { type: "input-sent", text: "Is it a noun?" }, failed);
 
     expect(state.status).toBe("idle");
-    expect(state.entries.at(-1)).toEqual({ id: "1", kind: "error", code: "network_error" });
+    expect(state.entries.at(-1)).toEqual({
+      id: "1",
+      kind: "error",
+      request: "input",
+      code: "network_error",
+    });
 
     const retried = run(
       state,
@@ -167,7 +169,12 @@ describe("gameReducer", () => {
       { type: "failed", code: "ai_unavailable" },
     );
 
-    expect(state.entries.at(-1)).toEqual({ id: "1", kind: "error", code: "ai_unavailable" });
+    expect(state.entries.at(-1)).toEqual({
+      id: "1",
+      kind: "error",
+      request: "input",
+      code: "ai_unavailable",
+    });
   });
 
   it("上限の失敗では、待つ秒数も error に持たせる", () => {
@@ -180,16 +187,32 @@ describe("gameReducer", () => {
     expect(state.entries.at(-1)).toEqual({
       id: "1",
       kind: "error",
+      request: "input",
       code: "ai_rate_limited",
       retryAfterSeconds: 37,
     });
   });
 
-  it("ヒントの要求の失敗では hintsUsed を増やさない", () => {
+  it("ヒントの要求の失敗では hintsUsed を増やさず、ヒントの要求の error を積む", () => {
     const state = run(chat, { type: "hint-requested" }, failed);
 
     expect(state.hintsUsed).toBe(0);
     expect(state.status).toBe("idle");
+    expect(state.entries).toEqual([
+      { id: "0", kind: "error", request: "hint", code: "network_error" },
+    ]);
+  });
+
+  it("ヒントの要求のあとに送った入力の失敗は、入力の error になる", () => {
+    const state = run(
+      chat,
+      { type: "hint-requested" },
+      { type: "hint-revealed", hint: { index: 1, text: "hint" } },
+      { type: "input-sent", text: "Is it a noun?" },
+      failed,
+    );
+
+    expect(state.entries.at(-1)).toMatchObject({ kind: "error", request: "input" });
   });
 
   it("画面で塞いでいるはずの失敗は、何も積まずに idle に戻る", () => {
@@ -386,13 +409,23 @@ describe("latestAnnouncement", () => {
       failed,
     );
 
-    expect(latestAnnouncement(state)).toEqual({ id: "3", kind: "error", code: "network_error" });
+    expect(latestAnnouncement(state)).toEqual({
+      id: "3",
+      kind: "error",
+      request: "input",
+      code: "network_error",
+    });
   });
 
   it("ヒントの失敗も error として返す", () => {
     const state = run(chat, { type: "hint-requested" }, failed);
 
-    expect(latestAnnouncement(state)).toEqual({ id: "1", kind: "error", code: "network_error" });
+    expect(latestAnnouncement(state)).toEqual({
+      id: "0",
+      kind: "error",
+      request: "hint",
+      code: "network_error",
+    });
   });
 
   it("verdict より新しい answer-feedback を返す", () => {

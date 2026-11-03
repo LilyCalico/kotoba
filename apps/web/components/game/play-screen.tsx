@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useEffect, useReducer, useRef, useState } from "react";
 
 import { AnswerFeedback, answerText } from "@/components/game/answer-feedback";
-import { ErrorMessage, ExpiredMessage, errorText } from "@/components/game/error-message";
+import { ErrorMessage, ExpiredMessage, errorText, waitText } from "@/components/game/error-message";
 import { GiveUpDialog } from "@/components/game/give-up-dialog";
 import { Header } from "@/components/game/header";
 import { HintButton } from "@/components/game/hint-button";
@@ -14,7 +14,7 @@ import { HintCard } from "@/components/game/hint-card";
 import { InputForm } from "@/components/game/input-form";
 import { chatItemAppear, chromeAppear } from "@/components/game/motion";
 import { PendingIndicator } from "@/components/game/pending-indicator";
-import { HINT_REQUEST_TEXT, PlayerMessage } from "@/components/game/player-message";
+import { PlayerMessage } from "@/components/game/player-message";
 import { ResultCard } from "@/components/game/result-card";
 import { TeaserCard } from "@/components/game/teaser-card";
 import {
@@ -50,6 +50,11 @@ import {
 export const TEASER_DURATION_MS = 3000;
 
 export const START_FAILED_TEXT = "Couldn't start a game.";
+
+/** ゲーム開始がレートリミットを超えたときの案内。数え直されるまでの時間を添える。 */
+export function startLimitText(retryAfterSeconds: number | undefined): string {
+  return `Too many new games. Try again ${waitText(retryAfterSeconds)}.`;
+}
 export const GIVE_UP_FAILED_TEXT = "Couldn't give up. Please try again.";
 export const TEASER_INSTRUCTION = "Press Enter or Space to start asking questions.";
 export const SKIP_LINK_TEXT = "Skip to the input";
@@ -116,9 +121,11 @@ export function GameScreen({
         if (cancelled) return;
         if (!(error instanceof GameClientError)) throw error;
         // ゲームを始められなかったときは、失敗の種類によらず始め直しを促す。
+        // レートリミットのときだけ、数え直されるまでの時間を添える。
         setStartFailed(true);
         toast({
-          title: START_FAILED_TEXT,
+          title:
+            error.code === "rate_limited" ? startLimitText(error.retryAfterSeconds) : START_FAILED_TEXT,
           action: {
             label: "Retry",
             onAction: () => {
@@ -226,13 +233,7 @@ function Chat({
 
   const last = entries.at(-1);
   const lastId = last?.id;
-  const previous = entries.at(-2);
-  const errorFocus =
-    last?.kind !== "error"
-      ? null
-      : previous?.kind === "player" && previous.message.type === "hint-request"
-        ? "hint"
-        : "input";
+  const errorFocus = last?.kind === "error" ? last.request : null;
 
   // 要素が増えたら末尾へ追従する。応答待ちのインジケーターの出入りでも高さが変わるため、`status` も見る。
   useEffect(() => {
@@ -338,7 +339,7 @@ function Chat({
           ))}
           {sending && (
             <ChatItem>
-              <PendingIndicator />
+              <PendingIndicator slowNotice />
             </ChatItem>
           )}
           {finished && (
@@ -425,11 +426,7 @@ function Entry({
 }) {
   switch (entry.kind) {
     case "player":
-      return (
-        <PlayerMessage
-          text={entry.message.type === "text" ? entry.message.text : HINT_REQUEST_TEXT}
-        />
-      );
+      return <PlayerMessage text={entry.text} />;
     case "verdict":
       return <VerdictMessage ref={ref} verdict={entry.verdict} />;
     case "unsupported-language":

@@ -19,15 +19,19 @@ export const DEFAULT_TIMEOUT_MS = 10_000;
 /** 上限に達したが、上限の種類も戻るまでの秒数も応答から読めないときの待ち時間。1 分あたりの上限が戻る最長の時間に合わせる。 */
 export const DEFAULT_RETRY_AFTER_SECONDS = 60;
 
-/** Gemini に返させる形。`verdict` は `kind` が `question` のときだけ値を持つ。 */
+/**
+ * Gemini に返させる形。`verdict` は `kind` が `question` のときだけ、
+ * `correct` は `kind` が `answer` のときだけ値を持つ。
+ */
 const judgementResponseSchema = z.object({
   kind: z.enum(["question", "answer", "unsupported_language"]),
   verdict: verdictSchema.nullable(),
+  correct: z.boolean().nullable(),
 });
 
 /**
  * structured output に渡す JSON Schema。Gemini が対応しない `$schema` を除く。
- * `kind` と `verdict` を enum に縛り、自由文を返させない。
+ * `kind` と `verdict` を enum に、`correct` を真偽値に縛り、自由文を返させない。
  */
 const { $schema: _schema, ...RESPONSE_JSON_SCHEMA } = z.toJSONSchema(judgementResponseSchema);
 
@@ -40,10 +44,17 @@ export type GenerateContent = (
 export function parseJudgement(text: string | undefined): Judgement {
   if (text === undefined) throw new Error("応答に本文がない");
 
-  const { kind, verdict } = judgementResponseSchema.parse(JSON.parse(text));
-  if (kind !== "question") return { kind };
-  if (verdict === null) throw new Error("質問なのに verdict がない");
-  return { kind, verdict };
+  const { kind, verdict, correct } = judgementResponseSchema.parse(JSON.parse(text));
+  switch (kind) {
+    case "question":
+      if (verdict === null) throw new Error("質問なのに verdict がない");
+      return { kind, verdict };
+    case "answer":
+      if (correct === null) throw new Error("解答なのに correct がない");
+      return { kind, correct };
+    case "unsupported_language":
+      return { kind };
+  }
 }
 
 /**

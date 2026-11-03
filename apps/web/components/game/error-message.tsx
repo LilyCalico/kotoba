@@ -26,15 +26,23 @@ export function aiLimitText(retryAfterSeconds: number | undefined): string {
   return `The free AI plan hit its limit. Please try again ${waitText(retryAfterSeconds)}.`;
 }
 
+/** 入力がレートリミットを超えたときの案内。数え直されるまでの時間を添える。 */
+export function rateLimitText(retryAfterSeconds: number | undefined): string {
+  return `You're sending too fast. Please try again ${waitText(retryAfterSeconds)}.`;
+}
+
 /**
  * 再送の案内の文言。`docs/specifications/api.md`「エラー」の「画面の扱い」に従う。
  *
+ * - `rate_limited`: 数え直されるまで通らないため、待つ時間を伝える
  * - `ai_rate_limited`: 無料枠の上限が戻るまで通らないため、待つ時間を伝える
  * - `ai_unavailable`: 無料枠の AI は一時的に失敗しやすく、送り直せば通ることが多いため、その旨を伝える
  * - それ以外: 共通の文言
  */
 export function errorText(code: GameClientErrorCode, retryAfterSeconds?: number): string {
   switch (code) {
+    case "rate_limited":
+      return rateLimitText(retryAfterSeconds);
     case "ai_rate_limited":
       return aiLimitText(retryAfterSeconds);
     case "ai_unavailable":

@@ -52,6 +52,41 @@ describe("buildJudgePrompt", () => {
     expect(systemInstruction).toContain("Japanese, English, and Swedish");
   });
 
+  it("仮名のない漢字だけの文は中国語、ラテン文字の英語・スウェーデン語以外の文は対応外と書く", () => {
+    const { systemInstruction } = buildJudgePrompt({ word: fredagsmys, history: [], text: "Is it food?" });
+
+    expect(systemInstruction).toContain("Japanese always uses kana");
+    expect(systemInstruction).toContain("English and Swedish are not the only languages in the Latin alphabet");
+  });
+
+  it("正解として受け付ける表記をすべて入れる", () => {
+    const { systemInstruction } = buildJudgePrompt({ word: fredagsmys, history: [], text: "fredagsmis" });
+
+    expect(systemInstruction).toContain(
+      `- Accepted spellings: ${[fredagsmys.word, ...fredagsmys.acceptedAnswers].join(", ")}`,
+    );
+  });
+
+  it("解答を救う基準に、2 文字程度までの綴りの間違いと音写を正解、意味の近い別の語と語の前後に別の語をつけた解答を誤答と書く", () => {
+    const { systemInstruction } = buildJudgePrompt({ word: fredagsmys, history: [], text: "fredagsmis" });
+
+    expect(systemInstruction).toContain("about two characters or fewer");
+    expect(systemInstruction).toContain("katakana or romaji");
+    expect(systemInstruction).toContain("A different word is wrong, even when its meaning is close");
+    expect(systemInstruction).toContain("A guess must be the word alone");
+    expect(systemInstruction).toContain('set "correct" to null');
+  });
+
+  it("単語そのものを当てる質問は解答として判定させ、別のことを尋ねる質問とは分ける", () => {
+    const { systemInstruction } = buildJudgePrompt({ word: fredagsmys, history: [], text: "Is it fredagsmys?" });
+
+    expect(systemInstruction).toContain(
+      'A question that only asks whether the secret word is a particular word, such as "Is it lagom?"',
+    );
+    expect(systemInstruction).toContain('"Is it lagom?" and "ラーゴムですか？" would be correct');
+    expect(systemInstruction).toContain('"Is it similar to hygge?", is a "question"');
+  });
+
   it("履歴がなければ、そのことを書く", () => {
     const { systemInstruction } = buildJudgePrompt({ word: fredagsmys, history: [], text: "Is it food?" });
 

@@ -80,15 +80,29 @@ const PACIFIC_FIVE_PM = new Date("2026-10-30T00:00:00Z");
 
 describe("parseJudgement", () => {
   it("質問には verdict を添えて返す", () => {
-    expect(parseJudgement('{"kind":"question","verdict":"yes"}')).toEqual({
+    expect(parseJudgement('{"kind":"question","verdict":"yes","correct":null}')).toEqual({
       kind: "question",
       verdict: "yes",
     });
   });
 
-  it("解答と対応外言語では verdict を捨てる", () => {
-    expect(parseJudgement('{"kind":"answer","verdict":null}')).toEqual({ kind: "answer" });
-    expect(parseJudgement('{"kind":"unsupported_language","verdict":"yes"}')).toEqual({
+  it("解答には正誤を添え、verdict を捨てる", () => {
+    expect(parseJudgement('{"kind":"answer","verdict":null,"correct":true}')).toEqual({
+      kind: "answer",
+      correct: true,
+    });
+    expect(parseJudgement('{"kind":"answer","verdict":"yes","correct":false}')).toEqual({
+      kind: "answer",
+      correct: false,
+    });
+  });
+
+  it("質問と対応外言語では correct を捨てる", () => {
+    expect(parseJudgement('{"kind":"question","verdict":"no","correct":true}')).toEqual({
+      kind: "question",
+      verdict: "no",
+    });
+    expect(parseJudgement('{"kind":"unsupported_language","verdict":"yes","correct":true}')).toEqual({
       kind: "unsupported_language",
     });
   });
@@ -97,10 +111,12 @@ describe("parseJudgement", () => {
     for (const text of [
       undefined,
       "not json",
-      '{"kind":"question","verdict":null}',
-      '{"kind":"question","verdict":"maybe"}',
-      '{"kind":"hint","verdict":null}',
-      '{"kind":"answer"}',
+      '{"kind":"question","verdict":null,"correct":null}',
+      '{"kind":"question","verdict":"maybe","correct":null}',
+      '{"kind":"hint","verdict":null,"correct":null}',
+      '{"kind":"answer","verdict":null,"correct":null}',
+      '{"kind":"answer","verdict":null,"correct":"yes"}',
+      '{"kind":"answer","verdict":null}',
     ]) {
       expect(() => parseJudgement(text), String(text)).toThrow();
     }
@@ -109,7 +125,7 @@ describe("parseJudgement", () => {
 
 describe("GeminiInputJudge", () => {
   it("Gemini の分類を返す", async () => {
-    const { generate } = fakeGenerate('{"kind":"question","verdict":"yes"}');
+    const { generate } = fakeGenerate('{"kind":"question","verdict":"yes","correct":null}');
 
     await expect(judgeWith(generate).judge(input)).resolves.toEqual({
       kind: "question",
@@ -118,7 +134,7 @@ describe("GeminiInputJudge", () => {
   });
 
   it("モデル・プロンプト・structured output の指定を渡す", async () => {
-    const { generate, calls } = fakeGenerate('{"kind":"answer","verdict":null}');
+    const { generate, calls } = fakeGenerate('{"kind":"answer","verdict":null,"correct":false}');
 
     await judgeWith(generate).judge(input);
 
@@ -130,7 +146,7 @@ describe("GeminiInputJudge", () => {
     expect(call?.config?.temperature).toBe(0);
     expect(call?.config?.responseJsonSchema).toMatchObject({
       type: "object",
-      required: ["kind", "verdict"],
+      required: ["kind", "verdict", "correct"],
       properties: {
         kind: { enum: ["question", "answer", "unsupported_language"] },
         verdict: {
@@ -139,6 +155,7 @@ describe("GeminiInputJudge", () => {
             { type: "null" },
           ],
         },
+        correct: { type: ["boolean", "null"] },
       },
     });
     expect(call?.config?.responseJsonSchema).not.toHaveProperty("$schema");
@@ -148,9 +165,10 @@ describe("GeminiInputJudge", () => {
     for (const first of [
       new Error("503 Service Unavailable"),
       "not json",
-      '{"kind":"question","verdict":null}',
+      '{"kind":"question","verdict":null,"correct":null}',
+      '{"kind":"answer","verdict":null,"correct":null}',
     ]) {
-      const { generate, calls } = fakeGenerate(first, '{"kind":"question","verdict":"no"}');
+      const { generate, calls } = fakeGenerate(first, '{"kind":"question","verdict":"no","correct":null}');
 
       await expect(judgeWith(generate).judge(input)).resolves.toEqual({
         kind: "question",
@@ -186,14 +204,14 @@ describe("GeminiInputJudge", () => {
     let calls = 0;
     const generate: GenerateContent = (params) => {
       calls++;
-      if (calls === 2) return Promise.resolve({ text: '{"kind":"answer","verdict":null}' });
+      if (calls === 2) return Promise.resolve({ text: '{"kind":"answer","verdict":null,"correct":false}' });
       // 打ち切りの合図が来るまで応答しない。
       return new Promise((_, reject) => {
         params.config?.abortSignal?.addEventListener("abort", () => reject(new Error("aborted")));
       });
     };
 
-    await expect(judgeWith(generate, 20).judge(input)).resolves.toEqual({ kind: "answer" });
+    await expect(judgeWith(generate, 20).judge(input)).resolves.toEqual({ kind: "answer", correct: false });
     expect(calls).toBe(2);
   });
 });

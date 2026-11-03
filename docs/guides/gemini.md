@@ -1,6 +1,6 @@
 # Gemini による入力の判定の手順
 
-`apps/api` がプレイヤーの入力を Gemini で分類し、質問に 5 値で答えるまでの手順。判定の流れと設計の理由は [ADR 0008](../adr/0008-input-judging-with-gemini-structured-output.md) を参照する。
+`apps/api` がプレイヤーの入力を Gemini で分類し、質問に 5 値で答え、解答のスペルミス・音写ゆれを救うまでの手順。判定の流れと設計の理由は [ADR 0008](../adr/0008-input-judging-with-gemini-structured-output.md) と [ADR 0009](../adr/0009-answer-typo-rescue-in-the-judging-call.md) を参照する。
 
 ## このリポジトリでの前提
 
@@ -56,8 +56,8 @@ export function createInputJudge(config: ConfigService): InputJudge {
 
 | 部品 | 置き場所 | 役割 |
 | --- | --- | --- |
-| `buildJudgePrompt` | `judge-prompt.ts` | 分類の規則・秘密の単語・全 Q&A 履歴をシステム指示に、プレイヤーの入力を本文に置く |
-| `GeminiInputJudge` | `gemini-input-judge.ts` | structured output で `{ kind, verdict }` を返させ、zod で検証する。失敗は 1 回だけ再試行する。無料枠の上限（429）だけは再試行せず、上限が戻るまでの秒数を添えて `ai_rate_limited` を投げる |
+| `buildJudgePrompt` | `judge-prompt.ts` | 分類と解答の救済の規則・秘密の単語（正解として受け付ける表記を含む）・全 Q&A 履歴をシステム指示に、プレイヤーの入力を本文に置く |
+| `GeminiInputJudge` | `gemini-input-judge.ts` | structured output で `{ kind, verdict, correct }` を返させ、zod で検証する。失敗は 1 回だけ再試行する。無料枠の上限（429）だけは再試行せず、上限が戻るまでの秒数を添えて `ai_rate_limited` を投げる |
 | `createGenerateContent` | `gemini-input-judge.ts` | `GoogleGenAI` を作り、`models.generateContent` を返す。SDK の自動リトライは `retryOptions: { attempts: 1 }` で切る |
 | `UnavailableInputJudge` | `gemini-input-judge.ts` | キーがないときに差し込み、常に `ai_unavailable` を投げる |
 
@@ -69,10 +69,13 @@ export function createInputJudge(config: ConfigService): InputJudge {
 const judgementResponseSchema = z.object({
   kind: z.enum(["question", "answer", "unsupported_language"]),
   verdict: verdictSchema.nullable(),
+  correct: z.boolean().nullable(),
 });
 
 const { $schema: _schema, ...RESPONSE_JSON_SCHEMA } = z.toJSONSchema(judgementResponseSchema);
 ```
+
+`verdict` は `question` のときだけ、`correct` は `answer` のときだけ値を持ち、それ以外は `null` にさせる。`question` なのに `verdict` が、`answer` なのに `correct` が `null` の応答は、形の合わない応答として再試行に回す。
 
 `z.toJSONSchema` が付ける `$schema` は、Gemini の `responseJsonSchema` が受け付けるキーワードの一覧にないため取り除く。`responseJsonSchema` は `responseMimeType: "application/json"` と組で指定する。
 
@@ -100,7 +103,7 @@ const { $schema: _schema, ...RESPONSE_JSON_SCHEMA } = z.toJSONSchema(judgementRe
 | --- | --- |
 | キリル文字かハングルを含む | `unsupported_language` |
 | 「?」か「？」で終わる | `question` / `yes` |
-| それ以外 | `answer` |
+| それ以外 | `answer` / 誤答（スペルミス・音写ゆれの救済はしない） |
 
 キーはスタブが見ないため、空でなければ何でもよい。CI に Gemini のキーは要らない。
 

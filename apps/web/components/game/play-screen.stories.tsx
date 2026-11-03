@@ -1,8 +1,20 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, screen, userEvent, waitFor, within } from "storybook/test";
-import { AI_ERROR_TEXT, ERROR_TEXT, EXPIRED_TEXT, aiLimitText } from "@/components/game/error-message";
+import {
+  AI_ERROR_TEXT,
+  ERROR_TEXT,
+  EXPIRED_TEXT,
+  aiLimitText,
+  rateLimitText,
+} from "@/components/game/error-message";
 import { INPUT_LABEL } from "@/components/game/input-form";
-import { GIVE_UP_FAILED_TEXT, GameScreen, START_FAILED_TEXT } from "@/components/game/play-screen";
+import { SLOW_PENDING_TEXT } from "@/components/game/pending-indicator";
+import {
+  GIVE_UP_FAILED_TEXT,
+  GameScreen,
+  START_FAILED_TEXT,
+  startLimitText,
+} from "@/components/game/play-screen";
 import { UNSUPPORTED_LANGUAGE_TEXT } from "@/components/game/verdict-message";
 import { toastQueue } from "@/components/ui/toast";
 import { type GameClient, GameClientError, type GameClientErrorCode } from "@/lib/game/client";
@@ -94,6 +106,18 @@ export const Sending: Story = {
   },
 };
 
+/** 応答待ちが 2 秒を超えた。読み込みバーの下に詫びの文言を添える。 */
+export const SendingSlow: Story = {
+  args: { client: mockClient({ sendInput: never }) },
+  play: async () => {
+    await enterChat();
+    await send("Is it about Friday?");
+
+    await expect(screen.queryByText(SLOW_PENDING_TEXT)).not.toBeInTheDocument();
+    await expect(await screen.findByText(SLOW_PENDING_TEXT, {}, { timeout: 4000 })).toBeVisible();
+  },
+};
+
 /** 正解。入力欄とヒントボタンを畳み、結果カードの下に Play again を置く。 */
 export const Cleared: Story = {
   play: async () => {
@@ -157,6 +181,18 @@ export const InputRateLimited: Story = {
   },
 };
 
+/** 入力のレートリミット超過。数え直されるまでの時間を添えて、そのころに送り直すよう伝える。 */
+export const InputRateLimitExceeded: Story = {
+  args: { client: mockClient({ sendInput: fail("rate_limited", 45) }) },
+  play: async () => {
+    await enterChat();
+    await send("Is it about Friday?");
+
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(rateLimitText(45)));
+    await expect(screen.getByRole("status")).toHaveTextContent("in about a minute");
+  },
+};
+
 /** ヒントの要求の失敗。ログにエラーを積んで読み上げ、ヒントボタンにフォーカスを戻す。 */
 export const HintFailed: Story = {
   args: { client: mockClient({ revealHint: fail() }) },
@@ -175,6 +211,16 @@ export const StartFailed: Story = {
   args: { client: mockClient({ startGame: fail() }) },
   play: async () => {
     await screen.findByText(START_FAILED_TEXT);
+  },
+};
+
+/** ゲーム開始のレートリミット超過。数え直されるまでの時間を添え、Retry を残す。 */
+export const StartRateLimited: Story = {
+  args: { client: mockClient({ startGame: fail("rate_limited", 45) }) },
+  play: async () => {
+    await screen.findByText(startLimitText(45));
+    await expect(screen.getByText("Too many new games. Try again in about a minute.")).toBeVisible();
+    await expect(screen.getByRole("button", { name: "Retry" })).toBeVisible();
   },
 };
 

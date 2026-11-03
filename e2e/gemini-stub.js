@@ -4,7 +4,7 @@
 //
 // - キリル文字かハングルを含む入力: unsupported_language
 // - 「?」か「？」で終わる入力: question / yes
-// - それ以外: answer
+// - それ以外: answer / 誤答（スペルミス・音写ゆれの救済はしない）
 import { createServer } from "node:http";
 
 const PORT = Number(process.env.GEMINI_STUB_PORT ?? 3002);
@@ -13,9 +13,11 @@ const PORT = Number(process.env.GEMINI_STUB_PORT ?? 3002);
 const UNSUPPORTED_SCRIPT = /[Ѐ-ӿ가-힯]/u;
 
 function judge(text) {
-  if (UNSUPPORTED_SCRIPT.test(text)) return { kind: "unsupported_language", verdict: null };
-  if (/[?？]\s*$/u.test(text)) return { kind: "question", verdict: "yes" };
-  return { kind: "answer", verdict: null };
+  if (UNSUPPORTED_SCRIPT.test(text)) {
+    return { kind: "unsupported_language", verdict: null, correct: null };
+  }
+  if (/[?？]\s*$/u.test(text)) return { kind: "question", verdict: "yes", correct: null };
+  return { kind: "answer", verdict: null, correct: false };
 }
 
 /** `generateContent` の本文から、プレイヤーの入力（最後の user のテキスト）を取り出す。 */

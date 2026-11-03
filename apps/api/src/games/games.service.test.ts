@@ -21,7 +21,9 @@ function fakeJudge(respond?: (input: JudgeInput) => Judgement) {
       // 渡された時点の履歴を残す。あとで積まれる要素に引きずられないよう写す。
       calls.push({ ...input, history: [...input.history] });
       if (respond) return respond(input);
-      return input.text.endsWith("?") ? { kind: "question", verdict: "yes" } : { kind: "answer" };
+      return input.text.endsWith("?")
+        ? { kind: "question", verdict: "yes" }
+        : { kind: "answer", correct: false };
     },
   };
   return { judge, calls };
@@ -102,10 +104,10 @@ describe("GamesService", () => {
   it("AI の分類を InputResult にする", async () => {
     const judgements: Judgement[] = [
       { kind: "question", verdict: "irrelevant" },
-      { kind: "answer" },
+      { kind: "answer", correct: false },
       { kind: "unsupported_language" },
     ];
-    const { judge } = fakeJudge(() => judgements.shift() ?? { kind: "answer" });
+    const { judge } = fakeJudge(() => judgements.shift() ?? { kind: "answer", correct: false });
     const { service } = createService({ judge });
     const gameId = await start(service);
 
@@ -115,6 +117,30 @@ describe("GamesService", () => {
     });
     await expect(service.input(gameId, "hygge")).resolves.toEqual({ kind: "answer", correct: false });
     await expect(service.input(gameId, "这是食物吗")).resolves.toEqual({ kind: "unsupported_language" });
+  });
+
+  it("AI がスペルミス・音写ゆれとして救った解答は、正規化マッチの正解と同じくクリアにする", async () => {
+    const { judge, calls } = fakeJudge(({ text }) => ({ kind: "answer", correct: text === "laagom" }));
+    const { service, store } = createService({ judge });
+    const rescuedGame = await start(service);
+    const exactGame = await start(service);
+
+    const rescued = await service.input(rescuedGame, "laagom");
+    const exact = await service.input(exactGame, "lagom");
+
+    expect(calls.map(({ text }) => text)).toEqual(["laagom"]);
+    expect(rescued).toEqual(exact);
+    expect(rescued).toMatchObject({ kind: "answer", correct: true, result: { outcome: "cleared", word: "Lagom" } });
+    expect((await store.get(rescuedGame))?.result).toMatchObject({ outcome: "cleared" });
+  });
+
+  it("AI が救わなかった解答は誤答のままにし、ゲームを続ける", async () => {
+    const { judge } = fakeJudge(() => ({ kind: "answer", correct: false }));
+    const { service, store } = createService({ judge });
+    const gameId = await start(service);
+
+    await expect(service.input(gameId, "moderate")).resolves.toEqual({ kind: "answer", correct: false });
+    expect((await store.get(gameId))?.result).toBeUndefined();
   });
 
   it("AI には秘密の単語と、それまでの全 Q&A 履歴を渡す", async () => {
