@@ -89,6 +89,7 @@ export function isAcceptedAnswer(word: Word, input: string): boolean {
 
 /**
  * 終了時に返す単語の一項目。テキストは `locale` の言語に絞り、持たない項目は省く。
+ * カタカナの読みは日本語 UI でだけ付け、英語 UI ではスウェーデン語の綴りだけを見せる。
  * api の応答と、web のモックの `GameClient` の両方がこれで組み立てる。
  */
 export function gameResultOf(word: Word, outcome: Outcome, locale: UiLocale): GameResult {
@@ -96,6 +97,7 @@ export function gameResultOf(word: Word, outcome: Outcome, locale: UiLocale): Ga
     outcome,
     wordId: word.id,
     word: word.word,
+    ...(locale === "ja" && { reading: word.reading }),
     partOfSpeech: word.partOfSpeech,
     definition: word.definition[locale],
     ...(word.literal && { literal: word.literal[locale] }),

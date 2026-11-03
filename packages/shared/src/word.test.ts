@@ -78,12 +78,17 @@ describe("gameResultOf", () => {
       outcome: "cleared",
       wordId: "kura-skymning",
       word: "Kura skymning",
+      reading: "クーラ・シムニング",
       partOfSpeech: "phrase",
       definition: full.definition.ja,
       literal: "薄暗がりにうずくまる",
       note: "冬の長い北欧の習慣。",
       example: { sv: "Vi kurar skymning.", translation: "薄闇で過ごそう。" },
     });
+  });
+
+  it("英語 UI ではカタカナの読みを付けない", () => {
+    expect(gameResultOf(word, "cleared", "en")).not.toHaveProperty("reading");
   });
 
   it("単語が持たない項目は省く", () => {

@@ -103,6 +103,8 @@ export const gameResultSchema = z.object({
   outcome: outcomeSchema,
   wordId: z.string(),
   word: z.string(),
+  /** カタカナの読み。日本語 UI のゲームだけが持つ */
+  reading: z.string().optional(),
   partOfSpeech: partOfSpeechSchema,
   definition: z.string(),
   /** 直訳。合成語など、語の成り立ちが答えの核心になる語だけが持つ */

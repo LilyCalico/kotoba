@@ -61,7 +61,7 @@ describe("createMockGameClient", () => {
     });
   });
 
-  it("locale の言語で設問・ヒント・定義を返す", async () => {
+  it("locale の言語で設問・ヒント・定義を返し、日本語ではカタカナの読みも返す", async () => {
     const client = clientFor("fredagsmys");
 
     const { gameId, teaser } = await client.startGame({ language: "sv", locale: "ja" });
@@ -72,6 +72,7 @@ describe("createMockGameClient", () => {
       text: fredagsmys.hints.ja[0],
     });
     await expect(client.giveUp(gameId)).resolves.toMatchObject({
+      reading: fredagsmys.reading,
       definition: fredagsmys.definition.ja,
     });
   });
