@@ -9,24 +9,29 @@ import {
 
 import type { GameClientErrorCode } from "./client";
 
-/**
- * プレイヤーの発言。入力欄からの送信と、ヒントボタンからの要求の 2 種がある。
- * ヒントの要求に添える文言は UI 言語で変わるため、状態には持たずコンポーネントが決める。
- */
-export type PlayerMessage = { type: "text"; text: string } | { type: "hint-request" };
+/** 応答を待つ要求。入力欄からの送信と、ヒントボタンからの要求の 2 種がある。 */
+export type GameRequest = "input" | "hint";
 
 /**
  * チャットログに積まれる要素。コンポーネントはこの型だけを見て描画する。
  * `id` は追加した時点の `entries.length` で、要素は追記しかしないため一意になる。
+ * プレイヤーの発言は入力欄から送った文だけを積む。ヒントの要求は発言として積まず、届いたヒントのカードだけを積む。
+ * `error` の `request` は失敗した要求で、画面はこれを見て入力欄かヒントボタンにフォーカスを戻す。
  */
 export type ChatEntry =
-  | { id: string; kind: "player"; message: PlayerMessage }
+  | { id: string; kind: "player"; text: string }
   | { id: string; kind: "verdict"; verdict: Verdict }
   | { id: string; kind: "unsupported-language" }
   | { id: string; kind: "answer-feedback"; correct: boolean }
   | { id: string; kind: "hint"; hint: Hint }
   | { id: string; kind: "result"; result: GameResult }
-  | { id: string; kind: "error"; code: GameClientErrorCode; retryAfterSeconds?: number }
+  | {
+      id: string;
+      kind: "error";
+      request: GameRequest;
+      code: GameClientErrorCode;
+      retryAfterSeconds?: number;
+    }
   | { id: string; kind: "expired" };
 
 type WithoutId<T> = T extends unknown ? Omit<T, "id"> : never;
@@ -41,6 +46,8 @@ export type GameState = {
   phase: "teaser" | "chat";
   /** `sending` は入力の送信とヒントの要求の応答待ち、`finished` はクリアかギブアップか期限切れの後 */
   status: "idle" | "sending" | "finished";
+  /** 直近に送った要求。応答待ちの失敗が、どちらの要求のものかを決める。まだ何も送っていなければ `null` */
+  request: GameRequest | null;
   hintsUsed: number;
   entries: ChatEntry[];
 };
@@ -88,6 +95,7 @@ export function createGameState(start: GameStart): GameState {
     teaser: start.teaser,
     phase: "teaser",
     status: "idle",
+    request: null,
     hintsUsed: 0,
     entries: [],
   };
@@ -138,16 +146,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         status: "sending",
-        entries: append(state, { kind: "player", message: { type: "text", text: action.text } }),
+        request: "input",
+        entries: append(state, { kind: "player", text: action.text }),
       };
 
     case "hint-requested":
       if (!canSend(state) || remainingHints(state.hintsUsed) <= 0) return state;
-      return {
-        ...state,
-        status: "sending",
-        entries: append(state, { kind: "player", message: { type: "hint-request" } }),
-      };
+      return { ...state, status: "sending", request: "hint" };
 
     case "input-resolved": {
       if (state.status !== "sending") return state;
@@ -209,6 +214,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         status: "idle",
         entries: append(state, {
           kind: "error",
+          request: state.request ?? "input",
           code: action.code,
           ...(action.retryAfterSeconds === undefined
             ? {}

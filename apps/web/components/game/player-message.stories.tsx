@@ -1,6 +1,6 @@
 import { MAX_INPUT_LENGTH } from "@kotoba/shared";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { HINT_REQUEST_TEXT, PlayerMessage } from "@/components/game/player-message";
+import { PlayerMessage } from "@/components/game/player-message";
 
 const LONG_TEXT =
   "Is it something that people in Sweden usually do together at home on a Friday evening after a long week, maybe with snacks, candy, tacos or a movie, instead of going out to a restaurant or a bar in town?".slice(
@@ -33,8 +33,4 @@ export const MaxLength: Story = {
 
 export const UnbrokenWord: Story = {
   args: { text: "Fredagsmys".repeat(20) },
-};
-
-export const HintRequest: Story = {
-  args: { text: HINT_REQUEST_TEXT },
 };

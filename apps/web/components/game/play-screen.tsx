@@ -14,7 +14,7 @@ import { HintCard } from "@/components/game/hint-card";
 import { InputForm } from "@/components/game/input-form";
 import { chatItemAppear, chromeAppear } from "@/components/game/motion";
 import { PendingIndicator } from "@/components/game/pending-indicator";
-import { HINT_REQUEST_TEXT, PlayerMessage } from "@/components/game/player-message";
+import { PlayerMessage } from "@/components/game/player-message";
 import { ResultCard } from "@/components/game/result-card";
 import { TeaserCard } from "@/components/game/teaser-card";
 import {
@@ -233,13 +233,7 @@ function Chat({
 
   const last = entries.at(-1);
   const lastId = last?.id;
-  const previous = entries.at(-2);
-  const errorFocus =
-    last?.kind !== "error"
-      ? null
-      : previous?.kind === "player" && previous.message.type === "hint-request"
-        ? "hint"
-        : "input";
+  const errorFocus = last?.kind === "error" ? last.request : null;
 
   // 要素が増えたら末尾へ追従する。応答待ちのインジケーターの出入りでも高さが変わるため、`status` も見る。
   useEffect(() => {
@@ -432,11 +426,7 @@ function Entry({
 }) {
   switch (entry.kind) {
     case "player":
-      return (
-        <PlayerMessage
-          text={entry.message.type === "text" ? entry.message.text : HINT_REQUEST_TEXT}
-        />
-      );
+      return <PlayerMessage text={entry.text} />;
     case "verdict":
       return <VerdictMessage ref={ref} verdict={entry.verdict} />;
     case "unsupported-language":
