@@ -8,6 +8,7 @@ import {
   rateLimitText,
 } from "@/components/game/error-message";
 import { INPUT_LABEL } from "@/components/game/input-form";
+import { SLOW_PENDING_TEXT } from "@/components/game/pending-indicator";
 import {
   GIVE_UP_FAILED_TEXT,
   GameScreen,
@@ -102,6 +103,18 @@ export const Sending: Story = {
 
     await expect(screen.getByRole("textbox", { name: INPUT_LABEL })).toBeDisabled();
     await expect(screen.getByRole("button", { name: /^Show a hint/ })).toBeDisabled();
+  },
+};
+
+/** 応答待ちが 2 秒を超えた。読み込みバーの下に詫びの文言を添える。 */
+export const SendingSlow: Story = {
+  args: { client: mockClient({ sendInput: never }) },
+  play: async () => {
+    await enterChat();
+    await send("Is it about Friday?");
+
+    await expect(screen.queryByText(SLOW_PENDING_TEXT)).not.toBeInTheDocument();
+    await expect(await screen.findByText(SLOW_PENDING_TEXT, {}, { timeout: 4000 })).toBeVisible();
   },
 };
 

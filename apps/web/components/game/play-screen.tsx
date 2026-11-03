@@ -339,7 +339,7 @@ function Chat({
           ))}
           {sending && (
             <ChatItem>
-              <PendingIndicator />
+              <PendingIndicator slowNotice />
             </ChatItem>
           )}
           {finished && (
