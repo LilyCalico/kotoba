@@ -53,12 +53,15 @@ afterEach(() => {
 
 describe("toWordInput", () => {
   it("時刻の列を落とし、任意の項目の NULL を省略に戻す", () => {
-    const input = toWordInput(rowById("mangata"));
+    // mangata は note を持たない。example も NULL の行にして、両方が省略に戻ることを確かめる。
+    const input = toWordInput({ ...rowById("mangata"), example: null });
+    const { example, ...expected } = words.find((word) => word.id === "mangata")!;
 
     expect(input).not.toHaveProperty("createdAt");
     expect(input).not.toHaveProperty("updatedAt");
+    expect(input).not.toHaveProperty("note");
     expect(input).not.toHaveProperty("example");
-    expect(input).toEqual(words.find((word) => word.id === "mangata"));
+    expect(input).toEqual(expected);
   });
 });
 
