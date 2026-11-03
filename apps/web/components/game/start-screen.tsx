@@ -17,6 +17,8 @@ import {
   keystrokeDelay,
   markBootSeen,
 } from "@/lib/game/boot";
+import { localizedPath } from "@/lib/i18n/locale";
+import { useLocale } from "@/lib/i18n/locale-context";
 
 export const SKIP_TEXT = "Skip";
 export const START_TEXT = "Start a game";
@@ -90,6 +92,7 @@ export function StartScreen({
   storage?: BootStorage | null;
   autoplay?: boolean;
 }) {
+  const locale = useLocale();
   const seen = useSyncExternalStore(
     subscribeNothing,
     () => hasSeenBoot(resolveStorage(storage)),
@@ -196,7 +199,10 @@ export function StartScreen({
                       Somewhere in Swedish it exists. Ask yes-or-no questions to uncover it.
                     </p>
                     <div className="relative mt-2 mr-1 self-stretch">
-                      <Link className={buttonVariants({ size: "lg", className: "w-full" })} href="/play">
+                      <Link
+                        className={buttonVariants({ size: "lg", className: "w-full" })}
+                        href={localizedPath(locale, "/play")}
+                      >
                         {START_TEXT}
                       </Link>
                       <PointerCursor />

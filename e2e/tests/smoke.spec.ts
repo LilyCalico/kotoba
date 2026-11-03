@@ -1,7 +1,7 @@
 import { expect, test } from "./fixtures.js";
 
 test("トップページが表示される", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/en");
 
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 });

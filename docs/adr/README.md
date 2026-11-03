@@ -43,3 +43,4 @@
 | [0008](0008-input-judging-with-gemini-structured-output.md) | 入力の分類と質問への回答を Gemini の structured output で行う | 採用 |
 | [0009](0009-answer-typo-rescue-in-the-judging-call.md) | 解答のスペルミス・音写ゆれの救済を、入力の分類と同じ Gemini の呼び出しで判定する | 採用 |
 | [0010](0010-ai-eval-with-own-runner.md) | AI の判定の eval を、判定の実装を直接呼ぶ自前のランナーで流す | 採用 |
+| [0011](0011-ui-locale-in-url-with-own-dictionaries.md) | UI 言語を URL のサブパスで分け、文言はライブラリを使わず型付きの辞書で持つ | 採用 |

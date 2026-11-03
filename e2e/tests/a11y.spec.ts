@@ -19,7 +19,7 @@ async function expectNoViolations(page: Page, include?: string) {
 }
 
 test("起動画面とスタート画面に axe の違反がない", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/en");
   await expect(page.getByRole("button", { name: "Skip" })).toBeVisible();
   await expectNoViolations(page);
 
@@ -29,14 +29,14 @@ test("起動画面とスタート画面に axe の違反がない", async ({ pag
 });
 
 test("設問の提示に axe の違反がない", async ({ page }) => {
-  await page.goto("/play");
+  await page.goto("/en/play");
   await expect(page.getByRole("region", { name: "Question" })).toBeVisible();
 
   await expectNoViolations(page);
 });
 
 test("プレイ中・ギブアップの確認・結果に axe の違反がない", async ({ page }) => {
-  await page.goto("/play");
+  await page.goto("/en/play");
   await expect(page.getByRole("region", { name: "Question" })).toBeVisible();
   await page.keyboard.press("Enter");
 
