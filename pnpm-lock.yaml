@@ -16,7 +16,7 @@ importers:
     dependencies:
       '@google/genai':
         specifier: ^2.31.0
-        version: 2.31.0(@modelcontextprotocol/sdk@1.30.0(zod@4.6.6))
+        version: 2.31.0(@modelcontextprotocol/sdk@1.30.0(zod@4.6.7))
       '@kotoba/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -49,7 +49,7 @@ importers:
         version: 7.8.2
       zod:
         specifier: ^4.5.4
-        version: 4.6.6
+        version: 4.6.7
     devDependencies:
       '@nestjs/cli':
         specifier: ^12.0.0
@@ -210,7 +210,7 @@ importers:
     dependencies:
       zod:
         specifier: ^4
-        version: 4.6.6
+        version: 4.6.7
     devDependencies:
       '@vitest/coverage-v8':
         specifier: ^5.0.0
@@ -6127,9 +6127,6 @@ packages:
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
-  zod@4.6.6:
-    resolution: {integrity: sha512-4UmzQUF5fxvfcYHlbjBmejU+w+hbDnWFx4aS8kBx7nPBHcO2SqPbpAG8snbdg+Xse4pRefR98hgjFgIMCI/UhA==}
-
   zod@4.6.7:
     resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
 
@@ -6659,14 +6656,14 @@ snapshots:
       '@noble/hashes': 1.8.0
     optional: true
 
-  '@google/genai@2.31.0(@modelcontextprotocol/sdk@1.30.0(zod@4.6.6))':
+  '@google/genai@2.31.0(@modelcontextprotocol/sdk@1.30.0(zod@4.6.7))':
     dependencies:
       google-auth-library: 10.9.1
       p-retry: 4.6.2
       protobufjs: 7.6.6
       ws: 8.21.3
     optionalDependencies:
-      '@modelcontextprotocol/sdk': 1.30.0(zod@4.6.6)
+      '@modelcontextprotocol/sdk': 1.30.0(zod@4.6.7)
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -6998,7 +6995,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@modelcontextprotocol/sdk@1.30.0(zod@4.6.6)':
+  '@modelcontextprotocol/sdk@1.30.0(zod@4.6.7)':
     dependencies:
       '@hono/node-server': 2.1.1(hono@4.13.8)
       ajv: 8.20.0
@@ -7015,8 +7012,8 @@ snapshots:
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
       raw-body: 3.0.2
-      zod: 4.6.6
-      zod-to-json-schema: 3.25.2(zod@4.6.6)
+      zod: 4.6.7
+      zod-to-json-schema: 3.25.2(zod@4.6.7)
     transitivePeerDependencies:
       - supports-color
     optional: true
@@ -12163,9 +12160,9 @@ snapshots:
     dependencies:
       zod: 3.25.76
 
-  zod-to-json-schema@3.25.2(zod@4.6.6):
+  zod-to-json-schema@3.25.2(zod@4.6.7):
     dependencies:
-      zod: 4.6.6
+      zod: 4.6.7
     optional: true
 
   zod-validation-error@4.0.2(zod@4.6.7):
@@ -12173,7 +12170,5 @@ snapshots:
       zod: 4.6.7
 
   zod@3.25.76: {}
-
-  zod@4.6.6: {}
 
   zod@4.6.7: {}
