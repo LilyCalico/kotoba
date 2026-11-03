@@ -62,6 +62,12 @@
       "dependsOn": ["^build"],
       "passThroughEnv": ["DATABASE_URL", "DIRECT_URL"],
       "cache": false
+    },
+    "eval": {
+      // 実際の Gemini を呼ぶため、結果をキャッシュしない。ケースと seed の単語が packages/shared の dist を読み込む。
+      "dependsOn": ["^build"],
+      "passThroughEnv": ["GEMINI_API_KEY", "GEMINI_MODEL", "EVAL_INTERVAL_MS", "GITHUB_STEP_SUMMARY"],
+      "cache": false
     }
   }
 }

@@ -53,11 +53,13 @@ ${describeWord(word)}
 
 ## How to classify the player's input
 
-First check the language. The game supports exactly three languages: Japanese, English, and Swedish. Input in any of these three is supported and must be classified as below; for example, "Är det ett djur?" is Swedish and is a supported question. If the input is written in any other language (for example Russian, Chinese, Korean, German, or French), set "kind" to "unsupported_language", even when it is a question about the secret word. Do not answer it. A guess that is just a single word or name is not judged by its language: treat it as "answer", because guesses are often loanwords or words from other languages.
+First check the language. The game supports exactly three languages: Japanese, English, and Swedish. Input in any of these three is supported and must be classified as below; for example, "Är det ett djur?" is Swedish and is a supported question. If the input is written in any other language (for example Russian, Chinese, Korean, German, or French), set "kind" to "unsupported_language", even when it is a question about the secret word. Do not answer it. Two cases are easy to miss:
+- Japanese always uses kana (hiragana or katakana). A sentence written only in Chinese characters with no kana, such as "这个词和天气有关吗？", is Chinese, not Japanese.
+- English and Swedish are not the only languages in the Latin alphabet. A sentence such as "Hat es mit dem Wetter zu tun?" is German and "Est-ce lié à la météo ?" is French; both are unsupported. A guess that is just a single word or name is not judged by its language: treat it as "answer", because guesses are often loanwords or words from other languages.
 
 Otherwise, set "kind" to one of:
 - "question": the player asks something about the secret word.
-- "answer": the player names a word or phrase as a guess of the secret word, without asking a question.
+- "answer": the player names a word or phrase as a guess of the secret word. A question that only asks whether the secret word is a particular word, such as "Is it lagom?", "Är det fika?", or "ラーゴムですか？", is also an "answer": judge the word it names as the guess. A question that names a word while asking something else about the secret word, such as "Is it similar to hygge?", is a "question".
 
 When "kind" is "question", set "verdict" to one of:
 - "yes": a yes/no question that is clearly true of the secret word.
@@ -74,7 +76,7 @@ When "kind" is "answer", set "correct" to true only when the guess is the secret
 - A misspelling is correct when it differs from an accepted spelling by about two characters or fewer: a missing, extra, swapped, or wrong letter. For example, if the secret word were "Lagom", "laagom" and "lagon" would be correct.
 - A transliteration that writes the sound of the secret word in another script, such as katakana or romaji, is correct however many characters differ, as long as it is recognizably the sound of the same word. For example, if the secret word were "Lagom", "ラゴム" and "ragomu" would be correct.
 - A different word is wrong, even when its meaning is close or it translates the secret word. For example, if the secret word were "Lagom", "moderate", "ちょうどいい", and "fika" would be wrong.
-- A guess must be the word alone. A guess that adds other words around the word is wrong, even when it contains an accepted spelling exactly. For example, if the secret word were "Lagom", "lagom please" and "it is lagom" would be wrong.
+- A guess must be the word alone. A guess that adds other words around the word is wrong, even when it contains an accepted spelling exactly. For example, if the secret word were "Lagom", "lagom please" and "it is lagom" would be wrong. The only exception is a question that asks whether the secret word is that word: if the secret word were "Lagom", "Is it lagom?" and "ラーゴムですか？" would be correct, and "Is it fika?" would be wrong.
 
 When "kind" is "question" or "unsupported_language", set "correct" to null.
 

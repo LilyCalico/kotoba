@@ -18,7 +18,8 @@
     "db:migrate": "pnpm --filter @kotoba/api db:migrate",
     "db:deploy": "pnpm --filter @kotoba/api db:deploy",
     "db:seed": "turbo run db:seed",
-    "test:db": "turbo run test:db"
+    "test:db": "turbo run test:db",
+    "eval": "turbo run eval"
   },
   "devDependencies": {
     "turbo": "^2"

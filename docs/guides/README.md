@@ -8,6 +8,7 @@
 
 | 手順書 | 対象 |
 | --- | --- |
+| [ai-eval.md](ai-eval.md) | 実際の Gemini を呼ぶ、AI の判定の eval とプロンプトインジェクション耐性のテスト |
 | [frontend-ui.md](frontend-ui.md) | デザイントークン、shadcn/ui、Storybook によるフロント UI 基盤 |
 | [gemini.md](gemini.md) | Gemini による入力の分類と質問への回答、E2E のスタブ |
 | [local-development.md](local-development.md) | `pnpm dev` で web と api を起動し、実際の API でゲームを遊ぶまで |
