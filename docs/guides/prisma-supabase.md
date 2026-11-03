@@ -360,15 +360,17 @@ pnpm test:db
 
 ## 11. 本番の Supabase につなぐ
 
-本番の Supabase プロジェクトは、Vercel へのデプロイと一緒に用意する。手順は次のとおり。
+本番の Supabase プロジェクトは、Vercel へのデプロイと一緒に用意する。プレビューと本番は同じ DB を使う。手順は次のとおり。
 
-1. Supabase でプロジェクトを作る。Postgres のメジャーバージョンを `supabase/config.toml` の `major_version` と揃える
+1. Supabase でプロジェクトを東京リージョンに作る。Postgres のメジャーバージョンを `supabase/config.toml` の `major_version` と揃える
 2. Supabase の SQL Editor で Prisma 専用のユーザーを作り、`public` スキーマの権限を与える。Supabase は Prisma にこの専用ユーザーを使うことを推奨している
-3. プロジェクトの「Connect」から接続文字列を 2 つ取り、ユーザーとパスワードを手順 2 のものに差し替える
+3. プロジェクトの「Connect」→「ORMs」→ Prisma から接続文字列を 2 つ取り、ユーザーとパスワードを手順 2 のものに差し替えて `apps/api/.env.production`（`.gitignore` 済み）に書く。パスワードの記号は URL エンコードする
    - トランザクションプーラー（ポート 6543）。末尾に `?pgbouncer=true` を付けて `DATABASE_URL` にする
-   - 直接接続かセッションプーラー（ポート 5432）を `DIRECT_URL` にする
-4. Vercel のプロジェクトの環境変数に `DATABASE_URL` と `DIRECT_URL` を設定する
-5. デプロイの前に `prisma migrate deploy` を本番の `DIRECT_URL` で流し、続けて `prisma db seed` で単語を入れる
+   - セッションプーラー（ポート 5432）を `DIRECT_URL` にする。直接接続は IPv6 だけを受け付け、IPv4 しか通らない回線からはつながらない
+4. Vercel のプロジェクトの環境変数に `DATABASE_URL` を登録する。`DIRECT_URL` は手元から流す migration と seed だけが使うため、Vercel には登録しない
+5. `apps/api/.env.production` の接続先で `pnpm db:deploy` と `pnpm db:seed` を流す
+
+手順 4 と 5 のコマンドは [vercel.md](vercel.md) の「環境変数を登録する」「本番の DB に migration と seed を流す」にある。
 
 ## 日々の操作
 
