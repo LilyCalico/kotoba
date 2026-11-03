@@ -1,10 +1,13 @@
 import type { Verdict, Word } from "@kotoba/shared";
 import type { QaEntry } from "../games/game-store.js";
 
-/** AI による入力の分類。質問と分類した入力には 5 値の回答を添える。 */
+/**
+ * AI による入力の分類。質問と分類した入力には 5 値の回答を、解答と分類した入力には正誤を添える。
+ * 解答の `correct` は、正規化マッチで外れた表記をスペルミス・音写ゆれとして救うかの判定である。
+ */
 export type Judgement =
   | { kind: "question"; verdict: Verdict }
-  | { kind: "answer" }
+  | { kind: "answer"; correct: boolean }
   | { kind: "unsupported_language" };
 
 export type JudgeInput = {
