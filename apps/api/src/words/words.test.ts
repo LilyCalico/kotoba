@@ -26,7 +26,9 @@ describe("resolveWord", () => {
   });
 
   it("例文を持たない単語では example を省く", () => {
-    expect(resolveWord(wordById("mangata"), "ja").example).toBeUndefined();
+    const { example, ...word } = wordById("mangata");
+
+    expect(resolveWord(word, "ja")).not.toHaveProperty("example");
   });
 });
 

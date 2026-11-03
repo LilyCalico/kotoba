@@ -18,6 +18,7 @@
 | [prisma-supabase.md](prisma-supabase.md) | Prisma と Supabase による DB（ローカル・CI・本番への接続） |
 | [renovate.md](renovate.md) | Renovate による依存関係の自動更新 |
 | [testing.md](testing.md) | Vitest によるユニットテストと Playwright による E2E |
+| [vercel.md](vercel.md) | Vercel Services による web と api のデプロイ（プレビュー・本番） |
 
 ## 書き方
 
