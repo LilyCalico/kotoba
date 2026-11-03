@@ -7,7 +7,6 @@ import {
   aiLimitText,
   rateLimitText,
 } from "@/components/game/error-message";
-import { INPUT_LABEL } from "@/components/game/input-form";
 import { SLOW_PENDING_TEXT } from "@/components/game/pending-indicator";
 import {
   GIVE_UP_FAILED_TEXT,
@@ -19,6 +18,7 @@ import { UNSUPPORTED_LANGUAGE_TEXT } from "@/components/game/verdict-message";
 import { toastQueue } from "@/components/ui/toast";
 import { type GameClient, GameClientError, type GameClientErrorCode } from "@/lib/game/client";
 import { createMockGameClient } from "@/lib/game/mock-client";
+import { en } from "@/lib/i18n/messages";
 
 /** 応答を待たせず、出題単語を固定したモック。 */
 function mockClient(overrides: Partial<GameClient> = {}): GameClient {
@@ -42,11 +42,11 @@ function fail(
 async function enterChat() {
   await screen.findByText("On Friday night, this word lives on the sofa");
   await userEvent.click(document.body);
-  await screen.findByRole("textbox", { name: INPUT_LABEL });
+  await screen.findByRole("textbox", { name: en.input.label });
 }
 
 async function send(text: string) {
-  const input = await screen.findByRole("textbox", { name: INPUT_LABEL });
+  const input = await screen.findByRole("textbox", { name: en.input.label });
   await waitFor(() => expect(input).toBeEnabled());
   await userEvent.type(input, `${text}{Enter}`);
 }
@@ -101,7 +101,7 @@ export const Sending: Story = {
     await enterChat();
     await send("Is it about Friday?");
 
-    await expect(screen.getByRole("textbox", { name: INPUT_LABEL })).toBeDisabled();
+    await expect(screen.getByRole("textbox", { name: en.input.label })).toBeDisabled();
     await expect(screen.getByRole("button", { name: /^Show a hint/ })).toBeDisabled();
   },
 };
@@ -134,9 +134,9 @@ export const Cleared: Story = {
 export const GaveUp: Story = {
   play: async () => {
     await enterChat();
-    await userEvent.click(screen.getByRole("button", { name: "Give up" }));
-    const dialog = await screen.findByRole("dialog", { name: "Give up?" });
-    await userEvent.click(within(dialog).getByRole("button", { name: "Give up" }));
+    await userEvent.click(screen.getByRole("button", { name: en.header.giveUp }));
+    const dialog = await screen.findByRole("dialog", { name: en.giveUpDialog.title });
+    await userEvent.click(within(dialog).getByRole("button", { name: en.giveUpDialog.confirm }));
 
     await screen.findByRole("heading", { name: "The word was" });
   },
@@ -152,7 +152,7 @@ export const InputFailed: Story = {
     await send("Is it about Friday?");
 
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(ERROR_TEXT));
-    const input = screen.getByRole("textbox", { name: INPUT_LABEL });
+    const input = screen.getByRole("textbox", { name: en.input.label });
     await expect(input).toHaveValue("Is it about Friday?");
     await waitFor(() => expect(input).toHaveFocus());
   },
@@ -229,9 +229,9 @@ export const GiveUpFailed: Story = {
   args: { client: mockClient({ giveUp: fail() }) },
   play: async () => {
     await enterChat();
-    await userEvent.click(screen.getByRole("button", { name: "Give up" }));
-    const dialog = await screen.findByRole("dialog", { name: "Give up?" });
-    await userEvent.click(within(dialog).getByRole("button", { name: "Give up" }));
+    await userEvent.click(screen.getByRole("button", { name: en.header.giveUp }));
+    const dialog = await screen.findByRole("dialog", { name: en.giveUpDialog.title });
+    await userEvent.click(within(dialog).getByRole("button", { name: en.giveUpDialog.confirm }));
 
     await screen.findByText(GIVE_UP_FAILED_TEXT);
     await expect(dialog).toBeInTheDocument();
@@ -257,9 +257,9 @@ export const GiveUpExpired: Story = {
   args: { client: mockClient({ giveUp: fail("game_not_found") }) },
   play: async () => {
     await enterChat();
-    await userEvent.click(screen.getByRole("button", { name: "Give up" }));
-    const dialog = await screen.findByRole("dialog", { name: "Give up?" });
-    await userEvent.click(within(dialog).getByRole("button", { name: "Give up" }));
+    await userEvent.click(screen.getByRole("button", { name: en.header.giveUp }));
+    const dialog = await screen.findByRole("dialog", { name: en.giveUpDialog.title });
+    await userEvent.click(within(dialog).getByRole("button", { name: en.giveUpDialog.confirm }));
 
     await screen.findByText(EXPIRED_TEXT);
     await waitFor(() => expect(dialog).not.toBeInTheDocument());
@@ -292,6 +292,6 @@ export const UnsupportedLanguage: Story = {
     await waitFor(() =>
       expect(screen.getByRole("status")).toHaveTextContent(UNSUPPORTED_LANGUAGE_TEXT),
     );
-    await expect(screen.getByRole("textbox", { name: INPUT_LABEL })).toBeEnabled();
+    await expect(screen.getByRole("textbox", { name: en.input.label })).toBeEnabled();
   },
 };

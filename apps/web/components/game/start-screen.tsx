@@ -18,10 +18,7 @@ import {
   markBootSeen,
 } from "@/lib/game/boot";
 import { localizedPath } from "@/lib/i18n/locale";
-import { useLocale } from "@/lib/i18n/locale-context";
-
-export const SKIP_TEXT = "Skip";
-export const START_TEXT = "Start a game";
+import { useLocale, useMessages } from "@/lib/i18n/locale-context";
 
 /** 起動画面の記録先。省略時はブラウザの `sessionStorage`、`null` なら記録しない。 */
 function resolveStorage(storage: BootStorage | null | undefined): BootStorage | null {
@@ -93,6 +90,7 @@ export function StartScreen({
   autoplay?: boolean;
 }) {
   const locale = useLocale();
+  const t = useMessages().start;
   const seen = useSyncExternalStore(
     subscribeNothing,
     () => hasSeenBoot(resolveStorage(storage)),
@@ -163,7 +161,7 @@ export function StartScreen({
               variant="ghost"
             >
               <span aria-hidden>&gt;</span>
-              {SKIP_TEXT}
+              {t.skip}
             </Button>
           </main>
         )}
@@ -193,17 +191,15 @@ export function StartScreen({
                       ref={headingRef}
                       tabIndex={-1}
                     >
-                      A word for a feeling you’ve never named
+                      {t.heading}
                     </h1>
-                    <p className="max-w-[17rem] text-sm leading-relaxed text-muted-foreground">
-                      Somewhere in Swedish it exists. Ask yes-or-no questions to uncover it.
-                    </p>
+                    <p className="max-w-[17rem] text-sm leading-relaxed text-muted-foreground">{t.lead}</p>
                     <div className="relative mt-2 mr-1 self-stretch">
                       <Link
                         className={buttonVariants({ size: "lg", className: "w-full" })}
                         href={localizedPath(locale, "/play")}
                       >
-                        {START_TEXT}
+                        {t.startGame}
                       </Link>
                       <PointerCursor />
                     </div>

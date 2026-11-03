@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useMessages } from "@/lib/i18n/locale-context";
 
 /**
  * ギブアップの確認。Give up は確定の操作なので主ボタンのキーキャップにし、旗のアイコンを添える。Cancel は副ボタン。
@@ -29,17 +30,19 @@ export function GiveUpDialog({
   onConfirm: () => void;
   isPending?: boolean;
 }) {
+  const t = useMessages().giveUpDialog;
+
   return (
     <Dialog isDismissable isOpen={isOpen} onOpenChange={onOpenChange} showCloseButton={false}>
       <DialogHeader>
-        <DialogTitle>Give up?</DialogTitle>
-        <DialogDescription>The word and its meaning will be revealed, and this round ends.</DialogDescription>
+        <DialogTitle>{t.title}</DialogTitle>
+        <DialogDescription>{t.description}</DialogDescription>
       </DialogHeader>
       <DialogFooter className="gap-3 pr-1 pb-1">
-        <DialogClose variant="outline">Cancel</DialogClose>
+        <DialogClose variant="outline">{t.cancel}</DialogClose>
         <Button className="data-[pending]:opacity-50" isPending={isPending} onPress={onConfirm}>
           <FlagIcon aria-hidden />
-          Give up
+          {t.confirm}
         </Button>
       </DialogFooter>
     </Dialog>
