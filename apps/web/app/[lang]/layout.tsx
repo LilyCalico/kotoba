@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { LOCALES, isLocale } from "@/lib/i18n/locale";
-import { crimsonText, pixelifySans, poppins } from "../fonts";
+import { crimsonText, japaneseFontVariables, pixelifySans, poppins } from "../fonts";
 import { Providers } from "../providers";
 import "../globals.css";
 
@@ -27,7 +27,11 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
   if (!isLocale(lang)) notFound();
 
   return (
-    <html lang={lang} className={`${poppins.variable} ${crimsonText.variable} ${pixelifySans.variable} h-full antialiased`}>
+    <html
+      lang={lang}
+      className={`${poppins.variable} ${crimsonText.variable} ${pixelifySans.variable} h-full antialiased`}
+      style={lang === "ja" ? japaneseFontVariables : undefined}
+    >
       <body className="min-h-full flex flex-col">
         <Providers locale={lang}>{children}</Providers>
       </body>
