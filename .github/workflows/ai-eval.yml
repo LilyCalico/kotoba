@@ -23,7 +23,7 @@ concurrency:
 jobs:
   eval:
     runs-on: ubuntu-latest
-    # 60 件を 6.5 秒間隔で呼ぶと約 6 分半。無料枠の上限で待つ分を見込む。
+    # 65 件を 6.5 秒間隔で呼ぶと約 7 分。無料枠の上限で待つ分を見込む。
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5

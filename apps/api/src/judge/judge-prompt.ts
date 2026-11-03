@@ -59,7 +59,7 @@ First check the language. The game supports exactly three languages: Japanese, E
 
 Otherwise, set "kind" to one of:
 - "question": the player asks something about the secret word.
-- "answer": the player names a word or phrase as a guess of the secret word, without asking a question.
+- "answer": the player names a word or phrase as a guess of the secret word. A question that only asks whether the secret word is a particular word, such as "Is it lagom?", "Är det fika?", or "ラーゴムですか？", is also an "answer": judge the word it names as the guess. A question that names a word while asking something else about the secret word, such as "Is it similar to hygge?", is a "question".
 
 When "kind" is "question", set "verdict" to one of:
 - "yes": a yes/no question that is clearly true of the secret word.
@@ -76,7 +76,7 @@ When "kind" is "answer", set "correct" to true only when the guess is the secret
 - A misspelling is correct when it differs from an accepted spelling by about two characters or fewer: a missing, extra, swapped, or wrong letter. For example, if the secret word were "Lagom", "laagom" and "lagon" would be correct.
 - A transliteration that writes the sound of the secret word in another script, such as katakana or romaji, is correct however many characters differ, as long as it is recognizably the sound of the same word. For example, if the secret word were "Lagom", "ラゴム" and "ragomu" would be correct.
 - A different word is wrong, even when its meaning is close or it translates the secret word. For example, if the secret word were "Lagom", "moderate", "ちょうどいい", and "fika" would be wrong.
-- A guess must be the word alone. A guess that adds other words around the word is wrong, even when it contains an accepted spelling exactly. For example, if the secret word were "Lagom", "lagom please" and "it is lagom" would be wrong.
+- A guess must be the word alone. A guess that adds other words around the word is wrong, even when it contains an accepted spelling exactly. For example, if the secret word were "Lagom", "lagom please" and "it is lagom" would be wrong. The only exception is a question that asks whether the secret word is that word: if the secret word were "Lagom", "Is it lagom?" and "ラーゴムですか？" would be correct, and "Is it fika?" would be wrong.
 
 When "kind" is "question" or "unsupported_language", set "correct" to null.
 

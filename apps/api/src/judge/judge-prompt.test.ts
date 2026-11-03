@@ -77,6 +77,16 @@ describe("buildJudgePrompt", () => {
     expect(systemInstruction).toContain('set "correct" to null');
   });
 
+  it("単語そのものを当てる質問は解答として判定させ、別のことを尋ねる質問とは分ける", () => {
+    const { systemInstruction } = buildJudgePrompt({ word: fredagsmys, history: [], text: "Is it fredagsmys?" });
+
+    expect(systemInstruction).toContain(
+      'A question that only asks whether the secret word is a particular word, such as "Is it lagom?"',
+    );
+    expect(systemInstruction).toContain('"Is it lagom?" and "ラーゴムですか？" would be correct');
+    expect(systemInstruction).toContain('"Is it similar to hygge?", is a "question"');
+  });
+
   it("履歴がなければ、そのことを書く", () => {
     const { systemInstruction } = buildJudgePrompt({ word: fredagsmys, history: [], text: "Is it food?" });
 
