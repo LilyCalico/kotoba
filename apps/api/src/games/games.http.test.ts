@@ -170,11 +170,20 @@ describe("ゲーム 1 周", () => {
       outcome: "gave_up",
       wordId: "lagom",
       word: "Lagom",
+      reading: lagom.reading,
       partOfSpeech: "adjective",
       definition: lagom.definition.ja,
       note: lagom.note?.ja,
       example: { sv: lagom.example?.sv, translation: lagom.example?.translations.ja },
     });
+  });
+
+  it("英語 UI のゲームの結果には、カタカナの読みを付けない", async () => {
+    const gameId = await startGame("en");
+
+    const response = await post(`/games/${gameId}/give-up`).expect(200);
+
+    expect(response.body).not.toHaveProperty("reading");
   });
 });
 

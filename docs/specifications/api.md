@@ -157,7 +157,7 @@
 | `inputResultSchema` | `questionResultSchema` / `answerResultSchema` / `unsupportedLanguageResultSchema` の判別共用体（`kind`） | 入力のレスポンス |
 | `hintRequestSchema` | `{ index }`（1 以上の整数） | ヒントのリクエスト |
 | `hintSchema` | `{ index, text }` | ヒントのレスポンス |
-| `gameResultSchema` | `{ outcome, wordId, word, partOfSpeech, definition, literal?, note?, example? }`。`example` は `{ sv, translation }` | 正解時の `result` とギブアップのレスポンス |
+| `gameResultSchema` | `{ outcome, wordId, word, reading?, partOfSpeech, definition, literal?, note?, example? }`。`example` は `{ sv, translation }` | 正解時の `result` とギブアップのレスポンス |
 | `problemSchema` | `{ type, title, status, code, detail? }`。`code` はサーバーが返すエラーの `code` の enum | エラーのレスポンス |
 
 `gameId` はパスで受けるため、リクエスト本文のスキーマには含めない。
@@ -166,6 +166,7 @@
 
 | フィールド | 内容 |
 | --- | --- |
+| `reading` | 単語のカタカナの読み。`locale` が `ja` のゲームだけが持つ。英語の UI ではスウェーデン語の綴りだけを見せる |
 | `partOfSpeech` | 品詞（`noun` / `verb` / `adjective` / `phrase`） |
 | `definition` | `locale` の言語の定義 |
 | `literal` | `locale` の言語の直訳。合成語など、成り立ちが答えの核心になる語だけが持つ |
