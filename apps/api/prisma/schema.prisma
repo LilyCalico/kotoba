@@ -82,3 +82,18 @@ model Game {
   @@index([expiresAt])
   @@map("games")
 }
+
+/// レートリミットのカウンタ。対象と IP の組（key）ごとに、1 分の窓の中で受けた回数を数える。
+/// api のどのインスタンスも同じ行を数えるため、インスタンスの数だけ上限が増えない。
+/// クライアントの IP を含むため、migration で RLS を有効にしている（Prisma のスキーマでは表せない）。
+model RateLimitCounter {
+  /// 「input:203.0.113.7」のような、対象と IP の組
+  key         String
+  /// 窓の始まりの時刻。1 分ちょうどに揃える
+  windowStart DateTime @map("window_start")
+  count       Int
+
+  @@id([key, windowStart])
+  @@index([windowStart])
+  @@map("rate_limit_counters")
+}

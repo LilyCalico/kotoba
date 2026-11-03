@@ -239,6 +239,24 @@ CI の `e2e` ジョブも、`db` ジョブと同じ手順で DB を用意して�
 
 出題する単語は、`localStorage` の出題済みの記録で絞る。api は記録した単語を出題から除くので、seed の単語のうち 1 語以外を記録しておけば、その 1 語が出る。テスト専用の API の口は作らない。秘密の単語を固定・取得できる口を本番に載せないためである。
 
+api はゲーム開始と入力をクライアントの IP ごとに数えて制限する（[api.md](../specifications/api.md) の「レートリミット」）。E2E のリクエストはどれも同じ接続元から届くため、そのままでは全テストが 1 つの枠を分け合い、並列に走るとゲーム開始の上限（1 分に 10 回）を超える。そこで spec は `@playwright/test` ではなく `tests/fixtures.ts` の `test` を使い、テストごとに違う IP を `x-forwarded-for` で名乗らせる。web の rewrite はこのヘッダーを書き換えずに api へ渡す。
+
+```typescript
+// e2e/tests/fixtures.ts
+export const test = base.extend({
+  extraHTTPHeaders: async ({ extraHTTPHeaders }, use) => {
+    await use({
+      ...extraHTTPHeaders,
+      "x-forwarded-for": `198.18.${randomInt(256)}.${randomInt(1, 255)}`,
+    });
+  },
+});
+```
+
+上限を緩めるフラグや環境変数は設けない。本番に制限を外す経路を載せないためである。
+
+DB を使う api のテスト（`*.db.test.ts`）も同じ理由で、ゲームを始めるリクエストに実行ごとに選び直した IP を付け、作ったカウンタを最後に消す。
+
 ```typescript
 // e2e/tests/game.spec.ts
 import { words } from "../../apps/api/src/prisma/seed/words.js";

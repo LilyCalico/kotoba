@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useEffect, useReducer, useRef, useState } from "react";
 
 import { AnswerFeedback, answerText } from "@/components/game/answer-feedback";
-import { ErrorMessage, ExpiredMessage, errorText } from "@/components/game/error-message";
+import { ErrorMessage, ExpiredMessage, errorText, waitText } from "@/components/game/error-message";
 import { GiveUpDialog } from "@/components/game/give-up-dialog";
 import { Header } from "@/components/game/header";
 import { HintButton } from "@/components/game/hint-button";
@@ -50,6 +50,11 @@ import {
 export const TEASER_DURATION_MS = 3000;
 
 export const START_FAILED_TEXT = "Couldn't start a game.";
+
+/** ゲーム開始がレートリミットを超えたときの案内。数え直されるまでの時間を添える。 */
+export function startLimitText(retryAfterSeconds: number | undefined): string {
+  return `Too many new games. Try again ${waitText(retryAfterSeconds)}.`;
+}
 export const GIVE_UP_FAILED_TEXT = "Couldn't give up. Please try again.";
 export const TEASER_INSTRUCTION = "Press Enter or Space to start asking questions.";
 export const SKIP_LINK_TEXT = "Skip to the input";
@@ -116,9 +121,11 @@ export function GameScreen({
         if (cancelled) return;
         if (!(error instanceof GameClientError)) throw error;
         // ゲームを始められなかったときは、失敗の種類によらず始め直しを促す。
+        // レートリミットのときだけ、数え直されるまでの時間を添える。
         setStartFailed(true);
         toast({
-          title: START_FAILED_TEXT,
+          title:
+            error.code === "rate_limited" ? startLimitText(error.retryAfterSeconds) : START_FAILED_TEXT,
           action: {
             label: "Retry",
             onAction: () => {
