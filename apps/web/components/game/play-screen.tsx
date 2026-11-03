@@ -45,6 +45,8 @@ import {
   latestAnnouncement,
   remainingHints,
 } from "@/lib/game/state";
+import { localizedPath } from "@/lib/i18n/locale";
+import { useLocale } from "@/lib/i18n/locale-context";
 
 /** 設問の提示からチャットへ自動で移るまでの時間。 */
 export const TEASER_DURATION_MS = 3000;
@@ -78,7 +80,7 @@ function playReducer(state: GameState | null, action: PlayAction): GameState | n
   return state && gameReducer(state, action);
 }
 
-/** `/play` の画面。`apps/api` を叩く `GameClient` を初回の描画で 1 回だけ作り、`GameScreen` に渡す。 */
+/** `/[lang]/play` の画面。`apps/api` を叩く `GameClient` を初回の描画で 1 回だけ作り、`GameScreen` に渡す。 */
 export function PlayScreen() {
   const [client] = useState(() => createApiGameClient());
   return <GameScreen client={client} />;
@@ -100,6 +102,7 @@ export function GameScreen({
   client: GameClient;
   storage?: PlayedWordsStorage | null;
 }) {
+  const locale = useLocale();
   const [game, dispatch] = useReducer(playReducer, null);
   const [attempt, setAttempt] = useState(0);
   const [startFailed, setStartFailed] = useState(false);
@@ -110,7 +113,7 @@ export function GameScreen({
     let cancelled = false;
     const request: StartGameRequest = {
       language: "sv",
-      locale: "en",
+      locale,
       excludeWordIds: excludedWordIds(resolveStorage(storage)),
     };
     client.startGame(request).then(
@@ -139,7 +142,7 @@ export function GameScreen({
     return () => {
       cancelled = true;
     };
-  }, [client, storage, attempt]);
+  }, [client, storage, locale, attempt]);
 
   const gameId = game?.gameId;
   const finishedWordId = game && finishedResult(game)?.wordId;
@@ -218,6 +221,7 @@ function Chat({
   dispatch: (action: GameAction) => void;
   client: GameClient;
 }) {
+  const locale = useLocale();
   const [text, setText] = useState("");
   const [giveUpOpen, setGiveUpOpen] = useState(false);
   const [givingUp, setGivingUp] = useState(false);
@@ -344,7 +348,10 @@ function Chat({
           )}
           {finished && (
             <ChatItem>
-              <Link className={buttonVariants({ size: "lg", className: "mt-4 mr-1" })} href="/">
+              <Link
+                className={buttonVariants({ size: "lg", className: "mt-4 mr-1" })}
+                href={localizedPath(locale, "/")}
+              >
                 Play again
               </Link>
             </ChatItem>

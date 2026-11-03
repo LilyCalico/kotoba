@@ -83,7 +83,7 @@ async function giveUp(page: Page) {
 }
 
 test("起動画面は打ち終えるとスタート画面に移り、同じタブでは 2 回目から出ない", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/en");
   await expect(page.getByRole("button", { name: "Skip" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Start a game" })).toBeVisible({ timeout: 10_000 });
   await expect(page.getByRole("button", { name: "Skip" })).toHaveCount(0);
@@ -94,17 +94,17 @@ test("起動画面は打ち終えるとスタート画面に移り、同じタ�
 });
 
 test("Skip を押すとスタート画面の見出しへフォーカスが移る", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/en");
   await page.getByRole("button", { name: "Skip" }).click();
 
   await expect(page.getByRole("heading", { level: 1, name: "A word for a feeling you’ve never named" })).toBeFocused();
 });
 
 test("START から設問の提示を経て、質問に回答が返る", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/en");
   await startFromHome(page);
 
-  await expect(page).toHaveURL("/play");
+  await expect(page).toHaveURL("/en/play");
   await enterChat(page);
   await send(page, "Is it a noun?");
 
@@ -113,7 +113,7 @@ test("START から設問の提示を経て、質問に回答が返る", async ({
 });
 
 test("対応外の言語で送ると、対応言語で聞き直すよう案内する", async ({ page }) => {
-  await page.goto("/play");
+  await page.goto("/en/play");
   await enterChat(page);
 
   await send(page, "Это еда?");
@@ -122,9 +122,16 @@ test("対応外の言語で送ると、対応言語で聞き直すよう案内�
   await expect(input(page)).toBeEnabled();
 });
 
+test("日本語の URL から始めたゲームは、日本語の設問で始まる", async ({ page }) => {
+  await playWithOnly(page, fredagsmys.id);
+  await page.goto("/ja/play");
+
+  await expect(page.getByText(fredagsmys.teaser.ja)).toBeVisible();
+});
+
 test("誤答のフィードバックのあと、同じ入力欄から再び解答できる", async ({ page }) => {
   await playWithOnly(page, fredagsmys.id);
-  await page.goto("/play");
+  await page.goto("/en/play");
   await expect(page.getByText(fredagsmys.teaser.en)).toBeVisible();
   await enterChat(page);
 
@@ -137,7 +144,7 @@ test("誤答のフィードバックのあと、同じ入力欄から再び解�
 
 test("ヒントを 3 回開示すると、ヒントボタンが無効になる", async ({ page }) => {
   await playWithOnly(page, fredagsmys.id);
-  await page.goto("/play");
+  await page.goto("/en/play");
   await enterChat(page);
 
   for (const [offset, text] of fredagsmys.hints.en.entries()) {
@@ -154,7 +161,7 @@ test("ヒントを 3 回開示すると、ヒントボタンが無効になる",
 
 test("正解すると結果カードに単語と定義が出て、単語が記録される", async ({ page }) => {
   await playWithOnly(page, fredagsmys.id);
-  await page.goto("/play");
+  await page.goto("/en/play");
   await enterChat(page);
 
   await send(page, "fredagsmys");
@@ -170,7 +177,7 @@ test("正解すると結果カードに単語と定義が出て、単語が記�
 
 test("確認ダイアログを経てギブアップすると、結果カードに単語と定義が出る", async ({ page }) => {
   await playWithOnly(page, fredagsmys.id);
-  await page.goto("/play");
+  await page.goto("/en/play");
   await enterChat(page);
 
   await giveUp(page);
@@ -185,7 +192,7 @@ test("答えを見た単語は、次のゲームで出題されない", async ({
   const [first, second] = ["fredagsmys", "fika"].map(seedWord);
   if (!first || !second) throw new Error("seed の単語が足りない");
   await playWithOnly(page, first.id, second.id);
-  await page.goto("/play");
+  await page.goto("/en/play");
   await enterChat(page);
 
   await giveUp(page);
@@ -199,7 +206,7 @@ test("答えを見た単語は、次のゲームで出題されない", async ({
 
 test("プールを一巡すると、記録をその単語 1 件に戻す", async ({ page }) => {
   await playWithOnly(page);
-  await page.goto("/play");
+  await page.goto("/en/play");
   await enterChat(page);
 
   await giveUp(page);
@@ -229,7 +236,7 @@ test("正解の送信中にギブアップしても、答えを見た単語を 1
     await route.fulfill({ response });
   });
 
-  await page.goto("/play");
+  await page.goto("/en/play");
   await enterChat(page);
   await input(page).fill(fredagsmys.id);
   await input(page).press("Enter");
