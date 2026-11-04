@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, screen, userEvent } from "storybook/test";
-import { START_TEXT, SKIP_TEXT, StartScreen } from "@/components/game/start-screen";
+import { StartScreen } from "@/components/game/start-screen";
+import { en } from "@/lib/i18n/messages";
 import { BOOT_SEEN_KEY, type BootStorage } from "@/lib/game/boot";
 
 /** 起動画面を見たかの記録を、story ごとに持つ記録先。 */
@@ -43,9 +44,9 @@ export const Welcome: Story = {
 export const Skip: Story = {
   args: { storage: memoryStorage(false), autoplay: false },
   play: async () => {
-    await userEvent.click(await screen.findByRole("button", { name: SKIP_TEXT }));
+    await userEvent.click(await screen.findByRole("button", { name: en.start.skip }));
 
-    await expect(await screen.findByRole("link", { name: START_TEXT })).toBeVisible();
+    await expect(await screen.findByRole("link", { name: en.start.startGame })).toBeVisible();
     await expect(screen.getByRole("heading", { level: 1 })).toHaveFocus();
   },
 };

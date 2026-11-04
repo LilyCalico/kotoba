@@ -15,7 +15,7 @@ const preview: Preview = {
   decorators: [
     // 画面全体を描く story は `parameters.page: true` を指定し、中央寄せと余白を当てずに描く。
     (Story, { parameters }) => (
-      <Providers>
+      <Providers locale="en">
         {parameters.page ? (
           <div className="grid-paper flex min-h-screen flex-col font-sans text-foreground">
             <Story />

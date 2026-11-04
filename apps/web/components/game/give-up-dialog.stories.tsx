@@ -3,6 +3,7 @@ import { useState } from "react";
 import { expect, fn, screen, userEvent, waitFor } from "storybook/test";
 import { GiveUpDialog } from "@/components/game/give-up-dialog";
 import { Button } from "@/components/ui/button";
+import { en } from "@/lib/i18n/messages";
 
 const meta = {
   title: "Game/GiveUpDialog",
@@ -45,9 +46,9 @@ export const Open: Story = {};
 /** Tab はダイアログの中を巡り、Esc は閉じるだけでギブアップを確定しない。 */
 export const KeyboardOnly: Story = {
   play: async ({ args }) => {
-    const dialog = await screen.findByRole("dialog", { name: "Give up?" });
-    const cancel = screen.getByRole("button", { name: "Cancel" });
-    const giveUp = screen.getByRole("button", { name: "Give up" });
+    const dialog = await screen.findByRole("dialog", { name: en.giveUpDialog.title });
+    const cancel = screen.getByRole("button", { name: en.giveUpDialog.cancel });
+    const giveUp = screen.getByRole("button", { name: en.giveUpDialog.confirm });
 
     for (let press = 0; press < 4; press++) {
       await userEvent.tab();
@@ -66,7 +67,7 @@ export const KeyboardOnly: Story = {
 /** Give up で確定する。 */
 export const Confirm: Story = {
   play: async ({ args }) => {
-    await userEvent.click(await screen.findByRole("button", { name: "Give up" }));
+    await userEvent.click(await screen.findByRole("button", { name: en.giveUpDialog.confirm }));
 
     await expect(args.onConfirm).toHaveBeenCalledOnce();
   },
@@ -77,7 +78,7 @@ export const Pending: Story = {
   args: { isPending: true },
   render: (args) => <GiveUpDialog {...args} />,
   play: async ({ args }) => {
-    await userEvent.click(await screen.findByRole("button", { name: "Give up" }));
+    await userEvent.click(await screen.findByRole("button", { name: en.giveUpDialog.confirm }));
 
     await expect(args.onConfirm).not.toHaveBeenCalled();
   },

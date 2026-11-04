@@ -8,8 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { remainingLength, validateInput } from "@/lib/game/input";
-
-export const INPUT_LABEL = "Ask a question or guess the word";
+import { useMessages } from "@/lib/i18n/locale-context";
 
 /**
  * 質問と解答を兼ねる単一の入力欄と、四角いキーキャップの送信。
@@ -32,6 +31,7 @@ export function InputForm({
   actions?: React.ReactNode;
   ref?: React.Ref<HTMLInputElement>;
 }) {
+  const t = useMessages().input;
   const inputId = useId();
   const counterId = useId();
   const canSubmit = !disabled && validateInput(value) === null;
@@ -46,7 +46,7 @@ export function InputForm({
     >
       <Field className="gap-3">
         <FieldLabel className="sr-only" htmlFor={inputId}>
-          {INPUT_LABEL}
+          {t.label}
         </FieldLabel>
         <div className="flex w-full items-stretch gap-2.5 pr-1">
           <Input
@@ -57,18 +57,18 @@ export function InputForm({
             id={inputId}
             maxLength={MAX_INPUT_LENGTH}
             onChange={(event) => onValueChange(event.target.value)}
-            placeholder={INPUT_LABEL}
+            placeholder={t.label}
             ref={ref}
             value={value}
           />
-          <Button aria-label="Send" className="size-12" isDisabled={!canSubmit} type="submit" variant="key">
+          <Button aria-label={t.send} className="size-12" isDisabled={!canSubmit} type="submit" variant="key">
             <ArrowUpIcon aria-hidden className="size-5" strokeWidth={2.4} />
           </Button>
         </div>
         <div className="flex items-center justify-between gap-3">
           {actions}
           <FieldDescription className="ml-auto text-right text-xs" id={counterId}>
-            {remainingLength(value)} characters left
+            {t.remaining(remainingLength(value))}
           </FieldDescription>
         </div>
       </Field>
