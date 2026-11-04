@@ -1,13 +1,16 @@
 import { type Page, expect, test } from "./fixtures.js";
 
 import { words } from "../../apps/api/src/prisma/seed/words.js";
+import { en } from "../../apps/web/lib/i18n/messages/en.js";
 
-const INPUT_LABEL = "Ask a question or guess the word";
 /** web が出題済み単語を記録する `localStorage` のキー。`apps/web/lib/game/played-words.ts` と揃える。 */
 const PLAYED_WORDS_KEY = "kotoba:played-words";
 
 /** 質問への 5 値の回答の表示。 */
-const VERDICT = /^(Yes|No|Hard to say|That's not related|Try a yes-or-no question)$/;
+const VERDICT = new RegExp(`^(${Object.values(en.verdict).join("|")})$`);
+
+/** ヒントボタン。名前の後ろに残りの回数が付くため、前方一致で探す。 */
+const HINT_BUTTON = new RegExp(`^${en.hint.button}`);
 
 function seedWord(id: string) {
   const word = words.find((candidate) => candidate.id === id);
@@ -48,12 +51,12 @@ function bubble(page: Page, text: string | RegExp) {
 
 /** 起動画面を Skip で飛ばし、スタート画面の Start a game からゲームを始める。 */
 async function startFromHome(page: Page) {
-  await page.getByRole("button", { name: "Skip" }).click();
-  await page.getByRole("link", { name: "Start a game" }).click();
+  await page.getByRole("button", { name: en.start.skip }).click();
+  await page.getByRole("link", { name: en.start.startGame }).click();
 }
 
 function input(page: Page) {
-  return page.getByRole("textbox", { name: INPUT_LABEL });
+  return page.getByRole("textbox", { name: en.input.label });
 }
 
 /**
@@ -61,7 +64,7 @@ function input(page: Page) {
  * 画面の中央はチャットに移ってもログの空き領域なので、自動遷移とクリックが重なっても操作には当たらない。
  */
 async function enterChat(page: Page) {
-  await expect(page.getByRole("region", { name: "Question" })).toBeVisible();
+  await expect(page.getByRole("region", { name: en.teaser.title })).toBeVisible();
   await page.locator("main").click();
   await expect(input(page)).toBeVisible();
 }
@@ -71,33 +74,33 @@ async function send(page: Page, text: string) {
   await expect(input(page)).toBeEnabled();
   await input(page).fill(text);
   await input(page).press("Enter");
-  await expect(page.getByText("Thinking…")).toHaveCount(0);
+  await expect(page.getByText(en.pending.title)).toHaveCount(0);
 }
 
 async function giveUp(page: Page) {
-  await page.getByRole("banner").getByRole("button", { name: "Give up" }).click();
-  const dialog = page.getByRole("dialog", { name: "Give up?" });
+  await page.getByRole("banner").getByRole("button", { name: en.header.giveUp }).click();
+  const dialog = page.getByRole("dialog", { name: en.giveUpDialog.title });
   await expect(dialog).toBeVisible();
-  await dialog.getByRole("button", { name: "Give up" }).click();
+  await dialog.getByRole("button", { name: en.header.giveUp }).click();
   await expect(dialog).toHaveCount(0);
 }
 
 test("起動画面は打ち終えるとスタート画面に移り、同じタブでは 2 回目から出ない", async ({ page }) => {
   await page.goto("/en");
-  await expect(page.getByRole("button", { name: "Skip" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Start a game" })).toBeVisible({ timeout: 10_000 });
-  await expect(page.getByRole("button", { name: "Skip" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: en.start.skip })).toBeVisible();
+  await expect(page.getByRole("link", { name: en.start.startGame })).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole("button", { name: en.start.skip })).toHaveCount(0);
 
   await page.reload();
-  await expect(page.getByRole("link", { name: "Start a game" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Skip" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: en.start.startGame })).toBeVisible();
+  await expect(page.getByRole("button", { name: en.start.skip })).toHaveCount(0);
 });
 
 test("Skip を押すとスタート画面の見出しへフォーカスが移る", async ({ page }) => {
   await page.goto("/en");
-  await page.getByRole("button", { name: "Skip" }).click();
+  await page.getByRole("button", { name: en.start.skip }).click();
 
-  await expect(page.getByRole("heading", { level: 1, name: "A word for a feeling you’ve never named" })).toBeFocused();
+  await expect(page.getByRole("heading", { level: 1, name: en.start.heading })).toBeFocused();
 });
 
 test("START から設問の提示を経て、質問に回答が返る", async ({ page }) => {
@@ -118,7 +121,7 @@ test("対応外の言語で送ると、対応言語で聞き直すよう案内�
 
   await send(page, "Это еда?");
 
-  await expect(bubble(page, "Please ask in Japanese, English, or Swedish.")).toBeVisible();
+  await expect(bubble(page, en.unsupportedLanguage)).toBeVisible();
   await expect(input(page)).toBeEnabled();
 });
 
@@ -136,10 +139,10 @@ test("誤答のフィードバックのあと、同じ入力欄から再び解�
   await enterChat(page);
 
   await send(page, "hygge");
-  await expect(bubble(page, "Not the word this time.")).toBeVisible();
+  await expect(bubble(page, en.answerFeedback.incorrect)).toBeVisible();
 
   await send(page, "fredagsmys");
-  await expect(bubble(page, "That's the word!")).toBeVisible();
+  await expect(bubble(page, en.answerFeedback.correct)).toBeVisible();
 });
 
 test("ヒントを 3 回開示すると、ヒントボタンが無効になる", async ({ page }) => {
@@ -148,13 +151,13 @@ test("ヒントを 3 回開示すると、ヒントボタンが無効になる",
   await enterChat(page);
 
   for (const [offset, text] of fredagsmys.hints.en.entries()) {
-    await page.getByRole("button", { name: /^Show a hint/ }).click();
-    const hint = page.getByRole("region", { name: `Hint ${offset + 1} of 3` });
+    await page.getByRole("button", { name: HINT_BUTTON }).click();
+    const hint = page.getByRole("region", { name: en.hint.title(offset + 1, fredagsmys.hints.en.length) });
     await expect(hint).toBeVisible();
     await expect(hint.getByText(text)).toBeVisible();
   }
 
-  const hint = page.getByRole("button", { name: "Show a hint, 0 left" });
+  const hint = page.getByRole("button", { name: en.hint.buttonLabel(0) });
   await expect(hint).toBeVisible();
   await expect(hint).toBeDisabled();
 });
@@ -166,12 +169,12 @@ test("正解すると結果カードに単語と定義が出て、単語が記�
 
   await send(page, "fredagsmys");
 
-  const result = page.getByRole("region", { name: "You found it" });
+  const result = page.getByRole("region", { name: en.result.heading.cleared });
   await expect(result).toBeVisible();
   await expect(result.getByText(fredagsmys.word, { exact: true })).toBeVisible();
   await expect(result.getByText(fredagsmys.definition.en)).toBeVisible();
   await expect(input(page)).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Play again" })).toBeVisible();
+  await expect(page.getByRole("link", { name: en.play.playAgain })).toBeVisible();
   expect((await playedWords(page)).at(-1)).toBe(fredagsmys.id);
 });
 
@@ -182,7 +185,7 @@ test("確認ダイアログを経てギブアップすると、結果カード�
 
   await giveUp(page);
 
-  const result = page.getByRole("region", { name: "The word was" });
+  const result = page.getByRole("region", { name: en.result.heading.gave_up });
   await expect(result).toBeVisible();
   await expect(result.getByText(fredagsmys.word, { exact: true })).toBeVisible();
   await expect(result.getByText(fredagsmys.definition.en)).toBeVisible();
@@ -199,7 +202,7 @@ test("答えを見た単語は、次のゲームで出題されない", async ({
   const answered = (await playedWords(page)).at(-1);
   const next = answered === first.id ? second : first;
 
-  await page.getByRole("link", { name: "Play again" }).click();
+  await page.getByRole("link", { name: en.play.playAgain }).click();
   await startFromHome(page);
   await expect(page.getByText(next.teaser.en)).toBeVisible();
 });
@@ -243,14 +246,14 @@ test("正解の送信中にギブアップしても、答えを見た単語を 1
   await processed;
 
   // クリア済みのゲームへのギブアップには、クリアの結果が返し直される。
-  await page.getByRole("banner").getByRole("button", { name: "Give up" }).click();
+  await page.getByRole("banner").getByRole("button", { name: en.header.giveUp }).click();
   const giveUpResponse = page.waitForResponse("**/api/v1/games/*/give-up");
-  await page.getByRole("dialog", { name: "Give up?" }).getByRole("button", { name: "Give up" }).click();
+  await page.getByRole("dialog", { name: en.giveUpDialog.title }).getByRole("button", { name: en.header.giveUp }).click();
   await giveUpResponse;
   const inputResponse = page.waitForResponse("**/api/v1/games/*/inputs");
   releaseInput();
   await inputResponse;
 
-  await expect(page.getByRole("region", { name: "You found it" })).toBeVisible();
+  await expect(page.getByRole("region", { name: en.result.heading.cleared })).toBeVisible();
   await expect.poll(() => playedWords(page)).toEqual([...before, fredagsmys.id]);
 });

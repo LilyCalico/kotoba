@@ -1,3 +1,5 @@
+"use client";
+
 import type { Verdict } from "@kotoba/shared";
 import { cn } from "cn";
 import {
@@ -10,19 +12,7 @@ import {
   XIcon,
 } from "lucide-react";
 
-const VERDICT_TEXT: Record<Verdict, string> = {
-  yes: "Yes",
-  no: "No",
-  unclear: "Hard to say",
-  irrelevant: "That's not related",
-  not_a_question: "Try a yes-or-no question",
-};
-
-export function verdictText(verdict: Verdict): string {
-  return VERDICT_TEXT[verdict];
-}
-
-export const UNSUPPORTED_LANGUAGE_TEXT = "Please ask in Japanese, English, or Swedish.";
+import { useMessages } from "@/lib/i18n/locale-context";
 
 const PILL_CLASS =
   "mr-auto inline-flex min-h-9 w-fit max-w-[85%] items-center gap-1.5 rounded-full px-4 py-1.5 text-[0.9375rem] font-semibold text-foreground focus-ring";
@@ -48,12 +38,13 @@ export function VerdictMessage({
   verdict: Verdict;
   ref?: React.Ref<HTMLParagraphElement>;
 }) {
+  const t = useMessages();
   const { icon: Icon, className } = VERDICT_STYLE[verdict];
 
   return (
     <p className={cn(PILL_CLASS, className)} ref={ref} tabIndex={-1}>
       <Icon aria-hidden className="size-4 shrink-0" strokeWidth={2.6} />
-      {verdictText(verdict)}
+      {t.verdict[verdict]}
     </p>
   );
 }
@@ -63,10 +54,12 @@ export function VerdictMessage({
  * Try a yes-or-no question と同じ黄のピルにし、言語のアイコンで見分ける。
  */
 export function UnsupportedLanguageMessage({ ref }: { ref?: React.Ref<HTMLParagraphElement> }) {
+  const t = useMessages();
+
   return (
     <p className={cn(PILL_CLASS, "bg-answer-meta")} ref={ref} tabIndex={-1}>
       <LanguagesIcon aria-hidden className="size-4 shrink-0" strokeWidth={2.6} />
-      {UNSUPPORTED_LANGUAGE_TEXT}
+      {t.unsupportedLanguage}
     </p>
   );
 }

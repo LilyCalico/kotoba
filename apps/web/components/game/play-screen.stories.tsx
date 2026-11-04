@@ -1,20 +1,7 @@
+import { MAX_HINTS } from "@kotoba/shared";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, screen, userEvent, waitFor, within } from "storybook/test";
-import {
-  AI_ERROR_TEXT,
-  ERROR_TEXT,
-  EXPIRED_TEXT,
-  aiLimitText,
-  rateLimitText,
-} from "@/components/game/error-message";
-import { SLOW_PENDING_TEXT } from "@/components/game/pending-indicator";
-import {
-  GIVE_UP_FAILED_TEXT,
-  GameScreen,
-  START_FAILED_TEXT,
-  startLimitText,
-} from "@/components/game/play-screen";
-import { UNSUPPORTED_LANGUAGE_TEXT } from "@/components/game/verdict-message";
+import { GameScreen } from "@/components/game/play-screen";
 import { toastQueue } from "@/components/ui/toast";
 import { type GameClient, GameClientError, type GameClientErrorCode } from "@/lib/game/client";
 import { createMockGameClient } from "@/lib/game/mock-client";
@@ -88,9 +75,9 @@ export const Chat: Story = {
     ]) {
       await send(question);
     }
-    await userEvent.click(await screen.findByRole("button", { name: /^Show a hint/ }));
+    await userEvent.click(await screen.findByRole("button", { name: en.hint.buttonLabel(MAX_HINTS) }));
 
-    await screen.findByRole("region", { name: "Hint 1 of 3" });
+    await screen.findByRole("region", { name: en.hint.title(1, MAX_HINTS) });
   },
 };
 
@@ -102,7 +89,7 @@ export const Sending: Story = {
     await send("Is it about Friday?");
 
     await expect(screen.getByRole("textbox", { name: en.input.label })).toBeDisabled();
-    await expect(screen.getByRole("button", { name: /^Show a hint/ })).toBeDisabled();
+    await expect(screen.getByRole("button", { name: en.hint.buttonLabel(MAX_HINTS) })).toBeDisabled();
   },
 };
 
@@ -113,8 +100,8 @@ export const SendingSlow: Story = {
     await enterChat();
     await send("Is it about Friday?");
 
-    await expect(screen.queryByText(SLOW_PENDING_TEXT)).not.toBeInTheDocument();
-    await expect(await screen.findByText(SLOW_PENDING_TEXT, {}, { timeout: 4000 })).toBeVisible();
+    await expect(screen.queryByText(en.pending.slow)).not.toBeInTheDocument();
+    await expect(await screen.findByText(en.pending.slow, {}, { timeout: 4000 })).toBeVisible();
   },
 };
 
@@ -124,9 +111,9 @@ export const Cleared: Story = {
     await enterChat();
     await send("fredagsmys");
 
-    await screen.findByRole("heading", { name: "You found it" });
+    await screen.findByRole("heading", { name: en.result.heading.cleared });
     await expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
-    await expect(screen.getByRole("link", { name: "Play again" })).toHaveAttribute("href", "/");
+    await expect(screen.getByRole("link", { name: en.play.playAgain })).toHaveAttribute("href", "/en");
   },
 };
 
@@ -138,7 +125,7 @@ export const GaveUp: Story = {
     const dialog = await screen.findByRole("dialog", { name: en.giveUpDialog.title });
     await userEvent.click(within(dialog).getByRole("button", { name: en.giveUpDialog.confirm }));
 
-    await screen.findByRole("heading", { name: "The word was" });
+    await screen.findByRole("heading", { name: en.result.heading.gave_up });
   },
 };
 
@@ -151,7 +138,7 @@ export const InputFailed: Story = {
     await enterChat();
     await send("Is it about Friday?");
 
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(ERROR_TEXT));
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(en.error.generic));
     const input = screen.getByRole("textbox", { name: en.input.label });
     await expect(input).toHaveValue("Is it about Friday?");
     await waitFor(() => expect(input).toHaveFocus());
@@ -165,7 +152,7 @@ export const InputFailedByAi: Story = {
     await enterChat();
     await send("Is it about Friday?");
 
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(AI_ERROR_TEXT));
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(en.error.aiUnavailable));
   },
 };
 
@@ -176,8 +163,7 @@ export const InputRateLimited: Story = {
     await enterChat();
     await send("Is it about Friday?");
 
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(aiLimitText(37)));
-    await expect(screen.getByRole("status")).toHaveTextContent("in about a minute");
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(en.error.aiLimit(37)));
   },
 };
 
@@ -188,8 +174,7 @@ export const InputRateLimitExceeded: Story = {
     await enterChat();
     await send("Is it about Friday?");
 
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(rateLimitText(45)));
-    await expect(screen.getByRole("status")).toHaveTextContent("in about a minute");
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(en.error.rateLimit(45)));
   },
 };
 
@@ -198,10 +183,10 @@ export const HintFailed: Story = {
   args: { client: mockClient({ revealHint: fail() }) },
   play: async () => {
     await enterChat();
-    const hint = screen.getByRole("button", { name: /^Show a hint/ });
+    const hint = screen.getByRole("button", { name: en.hint.buttonLabel(MAX_HINTS) });
     await userEvent.click(hint);
 
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(ERROR_TEXT));
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(en.error.generic));
     await waitFor(() => expect(hint).toHaveFocus());
   },
 };
@@ -210,7 +195,7 @@ export const HintFailed: Story = {
 export const StartFailed: Story = {
   args: { client: mockClient({ startGame: fail() }) },
   play: async () => {
-    await screen.findByText(START_FAILED_TEXT);
+    await screen.findByText(en.play.startFailed);
   },
 };
 
@@ -218,9 +203,8 @@ export const StartFailed: Story = {
 export const StartRateLimited: Story = {
   args: { client: mockClient({ startGame: fail("rate_limited", 45) }) },
   play: async () => {
-    await screen.findByText(startLimitText(45));
-    await expect(screen.getByText("Too many new games. Try again in about a minute.")).toBeVisible();
-    await expect(screen.getByRole("button", { name: "Retry" })).toBeVisible();
+    await screen.findByText(en.play.startLimit(45));
+    await expect(screen.getByRole("button", { name: en.play.retry })).toBeVisible();
   },
 };
 
@@ -233,7 +217,7 @@ export const GiveUpFailed: Story = {
     const dialog = await screen.findByRole("dialog", { name: en.giveUpDialog.title });
     await userEvent.click(within(dialog).getByRole("button", { name: en.giveUpDialog.confirm }));
 
-    await screen.findByText(GIVE_UP_FAILED_TEXT);
+    await screen.findByText(en.play.giveUpFailed);
     await expect(dialog).toBeInTheDocument();
   },
 };
@@ -245,10 +229,10 @@ export const Expired: Story = {
     await enterChat();
     await send("Is it about Friday?");
 
-    await waitFor(() => expect(screen.getByText(EXPIRED_TEXT)).toHaveFocus());
+    await waitFor(() => expect(screen.getByText(en.error.expired)).toHaveFocus());
     await expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
-    await expect(screen.queryByRole("button", { name: /^Show a hint/ })).not.toBeInTheDocument();
-    await expect(screen.getByRole("link", { name: "Play again" })).toHaveAttribute("href", "/");
+    await expect(screen.queryByRole("button", { name: en.hint.buttonLabel(MAX_HINTS) })).not.toBeInTheDocument();
+    await expect(screen.getByRole("link", { name: en.play.playAgain })).toHaveAttribute("href", "/en");
   },
 };
 
@@ -261,9 +245,9 @@ export const GiveUpExpired: Story = {
     const dialog = await screen.findByRole("dialog", { name: en.giveUpDialog.title });
     await userEvent.click(within(dialog).getByRole("button", { name: en.giveUpDialog.confirm }));
 
-    await screen.findByText(EXPIRED_TEXT);
+    await screen.findByText(en.error.expired);
     await waitFor(() => expect(dialog).not.toBeInTheDocument());
-    await expect(screen.getByRole("link", { name: "Play again" })).toBeInTheDocument();
+    await expect(screen.getByRole("link", { name: en.play.playAgain })).toBeInTheDocument();
   },
 };
 
@@ -272,11 +256,11 @@ export const IgnoredFailure: Story = {
   args: { client: mockClient({ revealHint: fail("hint_out_of_order") }) },
   play: async () => {
     await enterChat();
-    const hint = screen.getByRole("button", { name: /^Show a hint/ });
+    const hint = screen.getByRole("button", { name: en.hint.buttonLabel(MAX_HINTS) });
     await userEvent.click(hint);
 
     await waitFor(() => expect(hint).toBeEnabled());
-    await expect(screen.queryByText(ERROR_TEXT)).not.toBeInTheDocument();
+    await expect(screen.queryByText(en.error.generic)).not.toBeInTheDocument();
   },
 };
 
@@ -290,7 +274,7 @@ export const UnsupportedLanguage: Story = {
     await send("Är det mat? 这是食物吗");
 
     await waitFor(() =>
-      expect(screen.getByRole("status")).toHaveTextContent(UNSUPPORTED_LANGUAGE_TEXT),
+      expect(screen.getByRole("status")).toHaveTextContent(en.unsupportedLanguage),
     );
     await expect(screen.getByRole("textbox", { name: en.input.label })).toBeEnabled();
   },

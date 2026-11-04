@@ -15,6 +15,7 @@ import {
 
 import { Button } from "@/components/ui/button"
 import { WindowTitleBar } from "@/components/ui/window"
+import { useMessages } from "@/lib/i18n/locale-context"
 import { XIcon } from "lucide-react"
 
 const DialogDescriptionContext = React.createContext<{
@@ -78,6 +79,7 @@ function Dialog({
     children: React.ReactNode
     showCloseButton?: boolean
   }) {
+  const t = useMessages().common
   const descriptionId = React.useId()
   const [hasDescription, setHasDescription] = React.useState(false)
   const descriptionContext = React.useMemo(
@@ -115,7 +117,7 @@ function Dialog({
             >
               <XIcon
               />
-              <span className="sr-only">Close</span>
+              <span className="sr-only">{t.close}</span>
             </DialogClose>
           )}
         </DialogPrimitive>
@@ -142,6 +144,8 @@ function DialogFooter({
 }: React.ComponentProps<"div"> & {
   showCloseButton?: boolean
 }) {
+  const t = useMessages().common
+
   return (
     <div
       data-slot="dialog-footer"
@@ -152,7 +156,7 @@ function DialogFooter({
       {...props}
     >
       {children}
-      {showCloseButton && <DialogClose variant="outline">Close</DialogClose>}
+      {showCloseButton && <DialogClose variant="outline">{t.close}</DialogClose>}
     </div>
   )
 }

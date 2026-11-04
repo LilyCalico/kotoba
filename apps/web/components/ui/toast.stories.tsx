@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, fn, screen, userEvent, waitFor } from "storybook/test";
 import { Button } from "@/components/ui/button";
 import { type ToastContent, toast, toastQueue } from "@/components/ui/toast";
+import { en } from "@/lib/i18n/messages";
 
 function ToastTrigger({ content }: { content: ToastContent }) {
   return (
@@ -14,7 +15,7 @@ function ToastTrigger({ content }: { content: ToastContent }) {
 const meta = {
   title: "UI/Toast",
   component: ToastTrigger,
-  args: { content: { title: "Couldn't give up. Please try again." } },
+  args: { content: { title: en.play.giveUpFailed } },
   // story ごとにキューを空にし、前の story のスナックバーを持ち越さない。
   beforeEach: () => {
     toastQueue.clear();
@@ -35,8 +36,8 @@ export const Default: Story = {};
 export const WithAction: Story = {
   args: {
     content: {
-      title: "Couldn't start a game.",
-      action: { label: "Retry", onAction: fn() },
+      title: en.play.startFailed,
+      action: { label: en.play.retry, onAction: fn() },
     },
   },
 };
@@ -46,9 +47,9 @@ export const PressAction: Story = {
   args: WithAction.args,
   play: async ({ args }) => {
     await userEvent.click(screen.getByRole("button", { name: "Show a toast" }));
-    await userEvent.click(await screen.findByRole("button", { name: "Retry" }));
+    await userEvent.click(await screen.findByRole("button", { name: en.play.retry }));
 
     await expect(args.content.action?.onAction).toHaveBeenCalledOnce();
-    await waitFor(() => expect(screen.queryByText("Couldn't start a game.")).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByText(en.play.startFailed)).not.toBeInTheDocument());
   },
 };
