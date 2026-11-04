@@ -36,7 +36,7 @@ https://www.figma.com/design/mWFhHDTqPHFBKhIMrkKj9B/Kotoba?node-id=112-16215&t=n
 
 | 種類 | 値 |
 | --- | --- |
-| 書体 | Pixelify Sans（ワードマーク・タイトルバー・ボタン・起動画面の文字）／ Crimson Text（設問・ヒント・正解の単語と定義・見出し）／ Poppins（回答・発言・説明文などの UI の文） |
+| 書体 | Pixelify Sans（ワードマーク・タイトルバー・ボタン・起動画面の文字）／ Crimson Text（設問・ヒント・正解の単語と定義・見出し）／ Poppins（回答・発言・説明文などの UI の文）。日本語の画面では、英字はこのまま、日本語の字だけを役割ごとに DotGothic16 ／ Klee One ／ Zen Maru Gothic で出す。日本語のタイトルバーは、DotGothic16 のドットが揃う 16px にする |
 | 角 | 0（`--radius`）。キーキャップ・ピル・吹き出し・パソコンの筐体だけを丸める |
 | 影 | ずらしたベタの影。ウィンドウは 4px（`window`）、主ボタンは 4px（`keycap`）、副ボタンは 2px（`pressable`）。押せるものは押すと影の分だけ沈んで影が消える |
 | ホログラム | ピンク・空色・ライム・黄・ラベンダーを巡る円錐グラデーション（`holo`）。ステッカーにだけ使う |
