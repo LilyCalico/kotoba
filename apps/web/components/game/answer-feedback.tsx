@@ -1,8 +1,8 @@
+"use client";
+
 import { CircleCheckIcon, CircleSlashIcon } from "lucide-react";
 
-export function answerText(correct: boolean): string {
-  return correct ? "That's the word!" : "Not the word this time.";
-}
+import { useMessages } from "@/lib/i18n/locale-context";
 
 /**
  * 解答の正誤。塗りも枠も持たない、アイコン付きの文字にする。
@@ -15,6 +15,7 @@ export function AnswerFeedback({
   correct: boolean;
   ref?: React.Ref<HTMLParagraphElement>;
 }) {
+  const t = useMessages().answerFeedback;
   const Icon = correct ? CircleCheckIcon : CircleSlashIcon;
 
   return (
@@ -24,7 +25,7 @@ export function AnswerFeedback({
       tabIndex={-1}
     >
       <Icon aria-hidden className="size-4 shrink-0" />
-      {answerText(correct)}
+      {correct ? t.correct : t.incorrect}
     </p>
   );
 }

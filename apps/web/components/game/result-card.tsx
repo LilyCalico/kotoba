@@ -1,6 +1,6 @@
 "use client";
 
-import type { GameResult, Outcome } from "@kotoba/shared";
+import type { GameResult } from "@kotoba/shared";
 import { CheckIcon, FlagIcon } from "lucide-react";
 import { motion } from "motion/react";
 import { useId } from "react";
@@ -8,10 +8,7 @@ import { useId } from "react";
 import { LabelPill } from "@/components/game/label-pill";
 import { cardAppear, stickerStick } from "@/components/game/motion";
 import { WINDOW_TITLE_CLASS, WindowStack, WindowTitleBar } from "@/components/ui/window";
-
-export function resultHeading(outcome: Outcome): string {
-  return outcome === "cleared" ? "You found it" : "The word was";
-}
+import { useMessages } from "@/lib/i18n/locale-context";
 
 /**
  * 正解の単語を辞書の一項目として見せるウィンドウ。ピンクのタイトルバーに見出しを置き、
@@ -28,6 +25,7 @@ export function ResultCard({
   result: GameResult;
   ref?: React.Ref<HTMLHeadingElement>;
 }) {
+  const t = useMessages().result;
   const headingId = useId();
   const { outcome, word, partOfSpeech, definition, literal, note, example } = result;
   const StickerIcon = outcome === "cleared" ? CheckIcon : FlagIcon;
@@ -41,7 +39,7 @@ export function ResultCard({
         >
           <WindowTitleBar tone="result">
             <h2 className={`${WINDOW_TITLE_CLASS} focus-ring`} id={headingId} ref={ref} tabIndex={-1}>
-              {resultHeading(outcome)}
+              {t.heading[outcome]}
             </h2>
           </WindowTitleBar>
 
@@ -64,8 +62,8 @@ export function ResultCard({
                 {word}
               </p>
               <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                <LabelPill>{partOfSpeech}</LabelPill>
-                {literal && <p className="text-sm text-muted-foreground">Literally “{literal}”</p>}
+                <LabelPill>{t.partOfSpeech[partOfSpeech]}</LabelPill>
+                {literal && <p className="text-sm text-muted-foreground">{t.literal(literal)}</p>}
               </div>
             </div>
 

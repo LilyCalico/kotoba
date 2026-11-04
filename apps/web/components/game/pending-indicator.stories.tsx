@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, screen } from "storybook/test";
-import { PendingIndicator, SLOW_PENDING_TEXT } from "@/components/game/pending-indicator";
+import { PendingIndicator } from "@/components/game/pending-indicator";
+import { en } from "@/lib/i18n/messages";
 
 const meta = {
   title: "Game/PendingIndicator",
@@ -24,7 +25,7 @@ export const Default: Story = {};
 export const Slow: Story = {
   args: { slowNotice: true },
   play: async () => {
-    await expect(screen.queryByText(SLOW_PENDING_TEXT)).not.toBeInTheDocument();
-    await expect(await screen.findByText(SLOW_PENDING_TEXT, {}, { timeout: 4000 })).toBeVisible();
+    await expect(screen.queryByText(en.pending.slow)).not.toBeInTheDocument();
+    await expect(await screen.findByText(en.pending.slow, {}, { timeout: 4000 })).toBeVisible();
   },
 };

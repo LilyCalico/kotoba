@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { expect, userEvent, within } from "storybook/test";
 import { ResultCard } from "@/components/game/result-card";
 import { Button } from "@/components/ui/button";
+import { en } from "@/lib/i18n/messages";
 
 /** 直訳と例文を持つ単語。 */
 const fredagsmys: GameResult = {
@@ -84,6 +85,6 @@ export const FocusHeading: Story = {
 
     await userEvent.click(canvas.getByRole("button", { name: "Focus the heading" }));
 
-    await expect(canvas.getByRole("heading", { name: "You found it" })).toHaveFocus();
+    await expect(canvas.getByRole("heading", { name: en.result.heading.cleared })).toHaveFocus();
   },
 };
