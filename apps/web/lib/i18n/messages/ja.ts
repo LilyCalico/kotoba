@@ -3,6 +3,9 @@
  * 口調は砕けているけれど優しいトーンにし、回答のピルのように一目で読ませる文言は短く保つ。
  * E2E からも読み込むため、ほかのモジュールを読み込まない。
  */
+/** 数と単位（「1 分」）の間に置く、改行しない空白。数と単位が行をまたいで分かれないようにする。 */
+const NBSP = "\u00a0";
+
 export const ja = {
   metadata: {
     description:
@@ -27,7 +30,7 @@ export const ja = {
   input: {
     label: "質問するか、言葉を当ててみて",
     send: "送信",
-    remaining: (count: number) => `あと ${count} 文字`,
+    remaining: (count: number) => `あと ${count}${NBSP}文字`,
   },
   play: {
     teaserInstruction: "Enter か Space を押すと、質問をはじめられるよ。",
@@ -69,7 +72,7 @@ export const ja = {
   },
   hint: {
     button: "ヒントを見る",
-    buttonLabel: (remaining: number) => `ヒントを見る（残り ${remaining} 回）`,
+    buttonLabel: (remaining: number) => `ヒントを見る（残り ${remaining}${NBSP}回）`,
     title: (index: number, total: number) => `ヒント ${index} / ${total}`,
   },
   result: {
@@ -97,7 +100,7 @@ export const ja = {
 function waitPhrase(seconds: number | undefined): string {
   if (seconds === undefined) return "少ししたら";
   const minutes = Math.max(1, Math.ceil(seconds / 60));
-  if (minutes < 60) return `${minutes} 分くらいしたら`;
+  if (minutes < 60) return `${minutes}${NBSP}分くらいしたら`;
   const hours = Math.max(1, Math.round(seconds / 3600));
-  return `${hours} 時間くらいしたら`;
+  return `${hours}${NBSP}時間くらいしたら`;
 }
