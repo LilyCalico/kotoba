@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useEffectEvent, useId, useRef, useState, useSyncExternalStore } from "react";
 
+import { LanguageSwitch } from "@/components/game/language-switch";
 import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { WINDOW_TITLE_CLASS, WindowStack, WindowTitleBar } from "@/components/ui/window";
@@ -73,6 +74,7 @@ function PointerCursor() {
 /**
  * `/` の画面。サイトを開くと、まず起動画面でパソコンに「Hej hej! / Jag heter Kotoba」を 1 文字ずつ打ち込む。
  * 打ち終えて一拍おくか、Skip を押すと、スタート画面のウィンドウ（welcome.txt）が開く。
+ * ヘッダーには、ワードマークと反対側に言語の切り替えを置く。
  *
  * 起動画面はタブごとに 1 回だけ見せ、見たことを `storage` に記録する。Play again で戻ったときは、スタート画面から始める。
  * `storage` を省略するとブラウザの `sessionStorage` を使い、`null` なら記録せず毎回起動画面から始める。
@@ -144,8 +146,9 @@ export function StartScreen({
   return (
     <div className="flex flex-1 justify-center">
       <div className="flex w-full max-w-[42rem] flex-1 flex-col px-5 pb-[calc(2rem+env(safe-area-inset-bottom))]">
-        <header className="flex min-h-16 items-center pt-[env(safe-area-inset-top)]">
+        <header className="flex min-h-16 items-center justify-between pt-[env(safe-area-inset-top)]">
           <p className="font-pixel text-[1.375rem] font-semibold">kotoba</p>
+          <LanguageSwitch />
         </header>
 
         {phase === "boot" && (

@@ -412,6 +412,27 @@ pnpm storybook  # http://localhost:6006
 4. `UI/Dialog` が Esc で閉じ、Tab がダイアログ内に閉じ込められる
 5. `UI/Dialog` を開いたとき、ダイアログの中の文字も Poppins・Crimson Text・Pixelify Sans で描かれている
 
+## 文言と UI 言語を足す
+
+UI の文言は `lib/i18n/messages/` の言語ごとの辞書に置き、コンポーネントに直書きしない。言語を URL で分け、ライブラリを使わずに辞書を持つ理由は `docs/adr/0011-ui-locale-in-url-with-own-dictionaries.md` にある。
+
+### 文言を足す
+
+1. `lib/i18n/messages/en.ts` の、その文言を出すコンポーネントの節に足す。新しいコンポーネントなら節を作る。値を取る文言（数・待つ時間・単語）は、文の全体を返す関数にする。言語ごとに語順が変わるため、言い回しの一部だけを関数にして文の残りと連結しない
+2. `lib/i18n/messages/ja.ts` の同じ位置に日本語を書く。`index.ts` の `messages` が `Record<UiLocale, Messages>` のため、抜けると `pnpm typecheck` が落ちる。数と単位の間（「1 分」）は、改行しない空白（`NBSP`）にする
+3. クライアントコンポーネントは `useMessages()` で今の言語の辞書を引く。辞書は関数を持ち、サーバーからクライアントへ props で渡せないため、クライアントで言語から引く。サーバーで使う場所（`generateMetadata` など）は `messages[lang]` を引く
+4. Story と E2E は、文言を辞書から引いて確かめる。Story の play 関数は `storyMessages(globals)` で、Storybook のツールバーで選んだ言語の辞書を引く。E2E は `e2e/` から辞書を相対パスで読み込む（`import { ja } from "../../apps/web/lib/i18n/messages/ja.js"`）。このため辞書のファイルは、ほかのモジュールを読み込まない
+
+### UI 言語を足す
+
+1. `packages/shared/src/game.ts` の `uiLocaleSchema` に言語のコードを足す。web の UI 言語と、api のゲーム開始の `locale` の両方がこれを使う。api が設問・ヒント・結果をその言語で返すには、単語の多言語テキスト（`docs/adr/0004-localized-word-text-as-jsonb.md`）にもその言語が要る
+2. `lib/i18n/messages/` にその言語の辞書を書き、`index.ts` の `messages` に足す。足すまで型検査が落ちる
+3. `lib/i18n/locale.ts` の `LOCALE_NAMES` に、その言語自身で書いた言語名と短い名前を足す。スタート画面の言語の切り替えは、今の言語以外のすべての UI 言語へのリンクを並べる
+4. 専用の書体が要る言語は、`app/fonts.ts` に書体を足し、日本語と同じく `app/[lang]/layout.tsx` と `.storybook/preview.tsx` で `<html>` の書体の変数に当てる
+5. `.storybook/preview.tsx` のツールバーの `items` に言語を足す
+
+ページの生成（`generateStaticParams`）と Accept-Language の振り分けは `LOCALES` から作るため、手を入れなくても新しい言語を扱う。
+
 ## つまずきポイント
 
 ### `shadcn init` が対話プロンプトで止まる

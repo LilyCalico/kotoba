@@ -2,6 +2,10 @@ import { type Page, expect, test } from "./fixtures.js";
 
 import { words } from "../../apps/api/src/prisma/seed/words.js";
 import { en } from "../../apps/web/lib/i18n/messages/en.js";
+import { ja } from "../../apps/web/lib/i18n/messages/ja.js";
+
+/** 辞書の形。画面の言語の辞書を、操作の関数に渡す。 */
+type Messages = typeof en;
 
 /** web が出題済み単語を記録する `localStorage` のキー。`apps/web/lib/game/played-words.ts` と揃える。 */
 const PLAYED_WORDS_KEY = "kotoba:played-words";
@@ -50,31 +54,31 @@ function bubble(page: Page, text: string | RegExp) {
 }
 
 /** 起動画面を Skip で飛ばし、スタート画面の Start a game からゲームを始める。 */
-async function startFromHome(page: Page) {
-  await page.getByRole("button", { name: en.start.skip }).click();
-  await page.getByRole("link", { name: en.start.startGame }).click();
+async function startFromHome(page: Page, t: Messages = en) {
+  await page.getByRole("button", { name: t.start.skip }).click();
+  await page.getByRole("link", { name: t.start.startGame }).click();
 }
 
-function input(page: Page) {
-  return page.getByRole("textbox", { name: en.input.label });
+function input(page: Page, t: Messages = en) {
+  return page.getByRole("textbox", { name: t.input.label });
 }
 
 /**
  * 設問の提示をクリックで進め、3 秒の自動遷移を待たずにチャットへ移る。
  * 画面の中央はチャットに移ってもログの空き領域なので、自動遷移とクリックが重なっても操作には当たらない。
  */
-async function enterChat(page: Page) {
-  await expect(page.getByRole("region", { name: en.teaser.title })).toBeVisible();
+async function enterChat(page: Page, t: Messages = en) {
+  await expect(page.getByRole("region", { name: t.teaser.title })).toBeVisible();
   await page.locator("main").click();
-  await expect(input(page)).toBeVisible();
+  await expect(input(page, t)).toBeVisible();
 }
 
 /** 入力欄から送信し、応答が届いて入力欄が再び使えるようになるまで待つ。 */
-async function send(page: Page, text: string) {
-  await expect(input(page)).toBeEnabled();
-  await input(page).fill(text);
-  await input(page).press("Enter");
-  await expect(page.getByText(en.pending.title)).toHaveCount(0);
+async function send(page: Page, text: string, t: Messages = en) {
+  await expect(input(page, t)).toBeEnabled();
+  await input(page, t).fill(text);
+  await input(page, t).press("Enter");
+  await expect(page.getByText(t.pending.title)).toHaveCount(0);
 }
 
 async function giveUp(page: Page) {
@@ -125,11 +129,32 @@ test("対応外の言語で送ると、対応言語で聞き直すよう案内�
   await expect(input(page)).toBeEnabled();
 });
 
-test("日本語の URL から始めたゲームは、日本語の設問で始まる", async ({ page }) => {
+test("/ja では日本語の設問・回答・ヒント・判定で遊べ、結果カードに読みが出る", async ({ page }) => {
   await playWithOnly(page, fredagsmys.id);
-  await page.goto("/ja/play");
+  await page.goto("/ja");
+  await startFromHome(page, ja);
 
+  await expect(page).toHaveURL("/ja/play");
   await expect(page.getByText(fredagsmys.teaser.ja)).toBeVisible();
+  await enterChat(page, ja);
+
+  await send(page, "名詞？", ja);
+  await expect(bubble(page, new RegExp(`^${ja.verdict.yes}$`))).toBeVisible();
+
+  await page.getByRole("button", { name: new RegExp(`^${ja.hint.button}`) }).click();
+  const hint = page.getByRole("region", { name: ja.hint.title(1, fredagsmys.hints.ja.length) });
+  await expect(hint.getByText(fredagsmys.hints.ja[0] ?? "")).toBeVisible();
+
+  await send(page, "ヒュッゲ", ja);
+  await expect(bubble(page, ja.answerFeedback.incorrect)).toBeVisible();
+
+  await send(page, fredagsmys.reading, ja);
+  await expect(bubble(page, ja.answerFeedback.correct)).toBeVisible();
+  const result = page.getByRole("region", { name: ja.result.heading.cleared });
+  await expect(result.getByText(fredagsmys.word, { exact: true })).toBeVisible();
+  await expect(result.getByText(fredagsmys.reading, { exact: true })).toBeVisible();
+  await expect(result.getByText(fredagsmys.definition.ja)).toBeVisible();
+  await expect(page.getByRole("link", { name: ja.play.playAgain })).toHaveAttribute("href", "/ja");
 });
 
 test("誤答のフィードバックのあと、同じ入力欄から再び解答できる", async ({ page }) => {
