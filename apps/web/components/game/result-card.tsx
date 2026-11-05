@@ -12,7 +12,7 @@ import { useMessages } from "@/lib/i18n/locale-context";
 
 /**
  * 正解の単語を辞書の一項目として見せるウィンドウ。ピンクのタイトルバーに見出しを置き、
- * 単語・品詞・直訳・定義・補足・例文の順に組む。後ろに 2 枚のウィンドウを重ね、画面の主役にする。
+ * 単語・読み・品詞・直訳・定義・補足・例文の順に組む。読み（カタカナ）は日本語の UI の結果だけが持ち、単語の下に補足の文字で添える。後ろに 2 枚のウィンドウを重ね、画面の主役にする。
  * クリアとギブアップで見出しとステッカーのアイコンを変える。
  *
  * ウィンドウの右上の角にホログラムのステッカーが貼られる。ゲームの見せ場で、ウィンドウが現れてから一拍おいて貼られる。
@@ -27,7 +27,7 @@ export function ResultCard({
 }) {
   const t = useMessages().result;
   const headingId = useId();
-  const { outcome, word, partOfSpeech, definition, literal, note, example } = result;
+  const { outcome, word, reading, partOfSpeech, definition, literal, note, example } = result;
   const StickerIcon = outcome === "cleared" ? CheckIcon : FlagIcon;
 
   return (
@@ -55,12 +55,15 @@ export function ResultCard({
 
           <div className="flex flex-col gap-4 px-5 pt-6 pb-5.5">
             <div className="flex flex-col gap-3">
-              <p
-                className="font-serif text-[2.5rem] leading-none font-semibold hyphens-auto wrap-break-word md:text-[3.25rem]"
-                lang="sv"
-              >
-                {word}
-              </p>
+              <div className="flex flex-col gap-1.5">
+                <p
+                  className="font-serif text-[2.5rem] leading-none font-semibold hyphens-auto wrap-break-word md:text-[3.25rem]"
+                  lang="sv"
+                >
+                  {word}
+                </p>
+                {reading && <p className="text-sm text-muted-foreground">{reading}</p>}
+              </div>
               <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
                 <LabelPill>{t.partOfSpeech[partOfSpeech]}</LabelPill>
                 {literal && <p className="text-sm text-muted-foreground">{t.literal(literal)}</p>}
