@@ -2,7 +2,7 @@ import { MAX_HINTS } from "@kotoba/shared";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, fn, within } from "storybook/test";
 import { HintButton } from "@/components/game/hint-button";
-import { en } from "@/lib/i18n/messages";
+import { storyMessages } from "@/lib/i18n/story-locale";
 
 const meta = {
   title: "Game/HintButton",
@@ -29,12 +29,13 @@ export const Countdown: Story = {
       ))}
     </div>
   ),
-  play: async ({ canvasElement }) => {
+  play: async ({ canvasElement, globals }) => {
+    const t = storyMessages(globals);
     const canvas = within(canvasElement);
 
     for (const remaining of [3, 2, 1]) {
-      await expect(canvas.getByRole("button", { name: en.hint.buttonLabel(remaining) })).toBeEnabled();
+      await expect(canvas.getByRole("button", { name: t.hint.buttonLabel(remaining) })).toBeEnabled();
     }
-    await expect(canvas.getByRole("button", { name: en.hint.buttonLabel(0) })).toBeDisabled();
+    await expect(canvas.getByRole("button", { name: t.hint.buttonLabel(0) })).toBeDisabled();
   },
 };

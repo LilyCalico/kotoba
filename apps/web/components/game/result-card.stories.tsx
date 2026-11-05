@@ -1,41 +1,40 @@
-import type { GameResult } from "@kotoba/shared";
+import { type Outcome, type Word, gameResultOf } from "@kotoba/shared";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { useRef } from "react";
+import { type ComponentProps, useRef } from "react";
 import { expect, userEvent, within } from "storybook/test";
 import { ResultCard } from "@/components/game/result-card";
 import { Button } from "@/components/ui/button";
-import { en } from "@/lib/i18n/messages";
+import { fixtureWord } from "@/lib/game/fixtures";
+import { useLocale } from "@/lib/i18n/locale-context";
+import { storyMessages } from "@/lib/i18n/story-locale";
+
+/** モックの単語の結果を、ツールバーで選んだ言語で組んで描く。日本語では読みが付く。 */
+function WordResultCard({
+  word,
+  outcome,
+  ...props
+}: { word: Word; outcome: Outcome } & Omit<ComponentProps<typeof ResultCard>, "result">) {
+  return <ResultCard {...props} result={gameResultOf(word, outcome, useLocale())} />;
+}
 
 /** 直訳と例文を持つ単語。 */
-const fredagsmys: GameResult = {
-  outcome: "cleared",
-  wordId: "fredagsmys",
-  word: "Fredagsmys",
-  partOfSpeech: "noun",
-  definition:
-    "The habit of settling onto the sofa with family or a partner on a Friday night, snacks at hand.",
-  literal: "Friday coziness",
-  example: {
-    sv: "Vad ska vi ha till fredagsmyset?",
-    translation: "What are we having for tonight’s cozy night in?",
-  },
-};
+const fredagsmys = fixtureWord("fredagsmys");
 
 /** 補足を持ち、直訳を持たない単語。 */
-const lagom: GameResult = {
-  outcome: "gave_up",
-  wordId: "lagom",
-  word: "Lagom",
-  partOfSpeech: "adjective",
-  definition: "Just the right amount — neither too much nor too little.",
-  note: "It stands for a national preference for moderation, and works as a compliment.",
-  example: { sv: "Precis lagom!", translation: "Just right!" },
+const lagom = fixtureWord("lagom");
+
+/** 直訳・補足・例文のどれも持たない単語。 */
+const definitionOnly: Word = {
+  ...fixtureWord("mangata"),
+  literal: undefined,
+  note: undefined,
+  example: undefined,
 };
 
 const meta = {
   title: "Game/ResultCard",
-  component: ResultCard,
-  args: { result: fredagsmys },
+  component: WordResultCard,
+  args: { word: fredagsmys, outcome: "cleared" },
   decorators: [
     (Story) => (
       <div className="flex w-full max-w-lg flex-col gap-4 pt-4">
@@ -43,7 +42,7 @@ const meta = {
       </div>
     ),
   ],
-} satisfies Meta<typeof ResultCard>;
+} satisfies Meta<typeof WordResultCard>;
 
 export default meta;
 
@@ -52,20 +51,12 @@ type Story = StoryObj<typeof meta>;
 export const Cleared: Story = {};
 
 export const GaveUp: Story = {
-  args: { result: lagom },
+  args: { word: lagom, outcome: "gave_up" },
 };
 
 /** 直訳・補足・例文のどれも持たない単語。品詞と定義だけを組む。 */
 export const DefinitionOnly: Story = {
-  args: {
-    result: {
-      outcome: "cleared",
-      wordId: "mysig",
-      word: "Mysig",
-      partOfSpeech: "adjective",
-      definition: "An adjective for a warm, comfortable, inviting atmosphere.",
-    },
-  },
+  args: { word: definitionOnly },
 };
 
 /** ゲーム終了時と同じく、`ref` 経由で見出しへフォーカスを移す。 */
@@ -76,15 +67,15 @@ export const FocusHeading: Story = {
     return (
       <>
         <Button onPress={() => headingRef.current?.focus()}>Focus the heading</Button>
-        <ResultCard {...args} ref={headingRef} />
+        <WordResultCard {...args} ref={headingRef} />
       </>
     );
   },
-  play: async ({ canvasElement }) => {
+  play: async ({ canvasElement, globals }) => {
     const canvas = within(canvasElement);
 
     await userEvent.click(canvas.getByRole("button", { name: "Focus the heading" }));
 
-    await expect(canvas.getByRole("heading", { name: en.result.heading.cleared })).toHaveFocus();
+    await expect(canvas.getByRole("heading", { name: storyMessages(globals).result.heading.cleared })).toHaveFocus();
   },
 };

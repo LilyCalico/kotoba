@@ -1,12 +1,20 @@
+import type { Word } from "@kotoba/shared";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { useState } from "react";
+import { type ComponentProps, useState } from "react";
 import { TeaserCard } from "@/components/game/teaser-card";
 import { Button } from "@/components/ui/button";
+import { fixtureWord } from "@/lib/game/fixtures";
+import { useLocale } from "@/lib/i18n/locale-context";
+
+/** モックの単語の設問を、ツールバーで選んだ言語で描く。 */
+function WordTeaserCard({ word, ...props }: { word: Word } & Omit<ComponentProps<typeof TeaserCard>, "teaser">) {
+  return <TeaserCard {...props} teaser={word.teaser[useLocale()]} />;
+}
 
 const meta = {
   title: "Game/TeaserCard",
-  component: TeaserCard,
-  args: { teaser: "On Friday night, this word lives on the sofa" },
+  component: WordTeaserCard,
+  args: { word: fixtureWord("fredagsmys") },
   decorators: [
     (Story) => (
       <div className="w-full max-w-lg">
@@ -14,7 +22,7 @@ const meta = {
       </div>
     ),
   ],
-} satisfies Meta<typeof TeaserCard>;
+} satisfies Meta<typeof WordTeaserCard>;
 
 export default meta;
 
@@ -39,7 +47,7 @@ export const Settle: Story = {
           Toggle
         </Button>
         <div className={floating ? "flex flex-1 items-center" : "flex flex-1 items-start"}>
-          <TeaserCard
+          <WordTeaserCard
             {...args}
             key={floating ? "floating" : "pinned"}
             layoutId="teaser"

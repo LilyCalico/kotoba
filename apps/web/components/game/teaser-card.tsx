@@ -49,7 +49,7 @@ export function TeaserCard({
       </motion.div>
       <motion.p
         className={cn(
-          "font-serif leading-tight text-balance",
+          "font-serif leading-tight text-phrase",
           floating ? "px-6 pt-5 pb-7 text-[2rem]" : "px-4 pt-3 pb-4 text-[1.5rem]",
         )}
         layout={layout}

@@ -4,6 +4,12 @@
  * E2E からも読み込むため、ほかのモジュールを読み込まない。
  */
 export const en = {
+  /** ページの説明と、サイト名の前に付ける各ページのタイトル */
+  metadata: {
+    description:
+      "Ask yes-or-no questions to uncover a Swedish word for a feeling you've never been able to name.",
+    playTitle: "Play",
+  },
   start: {
     skip: "Skip",
     heading: "A word for a feeling you’ve never named",

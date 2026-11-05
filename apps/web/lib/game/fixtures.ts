@@ -493,6 +493,13 @@ export function findWordById(id: string): Word | undefined {
   return words.find((word) => word.id === id);
 }
 
+/** 単語プールに必ずある単語を引く。Story のように、id を決め打ちで使う場所のためのもの。 */
+export function fixtureWord(id: string): Word {
+  const word = findWordById(id);
+  if (!word) throw new Error(`${id} が単語プールにない`);
+  return word;
+}
+
 /** 単語の想定 Q&A。未知の id には空の配列を返し、すべての質問が `unclear` に落ちる。 */
 export function rulesFor(wordId: string): readonly QaRule[] {
   return qaRules[wordId] ?? [];

@@ -1,6 +1,6 @@
 import { expect, test } from "./fixtures.js";
 
-import { en } from "../../apps/web/lib/i18n/messages/en.js";
+import { ja } from "../../apps/web/lib/i18n/messages/ja.js";
 
 test.describe("ブラウザの言語が日本語", () => {
   test.use({ locale: "ja-JP" });
@@ -32,8 +32,8 @@ test.describe("ブラウザの言語が日本語でも英語でもない", () =>
 
 test("スタート画面からは、同じ言語のプレイ画面へ進む", async ({ page }) => {
   await page.goto("/ja");
-  await page.getByRole("button", { name: en.start.skip }).click();
-  await page.getByRole("link", { name: en.start.startGame }).click();
+  await page.getByRole("button", { name: ja.start.skip }).click();
+  await page.getByRole("link", { name: ja.start.startGame }).click();
 
   await expect(page).toHaveURL("/ja/play");
 });

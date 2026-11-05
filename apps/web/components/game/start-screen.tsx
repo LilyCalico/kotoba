@@ -186,7 +186,7 @@ export function StartScreen({
                   </WindowTitleBar>
                   <div className="flex flex-col items-center gap-3.5 px-5 pt-6 pb-6.5 text-center">
                     <h1
-                      className="font-serif text-[2.5rem] leading-[1.1] font-normal text-balance focus-ring"
+                      className="font-serif text-[2.5rem] leading-[1.1] font-normal text-phrase focus-ring"
                       id={headingId}
                       ref={headingRef}
                       tabIndex={-1}
