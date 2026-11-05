@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { isLocale, localeOfPath, localizedPath, negotiateLocale } from "./locale";
+import { isLocale, localeOfPath, localizedPath, negotiateLocale, preferredLocale } from "./locale";
 
 describe("negotiateLocale", () => {
   it("主言語のサブタグで UI 言語を選ぶ", () => {
@@ -24,6 +24,19 @@ describe("negotiateLocale", () => {
     expect(negotiateLocale("sv-SE,de;q=0.8")).toBe("en");
     expect(negotiateLocale(null)).toBe("en");
     expect(negotiateLocale("")).toBe("en");
+  });
+});
+
+describe("preferredLocale", () => {
+  it("画面で切り替えた言語を、ブラウザの言語より先に選ぶ", () => {
+    expect(preferredLocale("en", "ja-JP,ja;q=0.9")).toBe("en");
+    expect(preferredLocale("ja", "en-US,en;q=0.9")).toBe("ja");
+  });
+
+  it("切り替えた言語がない・UI 言語でないときは、ブラウザの言語で選ぶ", () => {
+    expect(preferredLocale(undefined, "ja-JP,ja;q=0.9")).toBe("ja");
+    expect(preferredLocale("sv", "ja-JP,ja;q=0.9")).toBe("ja");
+    expect(preferredLocale(undefined, null)).toBe("en");
   });
 });
 
