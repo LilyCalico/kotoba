@@ -1246,6 +1246,16 @@ const source: Word[] = [
         "It means both free of sleepiness and full of energy, in one word",
       ],
     },
+    meaning: {
+      core: "元気ではつらつとしていて、目がしっかり覚めている様子。",
+      accepts: ["元気", "はつらつとした", "目がさえている", "alert"],
+      rejects: ["眠い", "朝型", "うれしい"],
+      hints: [
+        "体や心の状態を言う形容詞だよ",
+        "ぐっすり眠った朝や、コーヒーを飲んだあとに",
+        "眠気がなくて、しゃきっとしている感じ",
+      ],
+    },
     example: {
       sv: "Jag är så pigg i morse!",
       translations: {
@@ -1281,6 +1291,16 @@ const source: Word[] = [
         "An adjective describing someone's nature",
         "You use it for someone who finds early rising easy and is cheerful from the first minute",
         "It is a compound of a time of day and an adjective meaning lively",
+      ],
+    },
+    meaning: {
+      core: "朝から元気な、朝型の。",
+      accepts: ["朝型", "朝に強い", "早起きが得意", "a morning person"],
+      rejects: ["元気", "朝", "眠い"],
+      hints: [
+        "人の様子を言う形容詞で、2 つの語を合わせた言葉だよ",
+        "目覚ましが鳴る前に起きて、もう朝ごはんの支度をしている人",
+        "一日のはじめの時間から、しゃきっとしていること",
       ],
     },
     example: {
@@ -1323,6 +1343,16 @@ const source: Word[] = [
         "It attaches to other words to make new ones meaning \"in the mood for ___\"",
       ],
     },
+    meaning: {
+      core: "何かを食べたい、したいという気分になっていること。",
+      accepts: ["〜したい気分", "食べたい気分", "欲しくなっている", "craving"],
+      rejects: ["お腹が空いた", "好き", "おいしい"],
+      hints: [
+        "気分を表す形容詞だよ",
+        "甘いものが目に入ったとき、ほかの語とつなげて「〜したい」と言う",
+        "あれが欲しい、あれをしたい、と心が向いている状態",
+      ],
+    },
     example: {
       sv: "Jag är sugen på godis.",
       translations: {
@@ -1357,6 +1387,16 @@ const source: Word[] = [
         "A noun for a length of time",
         "You use it for a shop open round the clock, or a body clock thrown off by jet lag",
         "English needs \"twenty-four hours\" for it; this language has a single word",
+      ],
+    },
+    meaning: {
+      core: "昼と夜を合わせた、まる一日（24 時間）。",
+      accepts: ["24 時間", "まる一日", "一昼夜"],
+      rejects: ["昼間", "夜", "一週間"],
+      hints: [
+        "時間の長さを表す言葉だよ",
+        "旅行の日数や、薬を飲む間隔を数えるときに",
+        "朝から次の朝まで、夜もまるごと含めた長さ",
       ],
     },
     example: {
@@ -1398,6 +1438,16 @@ const source: Word[] = [
         "A noun for a gathering of people",
         "You use it when friends meet and each brings a home-cooked dish",
         "It is a compound of words meaning \"bundle\" and \"party\"",
+      ],
+    },
+    meaning: {
+      core: "参加者がそれぞれ料理を持ち寄って開くパーティー。",
+      accepts: ["持ち寄りパーティー", "ポットラック", "potluck"],
+      rejects: ["パーティー", "バーベキュー", "誕生日会"],
+      hints: [
+        "集まりのことを言う言葉だよ",
+        "友だちの家に、手づくりのサラダやケーキを抱えて集まる",
+        "主催者がごちそうするのではなく、みんなが一品ずつ持ってくる会",
       ],
     },
     example: {
