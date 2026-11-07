@@ -18,9 +18,11 @@ import { PlayerMessage } from "@/components/game/player-message";
 import { ResultCard } from "@/components/game/result-card";
 import { TeaserCard } from "@/components/game/teaser-card";
 import { UnsupportedLanguageMessage, VerdictMessage } from "@/components/game/verdict-message";
+import { WordCard } from "@/components/game/word-card";
 import { buttonVariants } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { createApiGameClient } from "@/lib/game/api-client";
+import { gameModeFor } from "@/lib/game/mode";
 import { type GameClient, GameClientError } from "@/lib/game/client";
 import {
   type PlayedWordsStorage,
@@ -32,6 +34,7 @@ import {
   type AnnouncedEntry,
   type ChatEntry,
   type GameAction,
+  type GameOpening,
   type GameState,
   createGameState,
   failureKind,
@@ -50,14 +53,28 @@ export const TEASER_DURATION_MS = 3000;
 /** 入力欄の置き場所。skip link の飛び先になる。 */
 const PLAYER_INPUT_ID = "player-input";
 
-/** 設問の提示とチャットの設問カードをつなぐ共有レイアウトの名前。 */
-const TEASER_LAYOUT_ID = "teaser";
+/** 最初に見せるカード（設問か単語）の提示と、チャットのそのカードをつなぐ共有レイアウトの名前。 */
+const OPENING_LAYOUT_ID = "opening";
 
 type PlayAction = GameAction | { type: "started"; start: GameStart };
 
 /** 出題済み単語の記録先。省略時はブラウザの `localStorage`、`null` なら記録しない。 */
 function resolveStorage(storage: PlayedWordsStorage | null | undefined): PlayedWordsStorage | null {
   return storage === undefined ? getBrowserStorage() : storage;
+}
+
+/** 最初に見せるカード。単語当ては設問カード、意味当ては単語カード。 */
+function OpeningCard({ opening, variant }: { opening: GameOpening; variant: "floating" | "pinned" }) {
+  return opening.mode === "guess_meaning" ? (
+    <WordCard
+      layoutId={OPENING_LAYOUT_ID}
+      reading={opening.reading}
+      variant={variant}
+      word={opening.word}
+    />
+  ) : (
+    <TeaserCard layoutId={OPENING_LAYOUT_ID} teaser={opening.teaser} variant={variant} />
+  );
 }
 
 /** `startGame` の応答を待つ間は `null`。応答が届いたら `gameReducer` に委ねる。 */
@@ -101,6 +118,7 @@ export function GameScreen({
     const request: StartGameRequest = {
       language: "sv",
       locale,
+      mode: gameModeFor(locale),
       excludeWordIds: excludedWordIds(resolveStorage(storage)),
     };
     client.startGame(request).then(
@@ -171,13 +189,7 @@ export function GameScreen({
             <h1 className="sr-only">kotoba</h1>
             {game ? (
               <>
-                {game.opening.mode === "guess_word" && (
-                  <TeaserCard
-                    layoutId={TEASER_LAYOUT_ID}
-                    teaser={game.opening.teaser}
-                    variant="floating"
-                  />
-                )}
+                <OpeningCard opening={game.opening} variant="floating" />
                 <p className="sr-only">{t.teaserInstruction}</p>
               </>
             ) : (
@@ -314,9 +326,7 @@ function Chat({
       </motion.div>
       <main className="flex min-h-0 flex-1 flex-col pt-1">
         <div className="shrink-0 px-5">
-          {state.opening.mode === "guess_word" && (
-            <TeaserCard layoutId={TEASER_LAYOUT_ID} teaser={state.opening.teaser} variant="pinned" />
-          )}
+          <OpeningCard opening={state.opening} variant="pinned" />
         </div>
         <div
           // 上端をぼかし、スクロールした要素が設問カードの下へ消えていくように見せる。
