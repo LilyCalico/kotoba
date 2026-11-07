@@ -516,6 +516,16 @@ const source: Word[] = [
         "It joins a preposition meaning \"on\" with a word for a small drop",
       ],
     },
+    meaning: {
+      core: "コーヒーのおかわり（2 杯目のコーヒー）。",
+      accepts: ["おかわり", "2 杯目のコーヒー", "refill"],
+      rejects: ["コーヒー", "3 杯目のコーヒー", "お茶"],
+      hints: [
+        "飲み物にかかわる言葉だよ",
+        "カフェで 1 杯飲み終わったあと、カップを差し出して",
+        "同じ飲み物を、もう 1 杯",
+      ],
+    },
     example: {
       sv: "Är det någon som vill ha påtår?",
       translations: {
@@ -551,6 +561,16 @@ const source: Word[] = [
         "A noun about a drink, tied to a particular number",
         "You use it when a long meeting or chat calls for yet another top-up of coffee",
         "It joins the number three with a word for a small drop",
+      ],
+    },
+    meaning: {
+      core: "コーヒーのおかわりのさらにおかわり。3 杯目のコーヒー。",
+      accepts: ["3 杯目のコーヒー", "おかわりのおかわり", "second refill"],
+      rejects: ["おかわり", "2 杯目のコーヒー", "コーヒー"],
+      hints: [
+        "飲み物にかかわる言葉だよ",
+        "長いおしゃべりが続いて、カップが空くたびに注ぎ足して",
+        "1 杯目でも 2 杯目でもない、そのもう 1 杯",
       ],
     },
     example: {
@@ -594,6 +614,16 @@ const source: Word[] = [
         "It is a compound of the name of a weekend day and a word for sweets",
       ],
     },
+    meaning: {
+      core: "土曜日にだけ食べるお菓子。また、お菓子を土曜日まで取っておく習慣。",
+      accepts: ["土曜日のお菓子", "週に一度だけ食べるお菓子", "土曜日にお菓子を食べる習慣"],
+      rejects: ["お菓子", "週末", "ご褒美"],
+      hints: [
+        "食べもの、またそれにまつわる習慣のことだよ",
+        "スーパーの量り売りの棚の前で、子どもたちが袋を手に真剣に選んでいる",
+        "平日はがまんして、週に一度の決まった日にだけ楽しむ甘いもの",
+      ],
+    },
     example: {
       sv: "Mitt bästa lördagsgodis är lösgodiset som man väger upp själv på ICA.",
       translations: {
@@ -629,6 +659,16 @@ const source: Word[] = [
         "A noun for a particular day on the calendar",
         "It is the excuse for dinner out or a drink, even though it is a weekday",
         "It joins a word meaning \"little\" with the name of a weekend day",
+      ],
+    },
+    meaning: {
+      core: "週の真ん中の水曜日を、少しだけ週末気分で楽しむ日として呼ぶ言い方。",
+      accepts: ["水曜日", "小さな週末", "週の真ん中のちょっとしたお楽しみの日"],
+      rejects: ["週末", "土曜日", "休日"],
+      hints: [
+        "曜日や日にまつわる言葉だよ",
+        "週末はまだ遠いけれど、ちょっといいご飯やお酒を楽しむ人がいる",
+        "週の真ん中にある、小さな週末みたいな日",
       ],
     },
     example: {
@@ -670,6 +710,16 @@ const source: Word[] = [
         "A noun describing a relationship between people",
         "You use it on official forms, or when introducing the person you share a home with",
         "It shortens and joins words meaning \"together\" and \"to live\"",
+      ],
+    },
+    meaning: {
+      core: "結婚せずに一緒に暮らしているパートナー。",
+      accepts: ["同棲相手", "事実婚のパートナー", "内縁の相手", "cohabiting partner"],
+      rejects: ["夫", "妻", "恋人", "ルームメイト"],
+      hints: [
+        "人を指す言葉だよ",
+        "書類や役所の手続きにも出てくる、正式な呼び名でもある",
+        "指輪は交わしていないけれど、同じ家で暮らしている相手",
       ],
     },
     example: {
