@@ -2,6 +2,7 @@ import { isAcceptedAnswer } from "@kotoba/shared";
 import { describe, expect, it } from "vitest";
 import { words } from "../../prisma/seed/words.js";
 import { EVAL_CASES, modeOf } from "./cases.js";
+import { PASS_RATE } from "./score.js";
 
 describe("EVAL_CASES", () => {
   it("どのケースの単語も seed にある", () => {
@@ -19,13 +20,15 @@ describe("EVAL_CASES", () => {
     }
   });
 
-  it("どの種類にもケースがあり、救済には正解と誤答の両方がある", () => {
+  it("どの種類にもケースがあり、救済と意味の正誤には正解と誤答の両方がある", () => {
     const categories = new Set(EVAL_CASES.map(({ category }) => category));
-    expect([...categories].sort()).toEqual(["classification", "injection", "rescue", "verdict"]);
+    expect([...categories].sort()).toEqual(Object.keys(PASS_RATE).sort());
 
-    const rescue = EVAL_CASES.filter(({ category }) => category === "rescue");
-    expect(rescue.some(({ expect }) => "correct" in expect && expect.correct === true)).toBe(true);
-    expect(rescue.some(({ expect }) => "correct" in expect && expect.correct === false)).toBe(true);
+    for (const category of ["rescue", "meaning_judge"]) {
+      const ofCategory = EVAL_CASES.filter((testCase) => testCase.category === category);
+      expect(ofCategory.some(({ expect }) => "correct" in expect && expect.correct === true), category).toBe(true);
+      expect(ofCategory.some(({ expect }) => "correct" in expect && expect.correct === false), category).toBe(true);
+    }
   });
 
   it("meaning_ で始まる種類は意味当て、それ以外は単語当てで判定する", () => {
