@@ -46,6 +46,11 @@ export const en = {
   teaser: {
     title: "Question",
   },
+  /** 意味当てで最初に見せる、単語と読みのカード */
+  wordCard: {
+    title: "Word",
+    prompt: "What does this word mean?",
+  },
   /** 質問への 5 値の回答。`Verdict` の値で引く */
   verdict: {
     yes: "Yes",
