@@ -278,6 +278,16 @@ const source: Word[] = [
         "The first half of the word is the name of a small red fruit found in the forest",
       ],
     },
+    meaning: {
+      core: "自分だけ（や親しい人だけ）が知っている、お気に入りの特別な場所。",
+      accepts: ["穴場", "秘密の場所", "とっておきの場所", "隠れ家"],
+      rejects: ["野いちご畑", "公園", "観光地"],
+      hints: [
+        "場所のことを言う言葉だよ",
+        "人に教えたいような、教えたくないような——森の奥のベンチや路地裏の小さなカフェ",
+        "人にあまり知られていない、自分にとってとっておきの場所",
+      ],
+    },
     example: {
       sv: "Jag kan visa dig mitt smultronställe för blåbär.",
       translations: {
@@ -313,6 +323,16 @@ const source: Word[] = [
         "A noun for a sight that appears out in nature",
         "You see it beside a lake or the sea at night, and the weather and the phase of the moon decide whether it is there",
         "It is a compound of something in the sky and the word for a road",
+      ],
+    },
+    meaning: {
+      core: "月の光が水面に映って、道のように伸びて見える光の帯。",
+      accepts: ["水面に映る月の光の道", "月の光の道", "moonlight reflected on water"],
+      rejects: ["月", "月明かり", "夕日"],
+      hints: [
+        "自然の中で見られる光景のことだよ",
+        "晴れた夜、湖や海のほとりに立つと見える",
+        "夜空の明かりが水の上に映って、まっすぐな道みたいに伸びたもの",
       ],
     },
     example: {
@@ -352,6 +372,16 @@ const source: Word[] = [
         "It literally means \"the sun's ___\", likening the flickering to a certain animal",
       ],
     },
+    meaning: {
+      core: "鏡や時計などが日の光を反射して、壁や天井に映る揺れる光の点。",
+      accepts: ["反射した光の点", "光の反射", "鏡で反射した日の光が壁に映ったもの"],
+      rejects: ["猫", "日なた", "木漏れ日"],
+      hints: [
+        "目に見えるけれど、さわれないもののことだよ",
+        "晴れた日の窓辺で、腕時計やスマートフォンを動かすと現れる",
+        "何かに跳ね返された日の光が、壁の上でちらちら動くもの",
+      ],
+    },
     example: {
       sv: "Det dansar en solkatt på väggen från min mobil.",
       translations: {
@@ -389,6 +419,16 @@ const source: Word[] = [
         "A word meaning daybreak is preceded by the name of a bird heard in early summer",
       ],
     },
+    meaning: {
+      core: "早朝に外へ出かけて、鳥のさえずりを聞いて過ごすこと。",
+      accepts: ["早起きして鳥の声を聞きに行くこと", "朝の鳥のさえずりを楽しむこと", "going out at dawn to hear the birds"],
+      rejects: ["早起き", "散歩", "バードウォッチング"],
+      hints: [
+        "何かをしに出かけること、またその習慣のことだよ",
+        "春から初夏の、まだ人の少ない朝の森や公園で",
+        "朝早く外へ出て、耳をすませて楽しむこと",
+      ],
+    },
     example: {
       sv: "Han gav sig av till skogen för gökotta.",
       translations: {
@@ -423,6 +463,16 @@ const source: Word[] = [
         "It describes how you spend one particular stretch at the end of the day",
         "You stay in a room as it grows dark, leaving the lamps off",
         "It is two words: a verb meaning to huddle, and a noun meaning twilight",
+      ],
+    },
+    meaning: {
+      core: "夕暮れどきに明かりをつけないまま、薄暗い中で静かに過ごすこと。",
+      accepts: ["夕暮れに電気をつけずにぼんやりすること", "日暮れの薄闇の中でくつろぐこと", "sitting in the twilight without lights"],
+      rejects: ["夕焼け", "昼寝", "停電"],
+      hints: [
+        "何かをして過ごすことを表す言い回しだよ",
+        "日が落ちていく時間、窓の外がだんだん暗くなっていく部屋で",
+        "暗くなっていくのに、あえて明かりをつけずにじっと過ごすこと",
       ],
     },
     example: {
