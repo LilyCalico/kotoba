@@ -45,3 +45,4 @@
 | [0010](0010-ai-eval-with-own-runner.md) | AI の判定の eval を、判定の実装を直接呼ぶ自前のランナーで流す | 採用 |
 | [0011](0011-ui-locale-in-url-with-own-dictionaries.md) | UI 言語を URL のサブパスで分け、文言はライブラリを使わず型付きの辞書で持つ | 採用 |
 | [0012](0012-game-mode-as-separate-axis-from-locale.md) | 遊び方を UI 言語と別の軸としてゲーム開始で受け、web が UI 言語から決める | 採用 |
+| [0013](0013-meaning-judged-by-ai-with-per-word-criteria.md) | 意味当ての正誤を、単語ごとに人手で書いた判定基準を渡した AI で決める | 採用 |
