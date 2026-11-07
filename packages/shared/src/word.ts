@@ -31,8 +31,8 @@ const meaningSchema = z.object({
 
 /**
  * 出題する単語 1 件。
- * 開始時にクライアントへ送るのは teaser のみ、ヒントは開示操作のたびに 1 つずつ送り、
- * word と definition はゲームが終わるまで送らない。
+ * 開始時にクライアントへ送るのは、単語当てでは teaser だけ、意味当てでは word と reading だけである。
+ * ヒントは開示操作のたびに 1 つずつ送り、definition と意味当ての判定基準はゲームが終わるまで送らない。
  * データ本体は API 側の DB（seed の入力は `apps/api/src/prisma/seed/words.ts`）にのみ置き、web にはバンドルしない。
  */
 export const wordSchema = z.object({
@@ -55,7 +55,7 @@ export const wordSchema = z.object({
   acceptedAnswers: z.array(z.string().min(1)).min(1),
   /** 終了カードに載せる定義。一文で言い切る */
   definition: localized(z.string().min(1)),
-  /** ゲーム開始時に唯一クライアントへ渡す、謎めいた一行 */
+  /** 単語当てのゲーム開始時にクライアントへ渡す、謎めいた一行 */
   teaser: localized(z.string().min(1)),
   /** 単語当ての段階ヒント。1 が方向性、2 が使われる場面、3 が語の成り立ち */
   hints: localized(hintsSchema),
