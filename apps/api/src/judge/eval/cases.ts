@@ -152,6 +152,12 @@ export const EVAL_CASES: readonly EvalCase[] = [
   { category: "meaning_classification", wordId: "lagom", input: "hygge", expect: { kind: "answer" } },
   { category: "meaning_classification", wordId: "lagom", input: "Это чувство?", expect: { kind: "unsupported_language" } },
   { category: "meaning_classification", wordId: "fika", input: "这是食物吗？", expect: { kind: "unsupported_language" } },
+  { category: "meaning_classification", wordId: "fika", input: "Это напиток?", expect: { kind: "unsupported_language" } },
+  { category: "meaning_classification", wordId: "mangata", input: "Does it have to do with the moon?", expect: { kind: "question", verdict: "yes" } },
+  { category: "meaning_classification", wordId: "tupplur", input: "眠ることに関係ある？", expect: { kind: "question", verdict: "yes" } },
+  { category: "meaning_classification", wordId: "dygn", input: "食べ物に関係ある？", expect: { kind: "question", verdict: "no" } },
+  { category: "meaning_classification", wordId: "knytkalas", input: "動物のこと？", expect: { kind: "question", verdict: "no" } },
+  { category: "meaning_classification", wordId: "lagom", input: "Tell me more about it.", expect: { kind: "question", verdict: "not_a_question" } },
 
   // 意味当て: 意味の解答の正誤。核心を捉えた言い換えは正解、近いだけ・一部だけ・単語の名前だけは誤答
   { category: "meaning_judge", wordId: "lagom", input: "多すぎず少なすぎず", expect: { kind: "answer", correct: true } },
