@@ -1,13 +1,20 @@
 import { type Page, expect, test } from "./fixtures.js";
 
 import { words } from "../../apps/api/src/prisma/seed/words.js";
+import { en } from "../../apps/web/lib/i18n/messages/en.js";
+import { ja } from "../../apps/web/lib/i18n/messages/ja.js";
 
-const INPUT_LABEL = "Ask a question or guess the word";
+/** 辞書の形。画面の言語の辞書を、操作の関数に渡す。 */
+type Messages = typeof en;
+
 /** web が出題済み単語を記録する `localStorage` のキー。`apps/web/lib/game/played-words.ts` と揃える。 */
 const PLAYED_WORDS_KEY = "kotoba:played-words";
 
 /** 質問への 5 値の回答の表示。 */
-const VERDICT = /^(Yes|No|Hard to say|That's not related|Try a yes-or-no question)$/;
+const VERDICT = new RegExp(`^(${Object.values(en.verdict).join("|")})$`);
+
+/** ヒントボタン。名前の後ろに残りの回数が付くため、前方一致で探す。 */
+const HINT_BUTTON = new RegExp(`^${en.hint.button}`);
 
 function seedWord(id: string) {
   const word = words.find((candidate) => candidate.id === id);
@@ -47,64 +54,64 @@ function bubble(page: Page, text: string | RegExp) {
 }
 
 /** 起動画面を Skip で飛ばし、スタート画面の Start a game からゲームを始める。 */
-async function startFromHome(page: Page) {
-  await page.getByRole("button", { name: "Skip" }).click();
-  await page.getByRole("link", { name: "Start a game" }).click();
+async function startFromHome(page: Page, t: Messages = en) {
+  await page.getByRole("button", { name: t.start.skip }).click();
+  await page.getByRole("link", { name: t.start.startGame }).click();
 }
 
-function input(page: Page) {
-  return page.getByRole("textbox", { name: INPUT_LABEL });
+function input(page: Page, t: Messages = en) {
+  return page.getByRole("textbox", { name: t.input.label });
 }
 
 /**
  * 設問の提示をクリックで進め、3 秒の自動遷移を待たずにチャットへ移る。
  * 画面の中央はチャットに移ってもログの空き領域なので、自動遷移とクリックが重なっても操作には当たらない。
  */
-async function enterChat(page: Page) {
-  await expect(page.getByRole("region", { name: "Question" })).toBeVisible();
+async function enterChat(page: Page, t: Messages = en) {
+  await expect(page.getByRole("region", { name: t.teaser.title })).toBeVisible();
   await page.locator("main").click();
-  await expect(input(page)).toBeVisible();
+  await expect(input(page, t)).toBeVisible();
 }
 
 /** 入力欄から送信し、応答が届いて入力欄が再び使えるようになるまで待つ。 */
-async function send(page: Page, text: string) {
-  await expect(input(page)).toBeEnabled();
-  await input(page).fill(text);
-  await input(page).press("Enter");
-  await expect(page.getByText("Thinking…")).toHaveCount(0);
+async function send(page: Page, text: string, t: Messages = en) {
+  await expect(input(page, t)).toBeEnabled();
+  await input(page, t).fill(text);
+  await input(page, t).press("Enter");
+  await expect(page.getByText(t.pending.title)).toHaveCount(0);
 }
 
 async function giveUp(page: Page) {
-  await page.getByRole("banner").getByRole("button", { name: "Give up" }).click();
-  const dialog = page.getByRole("dialog", { name: "Give up?" });
+  await page.getByRole("banner").getByRole("button", { name: en.header.giveUp }).click();
+  const dialog = page.getByRole("dialog", { name: en.giveUpDialog.title });
   await expect(dialog).toBeVisible();
-  await dialog.getByRole("button", { name: "Give up" }).click();
+  await dialog.getByRole("button", { name: en.header.giveUp }).click();
   await expect(dialog).toHaveCount(0);
 }
 
 test("起動画面は打ち終えるとスタート画面に移り、同じタブでは 2 回目から出ない", async ({ page }) => {
-  await page.goto("/");
-  await expect(page.getByRole("button", { name: "Skip" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Start a game" })).toBeVisible({ timeout: 10_000 });
-  await expect(page.getByRole("button", { name: "Skip" })).toHaveCount(0);
+  await page.goto("/en");
+  await expect(page.getByRole("button", { name: en.start.skip })).toBeVisible();
+  await expect(page.getByRole("link", { name: en.start.startGame })).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole("button", { name: en.start.skip })).toHaveCount(0);
 
   await page.reload();
-  await expect(page.getByRole("link", { name: "Start a game" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Skip" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: en.start.startGame })).toBeVisible();
+  await expect(page.getByRole("button", { name: en.start.skip })).toHaveCount(0);
 });
 
 test("Skip を押すとスタート画面の見出しへフォーカスが移る", async ({ page }) => {
-  await page.goto("/");
-  await page.getByRole("button", { name: "Skip" }).click();
+  await page.goto("/en");
+  await page.getByRole("button", { name: en.start.skip }).click();
 
-  await expect(page.getByRole("heading", { level: 1, name: "A word for a feeling you’ve never named" })).toBeFocused();
+  await expect(page.getByRole("heading", { level: 1, name: en.start.heading })).toBeFocused();
 });
 
 test("START から設問の提示を経て、質問に回答が返る", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/en");
   await startFromHome(page);
 
-  await expect(page).toHaveURL("/play");
+  await expect(page).toHaveURL("/en/play");
   await enterChat(page);
   await send(page, "Is it a noun?");
 
@@ -113,69 +120,97 @@ test("START から設問の提示を経て、質問に回答が返る", async ({
 });
 
 test("対応外の言語で送ると、対応言語で聞き直すよう案内する", async ({ page }) => {
-  await page.goto("/play");
+  await page.goto("/en/play");
   await enterChat(page);
 
   await send(page, "Это еда?");
 
-  await expect(bubble(page, "Please ask in Japanese, English, or Swedish.")).toBeVisible();
+  await expect(bubble(page, en.unsupportedLanguage)).toBeVisible();
   await expect(input(page)).toBeEnabled();
+});
+
+test("/ja では日本語の設問・回答・ヒント・判定で遊べ、結果カードに読みが出る", async ({ page }) => {
+  await playWithOnly(page, fredagsmys.id);
+  await page.goto("/ja");
+  await startFromHome(page, ja);
+
+  await expect(page).toHaveURL("/ja/play");
+  await expect(page.getByText(fredagsmys.teaser.ja)).toBeVisible();
+  await enterChat(page, ja);
+
+  await send(page, "名詞？", ja);
+  await expect(bubble(page, new RegExp(`^${ja.verdict.yes}$`))).toBeVisible();
+
+  await page.getByRole("button", { name: new RegExp(`^${ja.hint.button}`) }).click();
+  const hint = page.getByRole("region", { name: ja.hint.title(1, fredagsmys.hints.ja.length) });
+  await expect(hint.getByText(fredagsmys.hints.ja[0] ?? "")).toBeVisible();
+
+  await send(page, "ヒュッゲ", ja);
+  await expect(bubble(page, ja.answerFeedback.incorrect)).toBeVisible();
+
+  await send(page, fredagsmys.reading, ja);
+  await expect(bubble(page, ja.answerFeedback.correct)).toBeVisible();
+  const result = page.getByRole("region", { name: ja.result.heading.cleared });
+  await expect(result.getByText(fredagsmys.word, { exact: true })).toBeVisible();
+  await expect(result.getByText(fredagsmys.reading, { exact: true })).toBeVisible();
+  await expect(result.getByText(fredagsmys.definition.ja)).toBeVisible();
+  await expect(page.getByRole("link", { name: ja.play.playAgain })).toHaveAttribute("href", "/ja");
 });
 
 test("誤答のフィードバックのあと、同じ入力欄から再び解答できる", async ({ page }) => {
   await playWithOnly(page, fredagsmys.id);
-  await page.goto("/play");
+  await page.goto("/en/play");
   await expect(page.getByText(fredagsmys.teaser.en)).toBeVisible();
   await enterChat(page);
 
   await send(page, "hygge");
-  await expect(bubble(page, "Not the word this time.")).toBeVisible();
+  await expect(bubble(page, en.answerFeedback.incorrect)).toBeVisible();
 
   await send(page, "fredagsmys");
-  await expect(bubble(page, "That's the word!")).toBeVisible();
+  await expect(bubble(page, en.answerFeedback.correct)).toBeVisible();
 });
 
 test("ヒントを 3 回開示すると、ヒントボタンが無効になる", async ({ page }) => {
   await playWithOnly(page, fredagsmys.id);
-  await page.goto("/play");
+  await page.goto("/en/play");
   await enterChat(page);
 
   for (const [offset, text] of fredagsmys.hints.en.entries()) {
-    await page.getByRole("button", { name: /^Show a hint/ }).click();
-    const hint = page.getByRole("region", { name: `Hint ${offset + 1} of 3` });
+    await page.getByRole("button", { name: HINT_BUTTON }).click();
+    const hint = page.getByRole("region", { name: en.hint.title(offset + 1, fredagsmys.hints.en.length) });
     await expect(hint).toBeVisible();
     await expect(hint.getByText(text)).toBeVisible();
   }
 
-  const hint = page.getByRole("button", { name: "Show a hint, 0 left" });
+  const hint = page.getByRole("button", { name: en.hint.buttonLabel(0) });
   await expect(hint).toBeVisible();
   await expect(hint).toBeDisabled();
 });
 
 test("正解すると結果カードに単語と定義が出て、単語が記録される", async ({ page }) => {
   await playWithOnly(page, fredagsmys.id);
-  await page.goto("/play");
+  await page.goto("/en/play");
   await enterChat(page);
 
   await send(page, "fredagsmys");
 
-  const result = page.getByRole("region", { name: "You found it" });
+  const result = page.getByRole("region", { name: en.result.heading.cleared });
   await expect(result).toBeVisible();
   await expect(result.getByText(fredagsmys.word, { exact: true })).toBeVisible();
   await expect(result.getByText(fredagsmys.definition.en)).toBeVisible();
   await expect(input(page)).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Play again" })).toBeVisible();
+  await expect(page.getByRole("link", { name: en.play.playAgain })).toBeVisible();
   expect((await playedWords(page)).at(-1)).toBe(fredagsmys.id);
 });
 
 test("確認ダイアログを経てギブアップすると、結果カードに単語と定義が出る", async ({ page }) => {
   await playWithOnly(page, fredagsmys.id);
-  await page.goto("/play");
+  await page.goto("/en/play");
   await enterChat(page);
 
   await giveUp(page);
 
-  const result = page.getByRole("region", { name: "The word was" });
+  const result = page.getByRole("region", { name: en.result.heading.gave_up });
   await expect(result).toBeVisible();
   await expect(result.getByText(fredagsmys.word, { exact: true })).toBeVisible();
   await expect(result.getByText(fredagsmys.definition.en)).toBeVisible();
@@ -185,21 +220,21 @@ test("答えを見た単語は、次のゲームで出題されない", async ({
   const [first, second] = ["fredagsmys", "fika"].map(seedWord);
   if (!first || !second) throw new Error("seed の単語が足りない");
   await playWithOnly(page, first.id, second.id);
-  await page.goto("/play");
+  await page.goto("/en/play");
   await enterChat(page);
 
   await giveUp(page);
   const answered = (await playedWords(page)).at(-1);
   const next = answered === first.id ? second : first;
 
-  await page.getByRole("link", { name: "Play again" }).click();
+  await page.getByRole("link", { name: en.play.playAgain }).click();
   await startFromHome(page);
   await expect(page.getByText(next.teaser.en)).toBeVisible();
 });
 
 test("プールを一巡すると、記録をその単語 1 件に戻す", async ({ page }) => {
   await playWithOnly(page);
-  await page.goto("/play");
+  await page.goto("/en/play");
   await enterChat(page);
 
   await giveUp(page);
@@ -229,21 +264,21 @@ test("正解の送信中にギブアップしても、答えを見た単語を 1
     await route.fulfill({ response });
   });
 
-  await page.goto("/play");
+  await page.goto("/en/play");
   await enterChat(page);
   await input(page).fill(fredagsmys.id);
   await input(page).press("Enter");
   await processed;
 
   // クリア済みのゲームへのギブアップには、クリアの結果が返し直される。
-  await page.getByRole("banner").getByRole("button", { name: "Give up" }).click();
+  await page.getByRole("banner").getByRole("button", { name: en.header.giveUp }).click();
   const giveUpResponse = page.waitForResponse("**/api/v1/games/*/give-up");
-  await page.getByRole("dialog", { name: "Give up?" }).getByRole("button", { name: "Give up" }).click();
+  await page.getByRole("dialog", { name: en.giveUpDialog.title }).getByRole("button", { name: en.header.giveUp }).click();
   await giveUpResponse;
   const inputResponse = page.waitForResponse("**/api/v1/games/*/inputs");
   releaseInput();
   await inputResponse;
 
-  await expect(page.getByRole("region", { name: "You found it" })).toBeVisible();
+  await expect(page.getByRole("region", { name: en.result.heading.cleared })).toBeVisible();
   await expect.poll(() => playedWords(page)).toEqual([...before, fredagsmys.id]);
 });

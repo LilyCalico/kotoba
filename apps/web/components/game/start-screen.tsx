@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useEffectEvent, useId, useRef, useState, useSyncExternalStore } from "react";
 
+import { LanguageSwitch } from "@/components/game/language-switch";
 import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { WINDOW_TITLE_CLASS, WindowStack, WindowTitleBar } from "@/components/ui/window";
@@ -17,9 +18,8 @@ import {
   keystrokeDelay,
   markBootSeen,
 } from "@/lib/game/boot";
-
-export const SKIP_TEXT = "Skip";
-export const START_TEXT = "Start a game";
+import { localizedPath } from "@/lib/i18n/locale";
+import { useLocale, useMessages } from "@/lib/i18n/locale-context";
 
 /** 起動画面の記録先。省略時はブラウザの `sessionStorage`、`null` なら記録しない。 */
 function resolveStorage(storage: BootStorage | null | undefined): BootStorage | null {
@@ -74,6 +74,7 @@ function PointerCursor() {
 /**
  * `/` の画面。サイトを開くと、まず起動画面でパソコンに「Hej hej! / Jag heter Kotoba」を 1 文字ずつ打ち込む。
  * 打ち終えて一拍おくか、Skip を押すと、スタート画面のウィンドウ（welcome.txt）が開く。
+ * ヘッダーには、ワードマークと反対側に言語の切り替えを置く。
  *
  * 起動画面はタブごとに 1 回だけ見せ、見たことを `storage` に記録する。Play again で戻ったときは、スタート画面から始める。
  * `storage` を省略するとブラウザの `sessionStorage` を使い、`null` なら記録せず毎回起動画面から始める。
@@ -90,6 +91,8 @@ export function StartScreen({
   storage?: BootStorage | null;
   autoplay?: boolean;
 }) {
+  const locale = useLocale();
+  const t = useMessages().start;
   const seen = useSyncExternalStore(
     subscribeNothing,
     () => hasSeenBoot(resolveStorage(storage)),
@@ -143,8 +146,9 @@ export function StartScreen({
   return (
     <div className="flex flex-1 justify-center">
       <div className="flex w-full max-w-[42rem] flex-1 flex-col px-5 pb-[calc(2rem+env(safe-area-inset-bottom))]">
-        <header className="flex min-h-16 items-center pt-[env(safe-area-inset-top)]">
+        <header className="flex min-h-16 items-center justify-between pt-[env(safe-area-inset-top)]">
           <p className="font-pixel text-[1.375rem] font-semibold">kotoba</p>
+          <LanguageSwitch />
         </header>
 
         {phase === "boot" && (
@@ -160,7 +164,7 @@ export function StartScreen({
               variant="ghost"
             >
               <span aria-hidden>&gt;</span>
-              {SKIP_TEXT}
+              {t.skip}
             </Button>
           </main>
         )}
@@ -185,19 +189,20 @@ export function StartScreen({
                   </WindowTitleBar>
                   <div className="flex flex-col items-center gap-3.5 px-5 pt-6 pb-6.5 text-center">
                     <h1
-                      className="font-serif text-[2.5rem] leading-[1.1] font-normal text-balance focus-ring"
+                      className="font-serif text-[2.5rem] leading-[1.1] font-normal text-phrase focus-ring"
                       id={headingId}
                       ref={headingRef}
                       tabIndex={-1}
                     >
-                      A word for a feeling you’ve never named
+                      {t.heading}
                     </h1>
-                    <p className="max-w-[17rem] text-sm leading-relaxed text-muted-foreground">
-                      Somewhere in Swedish it exists. Ask yes-or-no questions to uncover it.
-                    </p>
+                    <p className="max-w-[17rem] text-sm leading-relaxed text-muted-foreground">{t.lead}</p>
                     <div className="relative mt-2 mr-1 self-stretch">
-                      <Link className={buttonVariants({ size: "lg", className: "w-full" })} href="/play">
-                        {START_TEXT}
+                      <Link
+                        className={buttonVariants({ size: "lg", className: "w-full" })}
+                        href={localizedPath(locale, "/play")}
+                      >
+                        {t.startGame}
                       </Link>
                       <PointerCursor />
                     </div>

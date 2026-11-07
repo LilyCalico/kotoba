@@ -5,8 +5,8 @@ import { motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useReducer, useRef, useState } from "react";
 
-import { AnswerFeedback, answerText } from "@/components/game/answer-feedback";
-import { ErrorMessage, ExpiredMessage, errorText, waitText } from "@/components/game/error-message";
+import { AnswerFeedback } from "@/components/game/answer-feedback";
+import { ErrorMessage, ExpiredMessage, errorText } from "@/components/game/error-message";
 import { GiveUpDialog } from "@/components/game/give-up-dialog";
 import { Header } from "@/components/game/header";
 import { HintButton } from "@/components/game/hint-button";
@@ -17,12 +17,7 @@ import { PendingIndicator } from "@/components/game/pending-indicator";
 import { PlayerMessage } from "@/components/game/player-message";
 import { ResultCard } from "@/components/game/result-card";
 import { TeaserCard } from "@/components/game/teaser-card";
-import {
-  UNSUPPORTED_LANGUAGE_TEXT,
-  UnsupportedLanguageMessage,
-  VerdictMessage,
-  verdictText,
-} from "@/components/game/verdict-message";
+import { UnsupportedLanguageMessage, VerdictMessage } from "@/components/game/verdict-message";
 import { buttonVariants } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { createApiGameClient } from "@/lib/game/api-client";
@@ -45,19 +40,12 @@ import {
   latestAnnouncement,
   remainingHints,
 } from "@/lib/game/state";
+import { localizedPath } from "@/lib/i18n/locale";
+import { useLocale, useMessages } from "@/lib/i18n/locale-context";
+import type { Messages } from "@/lib/i18n/messages";
 
 /** 設問の提示からチャットへ自動で移るまでの時間。 */
 export const TEASER_DURATION_MS = 3000;
-
-export const START_FAILED_TEXT = "Couldn't start a game.";
-
-/** ゲーム開始がレートリミットを超えたときの案内。数え直されるまでの時間を添える。 */
-export function startLimitText(retryAfterSeconds: number | undefined): string {
-  return `Too many new games. Try again ${waitText(retryAfterSeconds)}.`;
-}
-export const GIVE_UP_FAILED_TEXT = "Couldn't give up. Please try again.";
-export const TEASER_INSTRUCTION = "Press Enter or Space to start asking questions.";
-export const SKIP_LINK_TEXT = "Skip to the input";
 
 /** 入力欄の置き場所。skip link の飛び先になる。 */
 const PLAYER_INPUT_ID = "player-input";
@@ -78,7 +66,7 @@ function playReducer(state: GameState | null, action: PlayAction): GameState | n
   return state && gameReducer(state, action);
 }
 
-/** `/play` の画面。`apps/api` を叩く `GameClient` を初回の描画で 1 回だけ作り、`GameScreen` に渡す。 */
+/** `/[lang]/play` の画面。`apps/api` を叩く `GameClient` を初回の描画で 1 回だけ作り、`GameScreen` に渡す。 */
 export function PlayScreen() {
   const [client] = useState(() => createApiGameClient());
   return <GameScreen client={client} />;
@@ -100,6 +88,8 @@ export function GameScreen({
   client: GameClient;
   storage?: PlayedWordsStorage | null;
 }) {
+  const locale = useLocale();
+  const t = useMessages().play;
   const [game, dispatch] = useReducer(playReducer, null);
   const [attempt, setAttempt] = useState(0);
   const [startFailed, setStartFailed] = useState(false);
@@ -110,7 +100,7 @@ export function GameScreen({
     let cancelled = false;
     const request: StartGameRequest = {
       language: "sv",
-      locale: "en",
+      locale,
       excludeWordIds: excludedWordIds(resolveStorage(storage)),
     };
     client.startGame(request).then(
@@ -124,10 +114,9 @@ export function GameScreen({
         // レートリミットのときだけ、数え直されるまでの時間を添える。
         setStartFailed(true);
         toast({
-          title:
-            error.code === "rate_limited" ? startLimitText(error.retryAfterSeconds) : START_FAILED_TEXT,
+          title: error.code === "rate_limited" ? t.startLimit(error.retryAfterSeconds) : t.startFailed,
           action: {
-            label: "Retry",
+            label: t.retry,
             onAction: () => {
               setStartFailed(false);
               setAttempt((count) => count + 1);
@@ -139,7 +128,7 @@ export function GameScreen({
     return () => {
       cancelled = true;
     };
-  }, [client, storage, attempt]);
+  }, [client, storage, locale, t, attempt]);
 
   const gameId = game?.gameId;
   const finishedWordId = game && finishedResult(game)?.wordId;
@@ -183,7 +172,7 @@ export function GameScreen({
             {game ? (
               <>
                 <TeaserCard layoutId={TEASER_LAYOUT_ID} teaser={game.teaser} variant="floating" />
-                <p className="sr-only">{TEASER_INSTRUCTION}</p>
+                <p className="sr-only">{t.teaserInstruction}</p>
               </>
             ) : (
               !startFailed && (
@@ -218,6 +207,9 @@ function Chat({
   dispatch: (action: GameAction) => void;
   client: GameClient;
 }) {
+  const locale = useLocale();
+  const messages = useMessages();
+  const t = messages.play;
   const [text, setText] = useState("");
   const [giveUpOpen, setGiveUpOpen] = useState(false);
   const [givingUp, setGivingUp] = useState(false);
@@ -291,7 +283,7 @@ function Chat({
         return;
       }
       // ダイアログは開いたままにし、もう一度 Give up を押せば再試行になる。
-      toast({ title: GIVE_UP_FAILED_TEXT });
+      toast({ title: t.giveUpFailed });
     } finally {
       setGivingUp(false);
     }
@@ -308,7 +300,7 @@ function Chat({
             inputRef.current?.focus();
           }}
         >
-          {SKIP_LINK_TEXT}
+          {t.skipToInput}
         </a>
       )}
       <motion.div {...chromeAppear} className="shrink-0 pt-[env(safe-area-inset-top)]">
@@ -344,8 +336,11 @@ function Chat({
           )}
           {finished && (
             <ChatItem>
-              <Link className={buttonVariants({ size: "lg", className: "mt-4 mr-1" })} href="/">
-                Play again
+              <Link
+                className={buttonVariants({ size: "lg", className: "mt-4 mr-1" })}
+                href={localizedPath(locale, "/")}
+              >
+                {t.playAgain}
               </Link>
             </ChatItem>
           )}
@@ -374,7 +369,7 @@ function Chat({
           </motion.div>
         )}
         <div className="sr-only" role="status">
-          {announcement && <p key={announcement.id}>{announcementText(announcement)}</p>}
+          {announcement && <p key={announcement.id}>{announcementText(messages, announcement)}</p>}
         </div>
       </main>
       <div className="shrink-0 pb-[env(safe-area-inset-bottom)]" />
@@ -400,16 +395,17 @@ function ChatItem({ children }: { children: React.ReactNode }) {
   );
 }
 
-function announcementText(entry: AnnouncedEntry): string {
+/** ライブリージョンで読み上げる文言。ログの要素が画面に出す文言と同じにする。 */
+function announcementText(t: Messages, entry: AnnouncedEntry): string {
   switch (entry.kind) {
     case "verdict":
-      return verdictText(entry.verdict);
+      return t.verdict[entry.verdict];
     case "unsupported-language":
-      return UNSUPPORTED_LANGUAGE_TEXT;
+      return t.unsupportedLanguage;
     case "answer-feedback":
-      return answerText(entry.correct);
+      return entry.correct ? t.answerFeedback.correct : t.answerFeedback.incorrect;
     case "error":
-      return errorText(entry.code, entry.retryAfterSeconds);
+      return errorText(t.error, entry.code, entry.retryAfterSeconds);
   }
 }
 

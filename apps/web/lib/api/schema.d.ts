@@ -112,6 +112,7 @@ export interface components {
             outcome: "cleared" | "gave_up";
             wordId: string;
             word: string;
+            reading?: string;
             /** @enum {string} */
             partOfSpeech: "noun" | "verb" | "adjective" | "phrase";
             definition: string;

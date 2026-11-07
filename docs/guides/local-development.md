@@ -52,6 +52,8 @@ pnpm dev
 
 Turborepo が web と api の `dev` を並べて起動する。`http://localhost:3000` を開き、起動画面の打ち込みが終わるか Skip を押してから、Start a game でゲームを始める。
 
+`http://localhost:3000` は、ブラウザの言語で `/ja` か `/en` にリダイレクトされる。言語を決めて開くときは `http://localhost:3000/ja`・`http://localhost:3000/en` を直接開く。`/ja` で始めたゲームは、設問・ヒント・結果が日本語で返る（ADR 0011）。
+
 ## 4. `/api/v1` が api に届く仕組み
 
 本番では Vercel Services が `/api/v1/(.*)` を api サービスへ直接振り分けるため、リクエストは Next.js に届かない。ローカルではこの振り分けを Next.js の rewrites が肩代わりする。
@@ -84,7 +86,7 @@ localStorage.removeItem("kotoba:played-words");
 
 ### ゲームを始めると「Couldn't start a game.」が出る
 
-**症状**: `/play` を開くと、設問が出ずに「Couldn't start a game.」のトーストが出る。
+**症状**: `/en/play` を開くと、設問が出ずに「Couldn't start a game.」のトーストが出る。
 
 **原因**: api が単語を引けていない。
 

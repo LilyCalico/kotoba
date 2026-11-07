@@ -1,20 +1,28 @@
+import { MAX_HINTS, type Word } from "@kotoba/shared";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { useState } from "react";
+import { type ComponentProps, useState } from "react";
 import { HintCard } from "@/components/game/hint-card";
 import { PlayerMessage } from "@/components/game/player-message";
 import { VerdictMessage } from "@/components/game/verdict-message";
 import { Button } from "@/components/ui/button";
+import { fixtureWord } from "@/lib/game/fixtures";
+import { useLocale } from "@/lib/i18n/locale-context";
 
-const HINTS = [
-  "The word is tied to one particular day of the week",
-  "It means staying in with family or a partner, with snacks bought for the occasion",
-  "It is a compound of the name of a day and a word meaning coziness",
-] as const;
+/** モックの単語の `index` 番目のヒントを、ツールバーで選んだ言語で描く。 */
+function WordHintCard({ word, ...props }: { word: Word } & Omit<ComponentProps<typeof HintCard>, "text">) {
+  return <HintCard {...props} text={word.hints[useLocale()][props.index - 1] ?? ""} />;
+}
+
+/** ヒントの間に挟む、プレイヤーの質問。 */
+const QUESTIONS = {
+  en: ["Is it a noun?", "Is it something you do on a Friday?"],
+  ja: ["名詞？", "金曜日にすること？"],
+} as const;
 
 const meta = {
   title: "Game/HintCard",
-  component: HintCard,
-  args: { index: 1, text: HINTS[0] },
+  component: WordHintCard,
+  args: { word: fixtureWord("fredagsmys"), index: 1 },
   decorators: [
     (Story) => (
       <div className="flex w-full max-w-lg flex-col gap-8">
@@ -22,7 +30,7 @@ const meta = {
       </div>
     ),
   ],
-} satisfies Meta<typeof HintCard>;
+} satisfies Meta<typeof WordHintCard>;
 
 export default meta;
 
@@ -31,10 +39,10 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 
 export const AllThree: Story = {
-  render: () => (
+  render: (args) => (
     <>
-      {HINTS.map((text, index) => (
-        <HintCard index={index + 1} key={text} text={text} />
+      {Array.from({ length: MAX_HINTS }, (_, offset) => (
+        <WordHintCard index={offset + 1} key={offset} word={args.word} />
       ))}
     </>
   ),
@@ -42,15 +50,19 @@ export const AllThree: Story = {
 
 /** 回答バブルと並べ、フル幅・枠線・ラベルで見分けられることを確かめる。 */
 export const AmongMessages: Story = {
-  render: () => (
-    <>
-      <PlayerMessage text="Is it a noun?" />
-      <VerdictMessage verdict="yes" />
-      <HintCard index={1} text={HINTS[0]} />
-      <PlayerMessage text="Is it something you do on a Friday?" />
-      <VerdictMessage verdict="yes" />
-    </>
-  ),
+  render: function Render(args) {
+    const [first, second] = QUESTIONS[useLocale()];
+
+    return (
+      <>
+        <PlayerMessage text={first} />
+        <VerdictMessage verdict="yes" />
+        <WordHintCard index={1} word={args.word} />
+        <PlayerMessage text={second} />
+        <VerdictMessage verdict="yes" />
+      </>
+    );
+  },
 };
 
 /** 開示の動き。Reveal を押すたびにカードを描き直し、出現の動きをもう一度再生する。 */
@@ -63,7 +75,7 @@ export const Reveal: Story = {
         <Button className="self-start" onPress={() => setCount((value) => value + 1)} variant="outline">
           Reveal
         </Button>
-        <HintCard {...args} key={count} />
+        <WordHintCard {...args} key={count} />
       </>
     );
   },

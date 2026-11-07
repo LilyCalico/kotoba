@@ -1,6 +1,15 @@
 import AxeBuilder from "@axe-core/playwright";
 import { type Page, expect, test } from "./fixtures.js";
 
+import { en } from "../../apps/web/lib/i18n/messages/en.js";
+import { ja } from "../../apps/web/lib/i18n/messages/ja.js";
+
+/** 検証する UI 言語と、その言語の辞書。どの画面も両方の言語で確かめる。 */
+const LOCALES = [
+  ["en", en],
+  ["ja", ja],
+] as const;
+
 /** 検証する WCAG の達成基準。2.2 の AA までを対象にする。 */
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
@@ -18,48 +27,50 @@ async function expectNoViolations(page: Page, include?: string) {
   expect(violations.map(({ id, nodes }) => ({ id, targets: nodes.map(({ target }) => target) }))).toEqual([]);
 }
 
-test("起動画面とスタート画面に axe の違反がない", async ({ page }) => {
-  await page.goto("/");
-  await expect(page.getByRole("button", { name: "Skip" })).toBeVisible();
-  await expectNoViolations(page);
+for (const [locale, t] of LOCALES) {
+  test(`${locale}: 起動画面とスタート画面に axe の違反がない`, async ({ page }) => {
+    await page.goto(`/${locale}`);
+    await expect(page.getByRole("button", { name: t.start.skip })).toBeVisible();
+    await expectNoViolations(page);
 
-  await page.getByRole("button", { name: "Skip" }).click();
-  await expect(page.getByRole("link", { name: "Start a game" })).toBeVisible();
-  await expectNoViolations(page);
-});
+    await page.getByRole("button", { name: t.start.skip }).click();
+    await expect(page.getByRole("link", { name: t.start.startGame })).toBeVisible();
+    await expectNoViolations(page);
+  });
 
-test("設問の提示に axe の違反がない", async ({ page }) => {
-  await page.goto("/play");
-  await expect(page.getByRole("region", { name: "Question" })).toBeVisible();
+  test(`${locale}: 設問の提示に axe の違反がない`, async ({ page }) => {
+    await page.goto(`/${locale}/play`);
+    await expect(page.getByRole("region", { name: t.teaser.title })).toBeVisible();
 
-  await expectNoViolations(page);
-});
+    await expectNoViolations(page);
+  });
 
-test("プレイ中・ギブアップの確認・結果に axe の違反がない", async ({ page }) => {
-  await page.goto("/play");
-  await expect(page.getByRole("region", { name: "Question" })).toBeVisible();
-  await page.keyboard.press("Enter");
+  test(`${locale}: プレイ中・ギブアップの確認・結果に axe の違反がない`, async ({ page }) => {
+    await page.goto(`/${locale}/play`);
+    await expect(page.getByRole("region", { name: t.teaser.title })).toBeVisible();
+    await page.keyboard.press("Enter");
 
-  const input = page.getByRole("textbox", { name: "Ask a question or guess the word" });
-  await input.fill("Is it a feeling?");
-  await input.press("Enter");
-  await expect(page.getByText("Thinking…")).toHaveCount(0);
-  await input.fill("hygge");
-  await input.press("Enter");
-  await expect(page.getByText("Thinking…")).toHaveCount(0);
-  await page.getByRole("button", { name: /^Show a hint/ }).click();
-  await expect(page.getByRole("region", { name: "Hint 1 of 3" })).toBeVisible();
-  await expectNoViolations(page);
+    const input = page.getByRole("textbox", { name: t.input.label });
+    await input.fill("Is it a feeling?");
+    await input.press("Enter");
+    await expect(page.getByText(t.pending.title)).toHaveCount(0);
+    await input.fill("hygge");
+    await input.press("Enter");
+    await expect(page.getByText(t.pending.title)).toHaveCount(0);
+    await page.getByRole("button", { name: new RegExp(`^${t.hint.button}`) }).click();
+    await expect(page.getByRole("region", { name: t.hint.title(1, 3) })).toBeVisible();
+    await expectNoViolations(page);
 
-  await page.getByRole("banner").getByRole("button", { name: "Give up" }).click();
-  const dialog = page.getByRole("dialog", { name: "Give up?" });
-  await expect(dialog).toBeVisible();
-  // モーダルの外は操作できず、暗い覆いの下にある。覆いの下の文字のコントラストは問わず、ダイアログの中だけを見る。
-  await expectNoViolations(page, '[role="dialog"]');
+    await page.getByRole("banner").getByRole("button", { name: t.header.giveUp }).click();
+    const dialog = page.getByRole("dialog", { name: t.giveUpDialog.title });
+    await expect(dialog).toBeVisible();
+    // モーダルの外は操作できず、暗い覆いの下にある。覆いの下の文字のコントラストは問わず、ダイアログの中だけを見る。
+    await expectNoViolations(page, '[role="dialog"]');
 
-  await dialog.getByRole("button", { name: "Give up" }).click();
-  // 閉じる途中の覆いが残っていると、その下の文字のコントラストを測ってしまうため、消えきるのを待つ。
-  await expect(dialog).toHaveCount(0);
-  await expect(page.getByRole("region", { name: "The word was" })).toBeVisible();
-  await expectNoViolations(page);
-});
+    await dialog.getByRole("button", { name: t.header.giveUp }).click();
+    // 閉じる途中の覆いが残っていると、その下の文字のコントラストを測ってしまうため、消えきるのを待つ。
+    await expect(dialog).toHaveCount(0);
+    await expect(page.getByRole("region", { name: t.result.heading.gave_up })).toBeVisible();
+    await expectNoViolations(page);
+  });
+}

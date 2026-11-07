@@ -506,6 +506,9 @@
           "word": {
             "type": "string"
           },
+          "reading": {
+            "type": "string"
+          },
           "partOfSpeech": {
             "type": "string",
             "enum": [

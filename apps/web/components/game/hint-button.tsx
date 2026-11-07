@@ -5,11 +5,7 @@ import { cn } from "cn";
 import { LightbulbIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-
-/** ヒントボタンの名前。残りの回数を含め、支援技術にも数が伝わるようにする。 */
-export function hintButtonText(remaining: number): string {
-  return `Show a hint, ${remaining} left`;
-}
+import { useMessages } from "@/lib/i18n/locale-context";
 
 /**
  * 入力欄の下に置く副ボタン。残りの回数を読み込みバーの 3 つのブロックで示し、塗ったブロックが残りの数になる。
@@ -26,9 +22,11 @@ export function HintButton({
   disabled?: boolean;
   ref?: React.Ref<HTMLButtonElement>;
 }) {
+  const t = useMessages().hint;
+
   return (
     <Button
-      aria-label={hintButtonText(remaining)}
+      aria-label={t.buttonLabel(remaining)}
       className="mr-0.5 self-start"
       isDisabled={disabled || remaining <= 0}
       onPress={onPress}
@@ -36,7 +34,7 @@ export function HintButton({
       variant="outline"
     >
       <LightbulbIcon aria-hidden />
-      Show a hint
+      {t.button}
       <span aria-hidden className="ml-0.5 inline-flex gap-0.5 border-[1.5px] border-border p-0.5">
         {Array.from({ length: MAX_HINTS }, (_, index) => (
           <span className={cn("h-[0.6875rem] w-2", index < remaining && "bg-meter")} key={index} />

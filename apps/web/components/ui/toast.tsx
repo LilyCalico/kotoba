@@ -10,6 +10,7 @@ import {
 } from "react-aria-components"
 
 import { Button } from "@/components/ui/button"
+import { useMessages } from "@/lib/i18n/locale-context"
 
 /** スナックバーの中身。`action` を添えると、閉じるボタンの手前に操作ボタンを置く。 */
 export type ToastContent = {
@@ -35,6 +36,8 @@ export function toast(content: ToastContent) {
  * `<body>` の直下に描画され、モーダルのダイアログが開いていても隠されず操作できる。
  */
 export function Toaster() {
+  const t = useMessages().common
+
   return (
     <ToastRegionPrimitive
       className="fixed inset-x-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-60 flex justify-center px-4 outline-none"
@@ -59,7 +62,7 @@ export function Toaster() {
             </Button>
           )}
           <Button
-            aria-label="Close"
+            aria-label={t.close}
             className="no-underline"
             size="icon"
             slot="close"

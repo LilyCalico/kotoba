@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { useId } from "react";
 
 import { WINDOW_TITLE_CLASS, WindowTitleBar } from "@/components/ui/window";
+import { useMessages } from "@/lib/i18n/locale-context";
 
 /** 設問の提示からチャットへ移るとき、設問のウィンドウが収まるまでの動き。 */
 export const TEASER_LAYOUT_TRANSITION = { duration: 0.4, ease: [0.22, 1, 0.36, 1] } as const;
@@ -25,6 +26,7 @@ export function TeaserCard({
   variant?: "floating" | "pinned";
   layoutId?: string;
 }) {
+  const t = useMessages().teaser;
   const labelId = useId();
   const floating = variant === "floating";
   const layout = layoutId ? "position" : undefined;
@@ -41,13 +43,13 @@ export function TeaserCard({
       <motion.div layout={layout} transition={TEASER_LAYOUT_TRANSITION}>
         <WindowTitleBar controls={["minimize", "maximize"]} tone="question">
           <p className={WINDOW_TITLE_CLASS} id={labelId}>
-            Question
+            {t.title}
           </p>
         </WindowTitleBar>
       </motion.div>
       <motion.p
         className={cn(
-          "font-serif leading-tight text-balance",
+          "font-serif leading-tight text-phrase",
           floating ? "px-6 pt-5 pb-7 text-[2rem]" : "px-4 pt-3 pb-4 text-[1.5rem]",
         )}
         layout={layout}

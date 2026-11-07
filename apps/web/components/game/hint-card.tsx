@@ -6,6 +6,7 @@ import { motion } from "motion/react";
 
 import { cardAppear } from "@/components/game/motion";
 import { WINDOW_TITLE_CLASS, WindowTitleBar } from "@/components/ui/window";
+import { useMessages } from "@/lib/i18n/locale-context";
 
 /**
  * 開示したヒント。ピーチのタイトルバー「Hint N of 3」を持つウィンドウに、明朝のヒントを載せる。
@@ -22,10 +23,12 @@ export function HintCard({
   text: string;
   ref?: React.Ref<HTMLElement>;
 }) {
+  const title = useMessages().hint.title(index, MAX_HINTS);
+
   return (
     <motion.section
       {...cardAppear}
-      aria-label={`Hint ${index} of ${MAX_HINTS}`}
+      aria-label={title}
       className="window mr-1 mb-1 flex flex-col focus-ring"
       ref={ref}
       tabIndex={-1}
@@ -33,7 +36,7 @@ export function HintCard({
       <WindowTitleBar controls={["close"]} tone="hint">
         <p className={`${WINDOW_TITLE_CLASS} flex items-center gap-1.5`}>
           <LightbulbIcon aria-hidden className="size-3.5" />
-          Hint {index} of {MAX_HINTS}
+          {title}
         </p>
       </WindowTitleBar>
       <p className="px-3.5 pt-2.5 pb-3.5 font-serif text-xl leading-snug">{text}</p>

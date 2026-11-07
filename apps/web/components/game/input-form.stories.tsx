@@ -2,7 +2,8 @@ import { MAX_INPUT_LENGTH } from "@kotoba/shared";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { useState } from "react";
 import { expect, fn, userEvent, within } from "storybook/test";
-import { INPUT_LABEL, InputForm } from "@/components/game/input-form";
+import { InputForm } from "@/components/game/input-form";
+import { storyMessages } from "@/lib/i18n/story-locale";
 
 const meta = {
   title: "Game/InputForm",
@@ -53,14 +54,15 @@ export const Typing: Story = {
 /** 上限ちょうどまで入れた状態。201 字目は入らない。 */
 export const AtLimit: Story = {
   args: { value: "a".repeat(MAX_INPUT_LENGTH) },
-  play: async ({ canvasElement }) => {
+  play: async ({ canvasElement, globals }) => {
+    const t = storyMessages(globals);
     const canvas = within(canvasElement);
-    const input = canvas.getByRole("textbox", { name: INPUT_LABEL });
+    const input = canvas.getByRole("textbox", { name: t.input.label });
 
     await userEvent.type(input, "b");
 
     await expect(input).toHaveValue("a".repeat(MAX_INPUT_LENGTH));
-    await expect(canvas.getByText("0 characters left")).toBeInTheDocument();
+    await expect(canvas.getByText(t.input.remaining(0))).toBeInTheDocument();
   },
 };
 
@@ -70,23 +72,25 @@ export const Sending: Story = {
 
 /** 空白だけの入力は、ボタンでも Enter でも送れない。 */
 export const WhitespaceOnly: Story = {
-  play: async ({ args, canvasElement }) => {
+  play: async ({ args, canvasElement, globals }) => {
+    const t = storyMessages(globals);
     const canvas = within(canvasElement);
-    const input = canvas.getByRole("textbox", { name: INPUT_LABEL });
+    const input = canvas.getByRole("textbox", { name: t.input.label });
 
     await userEvent.type(input, "   {Enter}");
 
-    await expect(canvas.getByRole("button", { name: "Send" })).toBeDisabled();
+    await expect(canvas.getByRole("button", { name: t.input.send })).toBeDisabled();
     await expect(args.onSubmit).not.toHaveBeenCalled();
   },
 };
 
 /** 送る文字列は前後の空白を落とす。 */
 export const Submit: Story = {
-  play: async ({ args, canvasElement }) => {
+  play: async ({ args, canvasElement, globals }) => {
+    const t = storyMessages(globals);
     const canvas = within(canvasElement);
 
-    await userEvent.type(canvas.getByRole("textbox", { name: INPUT_LABEL }), "  Is it a noun?  {Enter}");
+    await userEvent.type(canvas.getByRole("textbox", { name: t.input.label }), "  Is it a noun?  {Enter}");
 
     await expect(args.onSubmit).toHaveBeenCalledWith("Is it a noun?");
   },

@@ -16,8 +16,12 @@ export type WindowTone = keyof typeof TITLE_BAR_TONE;
 
 type WindowControl = "minimize" | "maximize" | "close";
 
-/** タイトルバーに載せる文字の組み方。タイトルの要素（見出しや `id` を持つ段落）に当てる。 */
-export const WINDOW_TITLE_CLASS = "font-pixel text-[0.9375rem] leading-none font-medium";
+/**
+ * タイトルバーに載せる文字の組み方。タイトルの要素（見出しや `id` を持つ段落）に当てる。
+ * 日本語のドット書体（DotGothic16）は 16px の倍数でドットが揃うため、日本語の画面では 16px にする。
+ */
+export const WINDOW_TITLE_CLASS =
+  "font-pixel text-[0.9375rem] leading-none font-medium [&:lang(ja)]:text-base";
 
 const CONTROL_GLYPH: Record<WindowControl, React.ReactNode> = {
   minimize: <path d="M1 6.5h6" />,
