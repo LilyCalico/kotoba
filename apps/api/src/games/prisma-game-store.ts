@@ -14,6 +14,7 @@ function toGame(row: GameRow): Game {
     id: row.id,
     wordId: row.wordId,
     locale: row.locale,
+    mode: row.mode,
     hintsRevealed: row.hintsRevealed,
     history: historySchema.parse(row.history),
     ...(result && { result }),
@@ -62,6 +63,7 @@ export class PrismaGameStore implements GameStore {
     return {
       wordId: game.wordId,
       locale: game.locale,
+      mode: game.mode,
       hintsRevealed: game.hintsRevealed,
       history: game.history,
       result: game.result ?? Prisma.DbNull,

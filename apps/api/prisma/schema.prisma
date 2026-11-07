@@ -23,6 +23,12 @@ enum UiLocale {
   en
 }
 
+/// 遊び方。packages/shared の gameModeSchema と 1 対 1 に対応する
+enum GameMode {
+  guess_word
+  guess_meaning
+}
+
 enum PartOfSpeech {
   noun
   verb
@@ -71,6 +77,7 @@ model Game {
   wordId        String   @map("word_id")
   word          Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
   locale        UiLocale
+  mode          GameMode @default(guess_word)
   hintsRevealed Int      @map("hints_revealed")
   /// 判定が成功した入力と、返した結果の組の配列
   history       Json

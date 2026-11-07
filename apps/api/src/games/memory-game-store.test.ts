@@ -3,7 +3,7 @@ import { GAME_TTL_MS, type Game } from "./game-store.js";
 import { MemoryGameStore } from "./memory-game-store.js";
 
 function game(id: string): Game {
-  return { id, wordId: "fika", locale: "en", hintsRevealed: 0, history: [] };
+  return { id, wordId: "fika", locale: "en", mode: "guess_word", hintsRevealed: 0, history: [] };
 }
 
 /** 時刻を手で進められる `MemoryGameStore`。 */

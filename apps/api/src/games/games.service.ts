@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import {
+  type GameMode,
   type GameResult,
   type GameStart,
   type Hint,
@@ -32,16 +33,18 @@ export class GamesService {
   async start({
     language,
     locale,
+    mode,
     excludeWordIds,
   }: {
     language: Language;
     locale: UiLocale;
+    mode: GameMode;
     excludeWordIds: readonly string[];
   }): Promise<GameStart> {
     const word = await this.words.pick({ language, excludeWordIds });
     if (!word) throw new ApiError("validation_error", `No words are available for "${language}".`);
 
-    const game: Game = { id: randomUUID(), wordId: word.id, locale, hintsRevealed: 0, history: [] };
+    const game: Game = { id: randomUUID(), wordId: word.id, locale, mode, hintsRevealed: 0, history: [] };
     await this.store.create(game);
     return { gameId: game.id, language: word.language, teaser: word.teaser[locale] };
   }
