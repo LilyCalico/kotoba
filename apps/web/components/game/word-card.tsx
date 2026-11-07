@@ -8,10 +8,14 @@ import { TEASER_LAYOUT_TRANSITION } from "@/components/game/teaser-card";
 import { WINDOW_TITLE_CLASS, WindowTitleBar } from "@/components/ui/window";
 import { useMessages } from "@/lib/i18n/locale-context";
 
+/** 明朝の単語 1 文字あたりの幅のおよその上限（em）。floating で単語をカードの幅に収める計算に使う。 */
+const SERIF_CHAR_WIDTH_EM = 0.55;
+
 /**
  * 意味当てで最初に見せる単語。ラベンダーのタイトルバー「ことば」を持つウィンドウに、
  * 明朝のスウェーデン語の単語と、その下にカタカナの読みを載せる。設問カードと同じ役割（読ませるもの）の見た目にする。
  * `floating` はゲーム開始時に画面中央に浮かべる様式で、意味を問いかける一文を添える。
+ * 単語は 3.5rem で出し、長い単語（Allemansrätten など）はカードの幅に収まるまで小さくする。
  * `pinned` はチャットでヘッダー直下に固定する様式で、単語と読みを 1 行に並べる。
  *
  * 2 つの様式に同じ `layoutId` を渡すと、設問カードと同じく、位置と大きさを保ったまま変形してつなぐ。
@@ -52,14 +56,21 @@ export function WordCard({
       <motion.div
         className={cn(
           "flex",
-          floating ? "flex-col gap-1.5 px-6 pt-7 pb-7.5" : "flex-wrap items-baseline gap-x-2.5 px-4 pt-3 pb-3.5",
+          floating
+            ? "@container flex-col gap-1.5 px-6 pt-7 pb-7.5"
+            : "flex-wrap items-baseline gap-x-2.5 px-4 pt-3 pb-3.5",
         )}
         layout={layout}
         transition={TEASER_LAYOUT_TRANSITION}
       >
         <p
-          className={cn("font-serif leading-none", floating ? "text-[3.5rem]" : "text-[2rem]")}
+          className={cn("font-serif leading-none", !floating && "text-[2rem]")}
           lang="sv"
+          style={
+            floating
+              ? { fontSize: `min(3.5rem, calc(100cqi / ${word.length * SERIF_CHAR_WIDTH_EM}))` }
+              : undefined
+          }
         >
           {word}
         </p>
