@@ -12,6 +12,21 @@ import { storyLocale } from "@/lib/i18n/story-locale";
 /** 出題する単語。 */
 const fredagsmys = fixtureWord("fredagsmys");
 
+/**
+ * 正解の入力。英語の UI は単語当てなので単語そのもの、日本語の UI は意味当てなので判定基準の正解の例。
+ * モックは意味の言い換えを判定しないため、正解の例と同じ文を送る。
+ */
+const ANSWER: Record<UiLocale, string> = {
+  en: fredagsmys.word,
+  ja: fredagsmys.meaning.accepts[0] ?? "",
+};
+
+/** ゲームの最初に見せるもの。英語の UI は設問、日本語の UI は単語。 */
+const OPENING: Record<UiLocale, string> = {
+  en: fredagsmys.teaser.en,
+  ja: fredagsmys.word,
+};
+
 /** 送信の失敗を確かめる Story で送る質問。 */
 const QUESTION: Record<UiLocale, string> = {
   en: "Is it about Friday?",
@@ -58,7 +73,7 @@ function fail(
 }
 
 async function enterChat(locale: UiLocale) {
-  await screen.findByText(fredagsmys.teaser[locale]);
+  await screen.findByText(OPENING[locale]);
   await userEvent.click(document.body);
   await screen.findByRole("textbox", { name: messages[locale].input.label });
 }
@@ -89,7 +104,7 @@ export const Starting: Story = {
   args: { client: mockClient({ startGame: never }) },
 };
 
-/** 設問の提示。3 秒で、または Enter / Space / クリックでチャットへ移る。 */
+/** 最初に見せるもの（英語は設問、日本語は単語）の提示。3 秒で、または Enter / Space / クリックでチャットへ移る。 */
 export const Teaser: Story = {};
 
 /** 5 値の回答、誤答、ヒントを 1 つずつ積んだチャット。 */
@@ -141,7 +156,7 @@ export const Cleared: Story = {
     const locale = storyLocale(globals);
     const t = messages[locale];
     await enterChat(locale);
-    await send(locale, fredagsmys.word);
+    await send(locale, ANSWER[locale]);
 
     await screen.findByRole("heading", { name: t.result.heading.cleared });
     await expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
