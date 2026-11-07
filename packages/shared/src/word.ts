@@ -15,6 +15,21 @@ export const HINT_COUNT = 3;
 const hintsSchema = z.tuple([z.string().min(1), z.string().min(1), z.string().min(1)]);
 
 /**
+ * 意味当てで使う、単語ごとの判定基準とヒント。
+ * 意味当ては日本語の UI でだけ遊ぶため、UI 言語で書き分けず日本語だけで書く。
+ */
+const meaningSchema = z.object({
+  /** 正解とみなす核心。1〜2 文で書く。AI に渡すだけで、画面には出さない */
+  core: z.string().min(1),
+  /** 正解にする言い換えの例 */
+  accepts: z.array(z.string().min(1)).min(1),
+  /** 近いが誤りにする解答の例 */
+  rejects: z.array(z.string().min(1)).min(1),
+  /** 段階ヒント。1 がどんな種類の意味か、2 が使われる場面、3 が核心に近い言い換え */
+  hints: hintsSchema,
+});
+
+/**
  * 出題する単語 1 件。
  * 開始時にクライアントへ送るのは teaser のみ、ヒントは開示操作のたびに 1 つずつ送り、
  * word と definition はゲームが終わるまで送らない。
@@ -42,8 +57,10 @@ export const wordSchema = z.object({
   definition: localized(z.string().min(1)),
   /** ゲーム開始時に唯一クライアントへ渡す、謎めいた一行 */
   teaser: localized(z.string().min(1)),
-  /** 段階ヒント。1 が方向性、2 が使われる場面、3 が語の成り立ち */
+  /** 単語当ての段階ヒント。1 が方向性、2 が使われる場面、3 が語の成り立ち */
   hints: localized(hintsSchema),
+  /** 意味当ての判定基準とヒント */
+  meaning: meaningSchema.optional(),
   /** 直訳。合成語で、語の成り立ちが答えの核心になる語だけが持つ */
   literal: localized(z.string().min(1)).optional(),
   /** 定義に畳むと冗長になる文化的な補足 */
