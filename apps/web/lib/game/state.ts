@@ -39,9 +39,14 @@ type WithoutId<T> = T extends unknown ? Omit<T, "id"> : never;
 /** `id` を除いた要素。reducer が採番して `ChatEntry` にする。 */
 type NewEntry = WithoutId<ChatEntry>;
 
+/** ゲームの最初に見せるもの。単語当ては設問、意味当ては単語と読み。 */
+export type GameOpening =
+  | { mode: "guess_word"; teaser: string }
+  | { mode: "guess_meaning"; word: string; reading: string };
+
 export type GameState = {
   gameId: string;
-  teaser: string;
+  opening: GameOpening;
   /** `teaser` は設問だけを中央に置く提示の状態、`chat` はログと入力欄を持つ状態 */
   phase: "teaser" | "chat";
   /** `sending` は入力の送信とヒントの要求の応答待ち、`finished` はクリアかギブアップか期限切れの後 */
@@ -88,11 +93,17 @@ export function failureKind(code: GameClientErrorCode): FailureKind {
   }
 }
 
-/** ゲーム開始直後の状態。設問の提示から始まる。 */
+function openingOf(start: GameStart): GameOpening {
+  return start.mode === "guess_meaning"
+    ? { mode: start.mode, word: start.word, reading: start.reading }
+    : { mode: start.mode, teaser: start.teaser };
+}
+
+/** ゲーム開始直後の状態。最初に見せるものの提示から始まる。 */
 export function createGameState(start: GameStart): GameState {
   return {
     gameId: start.gameId,
-    teaser: start.teaser,
+    opening: openingOf(start),
     phase: "teaser",
     status: "idle",
     request: null,

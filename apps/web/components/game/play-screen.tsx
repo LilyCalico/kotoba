@@ -171,7 +171,13 @@ export function GameScreen({
             <h1 className="sr-only">kotoba</h1>
             {game ? (
               <>
-                <TeaserCard layoutId={TEASER_LAYOUT_ID} teaser={game.teaser} variant="floating" />
+                {game.opening.mode === "guess_word" && (
+                  <TeaserCard
+                    layoutId={TEASER_LAYOUT_ID}
+                    teaser={game.opening.teaser}
+                    variant="floating"
+                  />
+                )}
                 <p className="sr-only">{t.teaserInstruction}</p>
               </>
             ) : (
@@ -308,7 +314,9 @@ function Chat({
       </motion.div>
       <main className="flex min-h-0 flex-1 flex-col pt-1">
         <div className="shrink-0 px-5">
-          <TeaserCard layoutId={TEASER_LAYOUT_ID} teaser={state.teaser} variant="pinned" />
+          {state.opening.mode === "guess_word" && (
+            <TeaserCard layoutId={TEASER_LAYOUT_ID} teaser={state.opening.teaser} variant="pinned" />
+          )}
         </div>
         <div
           // 上端をぼかし、スクロールした要素が設問カードの下へ消えていくように見せる。

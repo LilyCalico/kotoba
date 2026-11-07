@@ -44,7 +44,7 @@ async function codeOf(promise: Promise<unknown>): Promise<string> {
 
 describe("createApiGameClient", () => {
   it("startGame は language・locale・excludeWordIds を送る", async () => {
-    const start = { gameId: GAME_ID, language: "sv", teaser: "teaser" };
+    const start = { gameId: GAME_ID, language: "sv", mode: "guess_word", teaser: "teaser" };
     const { client, requests } = clientWith(json(201, start));
 
     await expect(
