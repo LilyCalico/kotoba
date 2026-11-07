@@ -104,8 +104,35 @@ describe("ゲーム開始", () => {
     expect(response.body).toEqual({
       gameId: expect.stringMatching(/^[0-9a-f-]{36}$/),
       language: "sv",
+      mode: "guess_word",
       teaser: lagom.teaser.ja,
     });
+  });
+
+  it("意味当ては単語と読みを返し、定義と単語の id は返さない", async () => {
+    const response = await post("/games", {
+      language: "sv",
+      locale: "ja",
+      mode: "guess_meaning",
+    }).expect(201);
+
+    expect(response.body).toEqual({
+      gameId: expect.stringMatching(/^[0-9a-f-]{36}$/),
+      language: "sv",
+      mode: "guess_meaning",
+      word: lagom.word,
+      reading: lagom.reading,
+    });
+  });
+
+  it("英語の UI の意味当ては validation_error", async () => {
+    const response = await post("/games", {
+      language: "sv",
+      locale: "en",
+      mode: "guess_meaning",
+    }).expect(400);
+
+    expect(response.body.code).toBe("validation_error");
   });
 
   it("excludeWordIds を単語の選出に渡す", async () => {

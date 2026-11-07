@@ -46,7 +46,9 @@ export class GamesService {
 
     const game: Game = { id: randomUUID(), wordId: word.id, locale, mode, hintsRevealed: 0, history: [] };
     await this.store.create(game);
-    return { gameId: game.id, language: word.language, teaser: word.teaser[locale] };
+    return mode === "guess_meaning"
+      ? { gameId: game.id, language: word.language, mode, word: word.word, reading: word.reading }
+      : { gameId: game.id, language: word.language, mode, teaser: word.teaser[locale] };
   }
 
   /**

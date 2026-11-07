@@ -143,12 +143,28 @@ export const hintSchema = z.object({
 }).meta({ id: "Hint" });
 export type Hint = z.infer<typeof hintSchema>;
 
-/** ゲーム開始時にクライアントへ渡す初期情報。秘密の単語は含まない。 */
-export const gameStartSchema = z.object({
-  gameId: z.uuid(),
-  language: languageSchema,
-  teaser: z.string(),
-}).meta({ id: "GameStart" });
+/**
+ * ゲーム開始時にクライアントへ渡す初期情報。遊び方（`mode`）で 2 つの形に分かれ、最初に見せるものだけを持つ。
+ * 単語当ては `locale` の言語の設問だけを持ち、単語は含まない。意味当ては単語とカタカナの読みを持ち、定義は含まない。
+ * どちらも単語の id は含まない。
+ */
+export const gameStartSchema = z
+  .discriminatedUnion("mode", [
+    z.object({
+      gameId: z.uuid(),
+      language: languageSchema,
+      mode: z.literal("guess_word"),
+      teaser: z.string(),
+    }),
+    z.object({
+      gameId: z.uuid(),
+      language: languageSchema,
+      mode: z.literal("guess_meaning"),
+      word: z.string(),
+      reading: z.string(),
+    }),
+  ])
+  .meta({ id: "GameStart" });
 export type GameStart = z.infer<typeof gameStartSchema>;
 
 /** サーバーが返すエラーの `code`。画面はこれで分岐し、`title` と `detail` は表示に使わない。 */
