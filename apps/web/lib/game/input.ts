@@ -4,6 +4,7 @@ import {
   type Verdict,
   type Word,
   isAcceptedAnswer,
+  normalizeAnswer,
 } from "@kotoba/shared";
 
 import { type QaRule, rulesFor } from "./fixtures";
@@ -120,7 +121,7 @@ export function lookupVerdict(rules: readonly QaRule[], text: string): Verdict {
 }
 
 /**
- * 入力を質問と解答に分類し、質問には 5 値の回答を、解答には正誤を返す。
+ * 単語当ての入力を質問と解答に分類し、質問には 5 値の回答を、解答には正誤を返す。
  * 実の API では AI が担う判断を、想定 Q&A と入力の形から代行する。
  *
  * 正解でも `result` は付けない。終了カードに載せる単語と定義は UI 言語で変わるため、
@@ -130,6 +131,23 @@ export function resolveInput(word: Word, text: string): InputResult {
   if (isAcceptedAnswer(word, text)) {
     return { kind: "answer", correct: true };
   }
+  return resolveByShape(word, text);
+}
+
+/**
+ * 意味当ての入力を分類する。判定基準の正解の例（`meaning.accepts`）と同じ入力を正解にし、
+ * それ以外は単語当てと同じく入力の形で分ける。言い換えを核心で判定する AI の代わりはしない。
+ */
+export function resolveMeaningInput(word: Word, text: string): InputResult {
+  const normalized = normalizeAnswer(text);
+  if (normalized !== "" && word.meaning.accepts.some((accept) => normalizeAnswer(accept) === normalized)) {
+    return { kind: "answer", correct: true };
+  }
+  return resolveByShape(word, text);
+}
+
+/** 正解でなかった入力を、形から質問・誤答・質問になっていない入力に分ける。 */
+function resolveByShape(word: Word, text: string): InputResult {
   if (isYesNoQuestion(text)) {
     return { kind: "question", verdict: lookupVerdict(rulesFor(word.id), text) };
   }

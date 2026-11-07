@@ -6,6 +6,7 @@ import {
   lookupVerdict,
   remainingLength,
   resolveInput,
+  resolveMeaningInput,
   validateInput,
 } from "./input";
 
@@ -82,6 +83,27 @@ describe("lookupVerdict", () => {
         "Is it about the moon?",
       ),
     ).toBe("no");
+  });
+});
+
+describe("resolveMeaningInput", () => {
+  it("判定基準の正解の例と同じ意味を正解にする", () => {
+    const [accept = ""] = fredagsmys.meaning.accepts;
+
+    expect(resolveMeaningInput(fredagsmys, accept)).toEqual({ kind: "answer", correct: true });
+  });
+
+  it("単語の綴りと、誤りの例は誤答にする", () => {
+    const [reject = ""] = fredagsmys.meaning.rejects;
+
+    expect(resolveMeaningInput(fredagsmys, fredagsmys.word)).toEqual({ kind: "answer", correct: false });
+    expect(resolveMeaningInput(fredagsmys, reject)).toEqual({ kind: "answer", correct: false });
+  });
+
+  it("質問は単語当てと同じく想定 Q&A で答える", () => {
+    expect(resolveMeaningInput(fredagsmys, "Is it about Friday?")).toEqual(
+      resolveInput(fredagsmys, "Is it about Friday?"),
+    );
   });
 });
 
