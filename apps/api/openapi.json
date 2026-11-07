@@ -367,6 +367,14 @@
               "en"
             ]
           },
+          "mode": {
+            "default": "guess_word",
+            "type": "string",
+            "enum": [
+              "guess_word",
+              "guess_meaning"
+            ]
+          },
           "excludeWordIds": {
             "default": [],
             "maxItems": 100,
@@ -381,30 +389,78 @@
         ]
       },
       "GameStart": {
-        "type": "object",
-        "properties": {
-          "gameId": {
-            "type": "string",
-            "format": "uuid",
-            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "gameId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "language": {
+                "type": "string",
+                "enum": [
+                  "sv",
+                  "ja"
+                ]
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "guess_word"
+                ]
+              },
+              "teaser": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "gameId",
+              "language",
+              "mode",
+              "teaser"
+            ],
+            "additionalProperties": false
           },
-          "language": {
-            "type": "string",
-            "enum": [
-              "sv",
-              "ja"
-            ]
-          },
-          "teaser": {
-            "type": "string"
+          {
+            "type": "object",
+            "properties": {
+              "gameId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "language": {
+                "type": "string",
+                "enum": [
+                  "sv",
+                  "ja"
+                ]
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "guess_meaning"
+                ]
+              },
+              "word": {
+                "type": "string"
+              },
+              "reading": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "gameId",
+              "language",
+              "mode",
+              "word",
+              "reading"
+            ],
+            "additionalProperties": false
           }
-        },
-        "required": [
-          "gameId",
-          "language",
-          "teaser"
-        ],
-        "additionalProperties": false
+        ]
       },
       "PlayerInput": {
         "type": "object",
