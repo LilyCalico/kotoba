@@ -1,4 +1,4 @@
-import type { Verdict, Word } from "@kotoba/shared";
+import type { GameMode, Verdict, Word } from "@kotoba/shared";
 import type { QaEntry } from "../games/game-store.js";
 
 /**
@@ -11,7 +11,9 @@ export type Judgement =
   | { kind: "unsupported_language" };
 
 export type JudgeInput = {
-  /** 秘密の単語 */
+  /** 遊び方。単語当てでは単語、意味当てでは意味を当てさせる */
+  mode: GameMode;
+  /** 出題した単語 */
   word: Word;
   /** そのゲームのそれまでの Q&A 履歴。回答の一貫性のために判定へ渡す */
   history: readonly QaEntry[];

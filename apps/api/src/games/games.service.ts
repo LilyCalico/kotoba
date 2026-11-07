@@ -117,7 +117,7 @@ export class GamesService {
     });
     if (isAcceptedAnswer(word, text)) return cleared();
 
-    const judgement = await this.judge.judge({ word, history: game.history, text });
+    const judgement = await this.judge.judge({ mode: game.mode, word, history: game.history, text });
     switch (judgement.kind) {
       case "question":
         return { kind: "question", verdict: judgement.verdict };
