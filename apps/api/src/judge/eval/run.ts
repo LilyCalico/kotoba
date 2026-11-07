@@ -14,7 +14,7 @@ import { words } from "../../prisma/seed/words.js";
 import { GeminiInputJudge, createGenerateContent } from "../gemini-input-judge.js";
 import type { InputJudge, Judgement } from "../input-judge.js";
 import { DEFAULT_GEMINI_MODEL } from "../judge.module.js";
-import { EVAL_CASES, type EvalCase, type EvalCategory } from "./cases.js";
+import { EVAL_CASES, type EvalCase, type EvalCategory, modeOf } from "./cases.js";
 import {
   type CaseResult,
   describeExpectation,
@@ -44,7 +44,7 @@ async function judgeCase(judge: InputJudge, testCase: EvalCase): Promise<CaseRes
     let judgement: Judgement;
     try {
       judgement = await judge.judge({
-        mode: "guess_word",
+        mode: modeOf(testCase.category),
         word,
         history: testCase.history ?? [],
         text: testCase.input,

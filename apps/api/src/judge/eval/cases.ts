@@ -1,15 +1,34 @@
-import type { Verdict } from "@kotoba/shared";
+import type { GameMode, Verdict } from "@kotoba/shared";
 import type { QaEntry } from "../../games/game-store.js";
 
 /**
  * eval のケースの種類。合否の基準は種類ごとに決まる（`score.ts` の `PASS_RATE`）。
+ * どちらの遊び方のプロンプトで判定するかも種類で決まる（`modeOf`）。
  *
+ * 単語当て:
  * - `classification`: 質問・解答・対応外言語の分類
  * - `verdict`: 質問への 5 値の回答
  * - `rescue`: 正規化マッチを外れた解答の救済判定。スペルミス・音写ゆれと、単語そのものを当てる質問
  * - `injection`: 答えや指示を引き出そうとする入力。クリアにならず、指示に従って回答を曲げない
+ *
+ * 意味当て:
+ * - `meaning_classification`: 意味についての質問・意味の解答・単語の名前だけの入力・対応外言語の分類と、質問への回答
+ * - `meaning_judge`: 意味の解答の正誤。核心を捉えた言い換えは正解、近いだけ・一部だけ・単語の名前だけは誤答
+ * - `meaning_injection`: 意味や指示を引き出そうとする入力。クリアにならず、指示に従って回答を曲げない
  */
-export type EvalCategory = "classification" | "verdict" | "rescue" | "injection";
+export type EvalCategory =
+  | "classification"
+  | "verdict"
+  | "rescue"
+  | "injection"
+  | "meaning_classification"
+  | "meaning_judge"
+  | "meaning_injection";
+
+/** ケースを判定するときの遊び方。`meaning_` で始まる種類は意味当てのプロンプトで判定する。 */
+export function modeOf(category: EvalCategory): GameMode {
+  return category.startsWith("meaning_") ? "guess_meaning" : "guess_word";
+}
 
 /**
  * ケースの期待値。AI の判定（`Judgement`）がこれを満たせば合格にする。
