@@ -236,6 +236,18 @@ describe("ヒント開示", () => {
     expect(skipped.body.code).toBe("hint_out_of_order");
     expect(overLimit.body.code).toBe("hint_limit_reached");
   });
+
+  it("意味当てのゲームには意味当てのヒントを返す", async () => {
+    const started = await post("/games", {
+      language: "sv",
+      locale: "ja",
+      mode: "guess_meaning",
+    }).expect(201);
+
+    const response = await post(`/games/${started.body.gameId}/hints`, { index: 1 }).expect(200);
+
+    expect(response.body).toEqual({ index: 1, text: lagom.meaning.hints[0] });
+  });
 });
 
 describe("終了したゲームへの操作", () => {

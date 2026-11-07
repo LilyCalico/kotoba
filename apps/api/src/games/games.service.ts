@@ -73,7 +73,8 @@ export class GamesService {
   }
 
   /**
-   * `index` 番目のヒントを返す。開示済みの番号には同じヒントを返し、数を進めない。
+   * `index` 番目のヒントを返す。単語当てには `locale` の言語の単語当てのヒントを、意味当てには意味当てのヒントを返す。
+   * 開示済みの番号には同じヒントを返し、数を進めない。
    * 番号を送らせるのは、応答を受け取り損ねた再送で次のヒントが開示されないようにするためである。
    */
   async revealHint(gameId: string, index: number): Promise<Hint> {
@@ -87,7 +88,8 @@ export class GamesService {
       game.hintsRevealed = index;
       await this.store.save(game);
     }
-    return { index, text: word.hints[game.locale][index - 1] };
+    const hints = game.mode === "guess_meaning" ? word.meaning.hints : word.hints[game.locale];
+    return { index, text: hints[index - 1] };
   }
 
   /** ギブアップを確定して正解を返す。終了済みのゲームには、終了時の結果をそのまま返す。 */
