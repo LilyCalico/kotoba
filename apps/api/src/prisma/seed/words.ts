@@ -1012,6 +1012,16 @@ const source: Word[] = [
         "It literally means \"a ___'s nap\", naming a bird known for crowing at dawn",
       ],
     },
+    meaning: {
+      core: "短くて気持ちのいいうたた寝。時間帯は問わない。",
+      accepts: ["うたた寝", "仮眠", "ちょっとした昼寝", "nap"],
+      rejects: ["睡眠", "夜ふかし", "目を閉じること"],
+      hints: [
+        "何かをすること、またはその時間のことだよ",
+        "ソファで、電車の中で、ランチのあとの少しのあいだに",
+        "深く眠るほどではない、短くて気持ちのいい眠り",
+      ],
+    },
     example: {
       sv: "Jag är trött, så jag vill ta en tupplur när jag kommer hem.",
       translations: {
@@ -1048,6 +1058,16 @@ const source: Word[] = [
         "Where English needs \"close\" plus \"eyes\", this does it in one word",
       ],
     },
+    meaning: {
+      core: "目を閉じること。",
+      accepts: ["目をつぶる", "目を閉じる", "まぶたを閉じる", "close one's eyes"],
+      rejects: ["まばたき", "見る", "ウインク"],
+      hints: [
+        "体を使ってすることを表す動詞だよ",
+        "かくれんぼで数を数えるとき、まぶしいとき、ちょっとひと休みするとき",
+        "顔のある部分を動かすだけの、ほんの小さな動作",
+      ],
+    },
     example: {
       sv: "Blunda en sekund.",
       translations: {
@@ -1082,6 +1102,16 @@ const source: Word[] = [
         "A verb to do with time",
         "You use it when asking whether you'll catch the train or finish before the deadline",
         "It covers both \"to make it in time\" and \"to have time to do\" in one word",
+      ],
+    },
+    meaning: {
+      core: "時間内に間に合うこと。また、何かをするだけの時間があること。",
+      accepts: ["間に合う", "時間がある", "時間内にできる", "make it in time"],
+      rejects: ["急ぐ", "遅れる", "暇"],
+      hints: [
+        "何かができるかどうかを言う動詞だよ",
+        "電車の発車時刻や締め切りの前に、時計を見ながら",
+        "決まった時までに、やりおおせられること",
       ],
     },
     example: {
@@ -1124,6 +1154,16 @@ const source: Word[] = [
         "Where English needs \"have the energy to\", this needs one word",
       ],
     },
+    meaning: {
+      core: "何かをするだけの気力や体力があること。",
+      accepts: ["気力がある", "やる気がある", "元気が残っている", "have the energy"],
+      rejects: ["疲れる", "がんばる", "強い"],
+      hints: [
+        "何かができるかどうかを言う動詞で、否定の形でよく使うよ",
+        "仕事のあと、料理するか、出かけるか、迷ったときに",
+        "それをするだけの力が、体と心に残っていること",
+      ],
+    },
     example: {
       sv: "Jag orkar inte laga mat.",
       translations: {
@@ -1158,6 +1198,16 @@ const source: Word[] = [
         "A verb about a feeling, used of places and of the people around you",
         "You use it in reply when asked how you're getting on in a new job or a new town",
         "Its ending looks passive, but it means you yourself feel at ease",
+      ],
+    },
+    meaning: {
+      core: "場所や環境、人間関係になじんで、心地よく感じること。",
+      accepts: ["居心地がいいと感じる", "なじんでいる", "楽しく過ごせている", "feel at home"],
+      rejects: ["好き", "慣れる", "楽しい"],
+      hints: [
+        "気持ちを表す動詞だよ",
+        "新しい職場、引っ越した街、留学先の学校について聞かれたときに",
+        "その場所や人のなかで、ここにいていいと思えること",
       ],
     },
     example: {
