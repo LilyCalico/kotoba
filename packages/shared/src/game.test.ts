@@ -23,12 +23,21 @@ describe("playerInputSchema", () => {
 });
 
 describe("startGameRequestSchema", () => {
-  it("locale と excludeWordIds を省くと既定値で埋める", () => {
+  it("locale・mode・excludeWordIds を省くと既定値で埋める", () => {
     expect(startGameRequestSchema.parse({ language: "sv" })).toEqual({
       language: "sv",
       locale: "en",
+      mode: "guess_word",
       excludeWordIds: [],
     });
+  });
+
+  it("意味当ては locale が ja のときだけ受ける", () => {
+    const meaning = { language: "sv", mode: "guess_meaning" };
+
+    expect(startGameRequestSchema.safeParse({ ...meaning, locale: "ja" }).success).toBe(true);
+    expect(startGameRequestSchema.safeParse({ ...meaning, locale: "en" }).success).toBe(false);
+    expect(startGameRequestSchema.safeParse(meaning).success).toBe(false);
   });
 
   it("上限を超える excludeWordIds を弾く", () => {
