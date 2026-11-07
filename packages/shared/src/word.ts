@@ -60,7 +60,7 @@ export const wordSchema = z.object({
   /** 単語当ての段階ヒント。1 が方向性、2 が使われる場面、3 が語の成り立ち */
   hints: localized(hintsSchema),
   /** 意味当ての判定基準とヒント */
-  meaning: meaningSchema.optional(),
+  meaning: meaningSchema,
   /** 直訳。合成語で、語の成り立ちが答えの核心になる語だけが持つ */
   literal: localized(z.string().min(1)).optional(),
   /** 定義に畳むと冗長になる文化的な補足 */
