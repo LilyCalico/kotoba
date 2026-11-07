@@ -430,8 +430,22 @@ UI の文言は `lib/i18n/messages/` の言語ごとの辞書に置き、コン�
 3. `lib/i18n/locale.ts` の `LOCALE_NAMES` に、その言語自身で書いた言語名と短い名前を足す。スタート画面の言語の切り替えは、今の言語以外のすべての UI 言語へのリンクを並べる
 4. 専用の書体が要る言語は、`app/fonts.ts` に書体を足し、日本語と同じく `app/[lang]/layout.tsx` と `.storybook/preview.tsx` で `<html>` の書体の変数に当てる
 5. `.storybook/preview.tsx` のツールバーの `items` に言語を足す
+6. `lib/game/mode.ts` の `GAME_MODE` に、その言語で遊ぶ遊び方を足す（下の「UI 言語ごとの遊び方」）
 
 ページの生成（`generateStaticParams`）と Accept-Language の振り分けは `LOCALES` から作るため、手を入れなくても新しい言語を扱う。
+
+### UI 言語ごとの遊び方
+
+遊び方は UI 言語で決まり、日本語は意味当て、英語は単語当てで遊ぶ（`docs/adr/0012-game-mode-as-separate-axis-from-locale.md`）。web の中で遊び方を分ける場所は次のとおり。
+
+| 場所 | 分けるもの |
+| --- | --- |
+| `lib/game/mode.ts` の `gameModeFor` | UI 言語から遊び方を決める唯一の場所。プレイ画面はゲーム開始の `mode` にこれを送る |
+| `lib/game/state.ts` の `GameState.opening` | 開始の応答（`GameStart`）の遊び方ごとの形を、最初に見せるもの（設問か、単語と読み）として持つ |
+| `components/game/play-screen.tsx` の `OpeningCard` | 単語当ては `TeaserCard`、意味当ては `WordCard` を、提示とチャットの両方に出す |
+| `lib/game/mock-client.ts` | 開始の応答・ヒント・入力の判定を遊び方で分け、api と同じ形を返す |
+
+遊び方で変わる文言（遊び方の説明・入力欄の名前・正誤のフィードバック）は、その遊び方で遊ぶ言語の辞書に、その遊び方の前提で書く。辞書の形は言語によらず同じにする。
 
 ## つまずきポイント
 
