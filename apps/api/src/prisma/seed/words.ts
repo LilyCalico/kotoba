@@ -759,6 +759,16 @@ const source: Word[] = [
         "It shortens and joins words meaning \"apart\" and \"to live\"",
       ],
     },
+    meaning: {
+      core: "恋人同士でありながら、別々の家に暮らしているパートナー。",
+      accepts: ["別々に暮らす恋人", "別居しているパートナー", "遠距離の恋人"],
+      rejects: ["恋人", "元恋人", "同棲相手"],
+      hints: [
+        "人を指す言葉だよ",
+        "どちらも自分の家を手放さず、週末だけ行き来する二人もいる",
+        "付き合っているけれど、一緒には住んでいない相手",
+      ],
+    },
     example: {
       sv: "Min partner bor långt bort, så just nu är vi särbo.",
       translations: {
@@ -799,6 +809,16 @@ const source: Word[] = [
         "It turns the initials of the allowance for caring for a sick child into a verb",
       ],
     },
+    meaning: {
+      core: "子どもの看病のために、手当を受けて仕事を休むこと。",
+      accepts: ["子どもの看病で仕事を休む", "看護休暇をとる", "子どもが病気で会社を休む"],
+      rejects: ["仕事を休む", "育児休暇", "在宅勤務"],
+      hints: [
+        "何かをすることを表す動詞だよ",
+        "朝、子どもが熱を出したとき、職場にこの一語だけ送れば事情が伝わる",
+        "家族の具合が悪くて、そのために仕事を休むこと",
+      ],
+    },
     example: {
       sv: "Jag måste vabba i dag, min dotter har feber.",
       translations: {
@@ -837,6 +857,16 @@ const source: Word[] = [
         "A verb about a way of working",
         "You use it when your child is ill but there is work you simply cannot drop",
         "It blends the verb for staying home with a sick child and the verb meaning \"to work\"",
+      ],
+    },
+    meaning: {
+      core: "子どもの看病をしながら、家で仕事をすること。",
+      accepts: ["看病しながら在宅勤務する", "子どもを看ながらリモートワークする"],
+      rejects: ["在宅勤務", "子どもの看病で仕事を休む", "育児"],
+      hints: [
+        "何かをすることを表す動詞で、2 つの語を混ぜた造語だよ",
+        "熱を出した子どもの横で、ノートパソコンを開いて",
+        "休むわけでも、出社するわけでもない。家で 2 つのことを同時にこなす",
       ],
     },
     example: {
@@ -880,6 +910,16 @@ const source: Word[] = [
         "It is a compound of the name of a season and a word for a cottage",
       ],
     },
+    meaning: {
+      core: "夏を過ごすための、湖畔や森にある小さな別荘。",
+      accepts: ["夏の別荘", "サマーハウス", "夏用のコテージ"],
+      rejects: ["別荘", "家", "キャンプ場"],
+      hints: [
+        "建物にまつわる言葉だよ",
+        "赤い壁に白い窓枠で、湖のそばや森の中に建っていることが多い",
+        "一年の決まった季節に、家族で長く過ごすための小さな家",
+      ],
+    },
     example: {
       sv: "När jag var liten älskade jag att vara i farfars sommarstuga på sommarlovet.",
       translations: {
@@ -919,6 +959,16 @@ const source: Word[] = [
         "A noun to do with law and how society works",
         "It is the reason you can camp in someone else's forest, or pick the berries and mushrooms there",
         "It is a compound of words meaning \"everyone\" and \"right\"",
+      ],
+    },
+    meaning: {
+      core: "誰でも他人の土地の森や湖に立ち入り、歩いたりキャンプしたり、ベリーを摘んだりできる権利。",
+      accepts: ["自然享受権", "誰でも自然を自由に利用できる権利", "他人の土地でも森を歩ける権利", "right to roam"],
+      rejects: ["人権", "土地の所有権", "キャンプ"],
+      hints: [
+        "決まりや権利にまつわる言葉だよ",
+        "柵のない森でテントを張ったり、湖で泳いだり、ベリーを摘んだりするときに",
+        "持ち主でなくても、みんなが自然の中に入って楽しんでいいこと",
       ],
     },
     example: {
