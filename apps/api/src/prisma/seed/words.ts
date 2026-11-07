@@ -38,6 +38,16 @@ const source: Word[] = [
         "It is said to capture this country's own value of never overdoing anything",
       ],
     },
+    meaning: {
+      core: "量や程度が多すぎも少なすぎもせず、ちょうどいいこと。",
+      accepts: ["ちょうどいい", "ほどほど", "過不足ない", "just right"],
+      rejects: ["少なめ", "普通", "控えめ"],
+      hints: [
+        "量や程度について言う言葉で、褒めるときにも使うよ",
+        "コーヒーの量、お風呂の湯加減、部屋の暖かさ——「これがいい」と言いたいときに出てくる",
+        "足りないのでも、やりすぎでもない。そのあいだのいいところ",
+      ],
+    },
     example: {
       sv: "Precis lagom!",
       translations: { ja: "ちょうどいい！", en: "Just right!" },
@@ -73,6 +83,16 @@ const source: Word[] = [
         "An everyday word for time spent in someone else's company",
         "Workplaces schedule it, and colleagues leave their desks to do it together",
         "Coffee and something sweet are essential, and the word doubles as a verb",
+      ],
+    },
+    meaning: {
+      core: "コーヒーやお茶と甘いものを囲んで、人と一緒にとる休憩。",
+      accepts: ["お茶の時間", "コーヒーブレイク", "おやつ休憩", "coffee break"],
+      rejects: ["コーヒー", "お菓子", "ランチ"],
+      hints: [
+        "何かをする時間のことで、名詞にも動詞にもなるよ",
+        "職場でも家でも、午後になると「そろそろしよう」と声がかかる",
+        "飲み物と甘いものを囲んで、手を止めておしゃべりするひととき",
       ],
     },
     example: {
@@ -115,6 +135,16 @@ const source: Word[] = [
         "English has a near equivalent in \"cozy\", but this one leans further toward how it felt inside",
       ],
     },
+    meaning: {
+      core: "温かくて居心地がよく、心がくつろぐ雰囲気であること。",
+      accepts: ["居心地がいい", "心地よい", "ほっこりする", "cozy"],
+      rejects: ["暖かい", "かわいい", "楽しい"],
+      hints: [
+        "場所や時間の雰囲気を言う形容詞だよ",
+        "キャンドルを灯した部屋、雨の日の毛布、友だちと過ごす冬の夜",
+        "ぬくもりがあって、そこにいると気持ちがほどける感じ",
+      ],
+    },
     example: {
       sv: "Vi hade en mysig kväll i soffan.",
       translations: {
@@ -149,6 +179,16 @@ const source: Word[] = [
         "A word for something you do, and it usually happens indoors",
         "It names the act of sinking into the sofa with a warm drink",
         "It is a verb sharing its root with the adjective for a snug atmosphere",
+      ],
+    },
+    meaning: {
+      core: "ぬくぬくと心地よく、くつろいで過ごすこと。",
+      accepts: ["くつろぐ", "まったりする", "ぬくぬく過ごす", "chill"],
+      rejects: ["寝る", "休む", "遊ぶ"],
+      hints: [
+        "何かをすることを表す動詞だよ",
+        "寒い日にブランケットにくるまって、温かい飲み物を手にソファで",
+        "居心地のいい場所で、ぬくぬくとゆっくり過ごすこと",
       ],
     },
     example: {
@@ -186,6 +226,16 @@ const source: Word[] = [
         "The word is tied to one particular day of the week",
         "It means staying in with family or a partner, with snacks bought for the occasion",
         "It is a compound of the name of a day and a word meaning coziness",
+      ],
+    },
+    meaning: {
+      core: "金曜日の夜に、家族や恋人と家でスナックを囲んでくつろいで過ごす習慣。",
+      accepts: ["金曜の夜に家でまったりすること", "金曜の夜のくつろぎタイム", "金曜日に家族と家でのんびり過ごすこと"],
+      rejects: ["週末", "金曜日", "飲み会", "夜更かし"],
+      hints: [
+        "週に一度の、決まった時間の過ごし方のことだよ",
+        "仕事や学校が終わった週末の入り口に、テレビの前にスナックやタコスが並ぶ",
+        "その曜日の夜、家族と家でのんびりくつろぐこと",
       ],
     },
     example: {
