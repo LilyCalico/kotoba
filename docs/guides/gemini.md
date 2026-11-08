@@ -102,6 +102,7 @@ const { $schema: _schema, ...RESPONSE_JSON_SCHEMA } = z.toJSONSchema(judgementRe
 | 入力 | スタブの応答 |
 | --- | --- |
 | キリル文字かハングルを含む | `unsupported_language` |
+| 意味当てで、判定基準の正解の例（`meaning.accepts`）のどれかと一致する | `answer` / 正解 |
 | 「?」か「？」で終わる | `question` / `yes` |
 | それ以外 | `answer` / 誤答（スペルミス・音写ゆれの救済はしない） |
 

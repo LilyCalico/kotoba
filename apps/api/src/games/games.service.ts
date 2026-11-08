@@ -104,10 +104,10 @@ export class GamesService {
   }
 
   /**
-   * 入力を判定する。コードの正規化マッチで正解なら、AI を呼ばずにクリアにする。
-   * 外れた入力だけを AI に回し、質問か解答か対応外の言語かを分類させる。
-   * 解答と分類した入力は、AI がスペルミス・音写ゆれとして救えば正解、救わなければ誤答にする。
-   * 救った正解も、正規化マッチの正解と同じ応答にする。
+   * 入力を判定する。単語当てでは、コードの正規化マッチで正解なら AI を呼ばずにクリアにし、
+   * 外れた入力だけを AI に回す。AI がスペルミス・音写ゆれとして救った正解も、正規化マッチの正解と同じ応答にする。
+   * 意味当てでは、意味の言い回しが無数にあるため正規化マッチを通さず、入力をすべて AI に回す。
+   * AI は質問か解答か対応外の言語かを分類し、解答には正誤を添える。
    */
   private async classify(game: Game, word: Word, text: string): Promise<InputResult> {
     const cleared = (): InputResult => ({
@@ -115,9 +115,9 @@ export class GamesService {
       correct: true,
       result: gameResultOf(word, "cleared", game.locale),
     });
-    if (isAcceptedAnswer(word, text)) return cleared();
+    if (game.mode === "guess_word" && isAcceptedAnswer(word, text)) return cleared();
 
-    const judgement = await this.judge.judge({ word, history: game.history, text });
+    const judgement = await this.judge.judge({ mode: game.mode, word, history: game.history, text });
     switch (judgement.kind) {
       case "question":
         return { kind: "question", verdict: judgement.verdict };
