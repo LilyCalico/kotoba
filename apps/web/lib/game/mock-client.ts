@@ -1,4 +1,4 @@
-import { MAX_HINTS, type UiLocale, type Word, gameResultOf } from "@kotoba/shared";
+import { type GameMode, MAX_HINTS, type UiLocale, type Word, gameResultOf } from "@kotoba/shared";
 
 import { type GameClient, GameClientError } from "./client";
 import { findWordById, words } from "./fixtures";
@@ -14,7 +14,7 @@ export type MockGameClientOptions = {
   delayMs?: number;
 };
 
-type MockGame = { word: Word; locale: UiLocale };
+type MockGame = { word: Word; locale: UiLocale; mode: GameMode };
 
 function wait(ms: number): Promise<void> {
   if (ms <= 0) return Promise.resolve();
@@ -70,8 +70,12 @@ export function createMockGameClient(options: MockGameClientOptions = {}): GameC
   }
 
   return {
-    async startGame({ language, locale = "en", excludeWordIds = [] }) {
+    async startGame({ language, locale = "en", mode = "guess_word", excludeWordIds = [] }) {
       await wait(delayMs);
+
+      if (mode === "guess_meaning" && locale !== "ja") {
+        throw new GameClientError("validation_error", "意味当ては日本語の UI でだけ始められる");
+      }
 
       const fixed = wordId === undefined ? undefined : findWordById(wordId);
       const pool = words.filter((word) => word.language === language);
@@ -81,8 +85,10 @@ export function createMockGameClient(options: MockGameClientOptions = {}): GameC
 
       const word = fixed ?? pickWord(pool, excludeWordIds);
       const gameId = createGameId();
-      games.set(gameId, { word, locale });
-      return { gameId, language: word.language, teaser: word.teaser[locale] };
+      games.set(gameId, { word, locale, mode });
+      return mode === "guess_meaning"
+        ? { gameId, language: word.language, mode, word: word.word, reading: word.reading }
+        : { gameId, language: word.language, mode, teaser: word.teaser[locale] };
     },
 
     async sendInput(gameId, { text }) {
@@ -103,7 +109,9 @@ export function createMockGameClient(options: MockGameClientOptions = {}): GameC
       if (!Number.isInteger(index) || index < 1) {
         throw new GameClientError("validation_error", `不正なヒント番号: ${index}`);
       }
-      const text = game.word.hints[game.locale][index - 1];
+      const hints =
+        game.mode === "guess_meaning" ? game.word.meaning.hints : game.word.hints[game.locale];
+      const text = hints[index - 1];
       if (index > MAX_HINTS || text === undefined) {
         throw new GameClientError("hint_limit_reached", `範囲外のヒント番号: ${index}`);
       }

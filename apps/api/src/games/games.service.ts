@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import {
+  type GameMode,
   type GameResult,
   type GameStart,
   type Hint,
@@ -32,18 +33,22 @@ export class GamesService {
   async start({
     language,
     locale,
+    mode,
     excludeWordIds,
   }: {
     language: Language;
     locale: UiLocale;
+    mode: GameMode;
     excludeWordIds: readonly string[];
   }): Promise<GameStart> {
     const word = await this.words.pick({ language, excludeWordIds });
     if (!word) throw new ApiError("validation_error", `No words are available for "${language}".`);
 
-    const game: Game = { id: randomUUID(), wordId: word.id, locale, hintsRevealed: 0, history: [] };
+    const game: Game = { id: randomUUID(), wordId: word.id, locale, mode, hintsRevealed: 0, history: [] };
     await this.store.create(game);
-    return { gameId: game.id, language: word.language, teaser: word.teaser[locale] };
+    return mode === "guess_meaning"
+      ? { gameId: game.id, language: word.language, mode, word: word.word, reading: word.reading }
+      : { gameId: game.id, language: word.language, mode, teaser: word.teaser[locale] };
   }
 
   /**
@@ -68,7 +73,8 @@ export class GamesService {
   }
 
   /**
-   * `index` 番目のヒントを返す。開示済みの番号には同じヒントを返し、数を進めない。
+   * `index` 番目のヒントを返す。単語当てには `locale` の言語の単語当てのヒントを、意味当てには意味当てのヒントを返す。
+   * 開示済みの番号には同じヒントを返し、数を進めない。
    * 番号を送らせるのは、応答を受け取り損ねた再送で次のヒントが開示されないようにするためである。
    */
   async revealHint(gameId: string, index: number): Promise<Hint> {
@@ -82,7 +88,8 @@ export class GamesService {
       game.hintsRevealed = index;
       await this.store.save(game);
     }
-    return { index, text: word.hints[game.locale][index - 1] };
+    const hints = game.mode === "guess_meaning" ? word.meaning.hints : word.hints[game.locale];
+    return { index, text: hints[index - 1] };
   }
 
   /** ギブアップを確定して正解を返す。終了済みのゲームには、終了時の結果をそのまま返す。 */

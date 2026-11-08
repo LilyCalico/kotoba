@@ -20,7 +20,7 @@ afterAll(async () => {
 function game(overrides: Partial<Game> = {}): Game {
   const id = randomUUID();
   createdIds.push(id);
-  return { id, wordId: "lagom", locale: "en", hintsRevealed: 0, history: [], ...overrides };
+  return { id, wordId: "lagom", locale: "en", mode: "guess_word", hintsRevealed: 0, history: [], ...overrides };
 }
 
 /**
@@ -52,6 +52,7 @@ describe("PrismaGameStore（DB）", () => {
     const { store } = createStore();
     const finished = game({
       locale: "ja",
+      mode: "guess_meaning",
       hintsRevealed: 2,
       history: [
         { text: "Is it a feeling?", result: { kind: "question", verdict: "yes" } },

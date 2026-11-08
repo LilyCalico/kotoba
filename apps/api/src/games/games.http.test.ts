@@ -104,8 +104,35 @@ describe("ゲーム開始", () => {
     expect(response.body).toEqual({
       gameId: expect.stringMatching(/^[0-9a-f-]{36}$/),
       language: "sv",
+      mode: "guess_word",
       teaser: lagom.teaser.ja,
     });
+  });
+
+  it("意味当ては単語と読みを返し、定義と単語の id は返さない", async () => {
+    const response = await post("/games", {
+      language: "sv",
+      locale: "ja",
+      mode: "guess_meaning",
+    }).expect(201);
+
+    expect(response.body).toEqual({
+      gameId: expect.stringMatching(/^[0-9a-f-]{36}$/),
+      language: "sv",
+      mode: "guess_meaning",
+      word: lagom.word,
+      reading: lagom.reading,
+    });
+  });
+
+  it("英語の UI の意味当ては validation_error", async () => {
+    const response = await post("/games", {
+      language: "sv",
+      locale: "en",
+      mode: "guess_meaning",
+    }).expect(400);
+
+    expect(response.body.code).toBe("validation_error");
   });
 
   it("excludeWordIds を単語の選出に渡す", async () => {
@@ -208,6 +235,18 @@ describe("ヒント開示", () => {
 
     expect(skipped.body.code).toBe("hint_out_of_order");
     expect(overLimit.body.code).toBe("hint_limit_reached");
+  });
+
+  it("意味当てのゲームには意味当てのヒントを返す", async () => {
+    const started = await post("/games", {
+      language: "sv",
+      locale: "ja",
+      mode: "guess_meaning",
+    }).expect(201);
+
+    const response = await post(`/games/${started.body.gameId}/hints`, { index: 1 }).expect(200);
+
+    expect(response.body).toEqual({ index: 1, text: lagom.meaning.hints[0] });
   });
 });
 

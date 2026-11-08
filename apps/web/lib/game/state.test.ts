@@ -14,6 +14,7 @@ import {
 const start: GameStart = {
   gameId: "00000000-0000-4000-8000-000000000000",
   language: "sv",
+  mode: "guess_word",
   teaser: "On Friday night, this word lives on the sofa",
 };
 
@@ -40,10 +41,10 @@ function run(state: GameState, ...actions: GameAction[]): GameState {
 const chat = run(createGameState(start), { type: "chat-entered" });
 
 describe("createGameState", () => {
-  it("設問の提示から始まる", () => {
+  it("最初に見せるものの提示から始まる", () => {
     expect(createGameState(start)).toEqual({
       gameId: start.gameId,
-      teaser: start.teaser,
+      opening: { mode: "guess_word", teaser: start.teaser },
       phase: "teaser",
       status: "idle",
       request: null,

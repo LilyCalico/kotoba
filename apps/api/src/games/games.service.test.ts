@@ -42,7 +42,7 @@ function createService({
 }
 
 async function start(service: GamesService): Promise<string> {
-  const { gameId } = await service.start({ language: "sv", locale: "en", excludeWordIds: [] });
+  const { gameId } = await service.start({ language: "sv", locale: "en", mode: "guess_word", excludeWordIds: [] });
   return gameId;
 }
 

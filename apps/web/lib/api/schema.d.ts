@@ -80,6 +80,11 @@ export interface components {
              * @enum {string}
              */
             locale?: "ja" | "en";
+            /**
+             * @default guess_word
+             * @enum {string}
+             */
+            mode?: "guess_word" | "guess_meaning";
             /** @default [] */
             excludeWordIds?: string[];
         };
@@ -88,7 +93,18 @@ export interface components {
             gameId: string;
             /** @enum {string} */
             language: "sv" | "ja";
+            /** @enum {string} */
+            mode: "guess_word";
             teaser: string;
+        } | {
+            /** Format: uuid */
+            gameId: string;
+            /** @enum {string} */
+            language: "sv" | "ja";
+            /** @enum {string} */
+            mode: "guess_meaning";
+            word: string;
+            reading: string;
         };
         PlayerInput: {
             text: string;
