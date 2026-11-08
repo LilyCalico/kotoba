@@ -3,9 +3,7 @@ import { type Page, expect, test } from "./fixtures.js";
 import { words } from "../../apps/api/src/prisma/seed/words.js";
 import { en } from "../../apps/web/lib/i18n/messages/en.js";
 import { ja } from "../../apps/web/lib/i18n/messages/ja.js";
-
-/** 辞書の形。画面の言語の辞書を、操作の関数に渡す。 */
-type Messages = typeof en;
+import { type Locale, type Messages, dictionaries, openingTitle } from "./locales.js";
 
 /** web が出題済み単語を記録する `localStorage` のキー。`apps/web/lib/game/played-words.ts` と揃える。 */
 const PLAYED_WORDS_KEY = "kotoba:played-words";
@@ -63,19 +61,14 @@ function input(page: Page, t: Messages = en) {
   return page.getByRole("textbox", { name: t.input.label });
 }
 
-/** 最初に見せるカードの名前。日本語の UI は意味当てなので単語カード、英語の UI は単語当てなので設問カード。 */
-function openingTitle(t: Messages): string {
-  return t === ja ? t.wordCard.title : t.teaser.title;
-}
-
 /**
  * 最初に見せるカードの提示をクリックで進め、3 秒の自動遷移を待たずにチャットへ移る。
  * 画面の中央はチャットに移ってもログの空き領域なので、自動遷移とクリックが重なっても操作には当たらない。
  */
-async function enterChat(page: Page, t: Messages = en) {
-  await expect(page.getByRole("region", { name: openingTitle(t) })).toBeVisible();
+async function enterChat(page: Page, locale: Locale = "en") {
+  await expect(page.getByRole("region", { name: openingTitle(locale) })).toBeVisible();
   await page.locator("main").click();
-  await expect(input(page, t)).toBeVisible();
+  await expect(input(page, dictionaries[locale])).toBeVisible();
 }
 
 /** 入力欄から送信し、応答が届いて入力欄が再び使えるようになるまで待つ。 */
@@ -144,7 +137,7 @@ test("/ja では単語と読みを見て、質問・ヒント・意味の解答�
   await expect(card.getByText(fredagsmys.word, { exact: true })).toBeVisible();
   await expect(card.getByText(fredagsmys.reading, { exact: true })).toBeVisible();
   await expect(page.getByText(fredagsmys.teaser.ja)).toHaveCount(0);
-  await enterChat(page, ja);
+  await enterChat(page, "ja");
 
   await send(page, "名詞？", ja);
   await expect(bubble(page, new RegExp(`^${ja.verdict.yes}$`))).toBeVisible();

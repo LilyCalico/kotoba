@@ -6,6 +6,7 @@ import { toastQueue } from "@/components/ui/toast";
 import { type GameClient, GameClientError, type GameClientErrorCode } from "@/lib/game/client";
 import { fixtureWord } from "@/lib/game/fixtures";
 import { createMockGameClient } from "@/lib/game/mock-client";
+import { gameModeFor } from "@/lib/game/mode";
 import { messages } from "@/lib/i18n/messages";
 import { storyLocale } from "@/lib/i18n/story-locale";
 
@@ -13,19 +14,17 @@ import { storyLocale } from "@/lib/i18n/story-locale";
 const fredagsmys = fixtureWord("fredagsmys");
 
 /**
- * 正解の入力。英語の UI は単語当てなので単語そのもの、日本語の UI は意味当てなので判定基準の正解の例。
+ * 正解の入力。単語当てでは単語そのもの、意味当てでは判定基準の正解の例。
  * モックは意味の言い換えを判定しないため、正解の例と同じ文を送る。
  */
-const ANSWER: Record<UiLocale, string> = {
-  en: fredagsmys.word,
-  ja: fredagsmys.meaning.accepts[0] ?? "",
-};
+function answerFor(locale: UiLocale): string {
+  return gameModeFor(locale) === "guess_meaning" ? (fredagsmys.meaning.accepts[0] ?? "") : fredagsmys.word;
+}
 
-/** ゲームの最初に見せるもの。英語の UI は設問、日本語の UI は単語。 */
-const OPENING: Record<UiLocale, string> = {
-  en: fredagsmys.teaser.en,
-  ja: fredagsmys.word,
-};
+/** ゲームの最初に見せるもの。単語当てでは設問、意味当てでは単語。 */
+function openingFor(locale: UiLocale): string {
+  return gameModeFor(locale) === "guess_meaning" ? fredagsmys.word : fredagsmys.teaser[locale];
+}
 
 /** 送信の失敗を確かめる Story で送る質問。 */
 const QUESTION: Record<UiLocale, string> = {
@@ -73,7 +72,7 @@ function fail(
 }
 
 async function enterChat(locale: UiLocale) {
-  await screen.findByText(OPENING[locale]);
+  await screen.findByText(openingFor(locale));
   await userEvent.click(document.body);
   await screen.findByRole("textbox", { name: messages[locale].input.label });
 }
@@ -156,7 +155,7 @@ export const Cleared: Story = {
     const locale = storyLocale(globals);
     const t = messages[locale];
     await enterChat(locale);
-    await send(locale, ANSWER[locale]);
+    await send(locale, answerFor(locale));
 
     await screen.findByRole("heading", { name: t.result.heading.cleared });
     await expect(screen.queryByRole("textbox")).not.toBeInTheDocument();

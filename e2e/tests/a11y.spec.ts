@@ -1,17 +1,10 @@
 import AxeBuilder from "@axe-core/playwright";
 import { type Page, expect, test } from "./fixtures.js";
 
-import { en } from "../../apps/web/lib/i18n/messages/en.js";
-import { ja } from "../../apps/web/lib/i18n/messages/ja.js";
+import { type Locale, dictionaries, openingTitle } from "./locales.js";
 
-/**
- * 検証する UI 言語と、その言語の辞書と、最初に見せるカードの名前。どの画面も両方の言語で確かめる。
- * 日本語の UI は意味当てなので単語カード、英語の UI は単語当てなので設問カードを最初に見せる。
- */
-const LOCALES = [
-  ["en", en, en.teaser.title],
-  ["ja", ja, ja.wordCard.title],
-] as const;
+/** 検証する UI 言語。どの画面も両方の言語で確かめる。 */
+const LOCALES: readonly Locale[] = ["en", "ja"];
 
 /** 検証する WCAG の達成基準。2.2 の AA までを対象にする。 */
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
@@ -30,7 +23,9 @@ async function expectNoViolations(page: Page, include?: string) {
   expect(violations.map(({ id, nodes }) => ({ id, targets: nodes.map(({ target }) => target) }))).toEqual([]);
 }
 
-for (const [locale, t, openingTitle] of LOCALES) {
+for (const locale of LOCALES) {
+  const t = dictionaries[locale];
+
   test(`${locale}: 起動画面とスタート画面に axe の違反がない`, async ({ page }) => {
     await page.goto(`/${locale}`);
     await expect(page.getByRole("button", { name: t.start.skip })).toBeVisible();
@@ -43,14 +38,14 @@ for (const [locale, t, openingTitle] of LOCALES) {
 
   test(`${locale}: 最初に見せるカードの提示に axe の違反がない`, async ({ page }) => {
     await page.goto(`/${locale}/play`);
-    await expect(page.getByRole("region", { name: openingTitle })).toBeVisible();
+    await expect(page.getByRole("region", { name: openingTitle(locale) })).toBeVisible();
 
     await expectNoViolations(page);
   });
 
   test(`${locale}: プレイ中・ギブアップの確認・結果に axe の違反がない`, async ({ page }) => {
     await page.goto(`/${locale}/play`);
-    await expect(page.getByRole("region", { name: openingTitle })).toBeVisible();
+    await expect(page.getByRole("region", { name: openingTitle(locale) })).toBeVisible();
     await page.keyboard.press("Enter");
 
     const input = page.getByRole("textbox", { name: t.input.label });
