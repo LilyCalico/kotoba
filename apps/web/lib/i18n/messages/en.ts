@@ -1,19 +1,34 @@
+// E2E の型検査ではこのファイルが CommonJS として扱われるため、ESM の shared を ESM として解決させる。
+import type { GameMode } from "@kotoba/shared" with { "resolution-mode": "import" };
+
+/** 遊び方で変わる文言。遊び方が増えたら、ここで抜けを型検査が見つける。 */
+type ByMode = Record<GameMode, string>;
+
 /**
  * 英語の UI の文言。この形がそのまま `Messages` の型になり、ほかの言語の辞書は同じ形で書く。
  * 値を取る文言は関数にし、言語ごとに語順や数の書き方を変えられるようにする。
- * E2E からも読み込むため、ほかのモジュールを読み込まない。
+ * 遊び方で変わる文言は、`GameMode` の値（`guess_word`・`guess_meaning`）をキーにして、どの言語でも両方の遊び方を持つ。
+ * E2E からも読み込むため、ほかのモジュールは型だけを読み込む。
  */
 export const en = {
   /** ページの説明と、サイト名の前に付ける各ページのタイトル */
   metadata: {
-    description:
-      "Ask yes-or-no questions to uncover a Swedish word for a feeling you've never been able to name.",
+    description: {
+      guess_word: "Ask yes-or-no questions to uncover a Swedish word for a feeling you've never been able to name.",
+      guess_meaning: "See a Swedish word and ask yes-or-no questions to uncover what it means.",
+    } satisfies ByMode,
     playTitle: "Play",
   },
   start: {
     skip: "Skip",
-    heading: "A word for a feeling you’ve never named",
-    lead: "Somewhere in Swedish it exists. Ask yes-or-no questions to uncover it.",
+    heading: {
+      guess_word: "A word for a feeling you’ve never named",
+      guess_meaning: "What feeling does this word name?",
+    } satisfies ByMode,
+    lead: {
+      guess_word: "Somewhere in Swedish it exists. Ask yes-or-no questions to uncover it.",
+      guess_meaning: "You'll get a Swedish word. Ask yes-or-no questions and guess what it means.",
+    } satisfies ByMode,
     startGame: "Start a game",
   },
   header: {
@@ -21,13 +36,19 @@ export const en = {
   },
   giveUpDialog: {
     title: "Give up?",
-    description: "The word and its meaning will be revealed, and this round ends.",
+    description: {
+      guess_word: "The word and its meaning will be revealed, and this round ends.",
+      guess_meaning: "The meaning will be revealed, and this round ends.",
+    } satisfies ByMode,
     cancel: "Cancel",
     confirm: "Give up",
   },
   input: {
     /** 入力欄のラベル。プレースホルダーにも使う */
-    label: "Ask a question or guess the word",
+    label: {
+      guess_word: "Ask a question or guess the word",
+      guess_meaning: "Ask a question or guess the meaning",
+    } satisfies ByMode,
     send: "Send",
     remaining: (count: number) => `${count} characters left`,
   },
@@ -61,8 +82,14 @@ export const en = {
   },
   unsupportedLanguage: "Please ask in Japanese, English, or Swedish.",
   answerFeedback: {
-    correct: "That's the word!",
-    incorrect: "Not the word this time.",
+    correct: {
+      guess_word: "That's the word!",
+      guess_meaning: "That's the meaning!",
+    } satisfies ByMode,
+    incorrect: {
+      guess_word: "Not the word this time.",
+      guess_meaning: "Not quite the meaning.",
+    } satisfies ByMode,
   },
   pending: {
     title: "Thinking…",
@@ -87,10 +114,16 @@ export const en = {
     title: (index: number, total: number) => `Hint ${index} of ${total}`,
   },
   result: {
-    /** 結果のウィンドウの見出し。`Outcome` の値で引く */
+    /** 結果のウィンドウの見出し。`Outcome` の値と遊び方で引く */
     heading: {
-      cleared: "You found it",
-      gave_up: "The word was",
+      cleared: {
+        guess_word: "You found it",
+        guess_meaning: "You found it",
+      } satisfies ByMode,
+      gave_up: {
+        guess_word: "The word was",
+        guess_meaning: "This word means",
+      } satisfies ByMode,
     },
     /** 品詞のラベル。`PartOfSpeech` の値で引く */
     partOfSpeech: {

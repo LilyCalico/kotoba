@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { type Page, expect, test } from "./fixtures.js";
 
+import { gameModeFor } from "../../apps/web/lib/game/mode.js";
 import { type Locale, dictionaries, openingTitle } from "./locales.js";
 
 /** 検証する UI 言語。どの画面も両方の言語で確かめる。 */
@@ -48,7 +49,7 @@ for (const locale of LOCALES) {
     await expect(page.getByRole("region", { name: openingTitle(locale) })).toBeVisible();
     await page.keyboard.press("Enter");
 
-    const input = page.getByRole("textbox", { name: t.input.label });
+    const input = page.getByRole("textbox", { name: t.input.label[gameModeFor(locale)] });
     await input.fill("Is it a feeling?");
     await input.press("Enter");
     await expect(page.getByText(t.pending.title)).toHaveCount(0);
@@ -68,7 +69,7 @@ for (const locale of LOCALES) {
     await dialog.getByRole("button", { name: t.header.giveUp }).click();
     // 閉じる途中の覆いが残っていると、その下の文字のコントラストを測ってしまうため、消えきるのを待つ。
     await expect(dialog).toHaveCount(0);
-    await expect(page.getByRole("region", { name: t.result.heading.gave_up })).toBeVisible();
+    await expect(page.getByRole("region", { name: t.result.heading.gave_up[gameModeFor(locale)] })).toBeVisible();
     await expectNoViolations(page);
   });
 }

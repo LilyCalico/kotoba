@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { useState } from "react";
 import { expect, fn, userEvent, within } from "storybook/test";
 import { InputForm } from "@/components/game/input-form";
-import { storyMessages } from "@/lib/i18n/story-locale";
+import { storyGameMode, storyMessages } from "@/lib/i18n/story-locale";
 
 const meta = {
   title: "Game/InputForm",
@@ -57,7 +57,7 @@ export const AtLimit: Story = {
   play: async ({ canvasElement, globals }) => {
     const t = storyMessages(globals);
     const canvas = within(canvasElement);
-    const input = canvas.getByRole("textbox", { name: t.input.label });
+    const input = canvas.getByRole("textbox", { name: t.input.label[storyGameMode(globals)] });
 
     await userEvent.type(input, "b");
 
@@ -75,7 +75,7 @@ export const WhitespaceOnly: Story = {
   play: async ({ args, canvasElement, globals }) => {
     const t = storyMessages(globals);
     const canvas = within(canvasElement);
-    const input = canvas.getByRole("textbox", { name: t.input.label });
+    const input = canvas.getByRole("textbox", { name: t.input.label[storyGameMode(globals)] });
 
     await userEvent.type(input, "   {Enter}");
 
@@ -90,7 +90,7 @@ export const Submit: Story = {
     const t = storyMessages(globals);
     const canvas = within(canvasElement);
 
-    await userEvent.type(canvas.getByRole("textbox", { name: t.input.label }), "  Is it a noun?  {Enter}");
+    await userEvent.type(canvas.getByRole("textbox", { name: t.input.label[storyGameMode(globals)] }), "  Is it a noun?  {Enter}");
 
     await expect(args.onSubmit).toHaveBeenCalledWith("Is it a noun?");
   },

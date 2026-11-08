@@ -6,7 +6,7 @@ import { ResultCard } from "@/components/game/result-card";
 import { Button } from "@/components/ui/button";
 import { fixtureWord } from "@/lib/game/fixtures";
 import { useLocale } from "@/lib/i18n/locale-context";
-import { storyMessages } from "@/lib/i18n/story-locale";
+import { storyGameMode, storyMessages } from "@/lib/i18n/story-locale";
 
 /** モックの単語の結果を、ツールバーで選んだ言語で組んで描く。日本語では読みが付く。 */
 function WordResultCard({
@@ -76,6 +76,6 @@ export const FocusHeading: Story = {
 
     await userEvent.click(canvas.getByRole("button", { name: "Focus the heading" }));
 
-    await expect(canvas.getByRole("heading", { name: storyMessages(globals).result.heading.cleared })).toHaveFocus();
+    await expect(canvas.getByRole("heading", { name: storyMessages(globals).result.heading.cleared[storyGameMode(globals)] })).toHaveFocus();
   },
 };

@@ -8,6 +8,7 @@ import { useId } from "react";
 import { LabelPill } from "@/components/game/label-pill";
 import { cardAppear, stickerStick } from "@/components/game/motion";
 import { WINDOW_TITLE_CLASS, WindowStack, WindowTitleBar } from "@/components/ui/window";
+import { useGameMode } from "@/lib/game/mode-context";
 import { useMessages } from "@/lib/i18n/locale-context";
 
 /**
@@ -26,6 +27,7 @@ export function ResultCard({
   ref?: React.Ref<HTMLHeadingElement>;
 }) {
   const t = useMessages().result;
+  const mode = useGameMode();
   const headingId = useId();
   const { outcome, word, reading, partOfSpeech, definition, literal, note, example } = result;
   const StickerIcon = outcome === "cleared" ? CheckIcon : FlagIcon;
@@ -39,7 +41,7 @@ export function ResultCard({
         >
           <WindowTitleBar tone="result">
             <h2 className={`${WINDOW_TITLE_CLASS} focus-ring`} id={headingId} ref={ref} tabIndex={-1}>
-              {t.heading[outcome]}
+              {t.heading[outcome][mode]}
             </h2>
           </WindowTitleBar>
 
