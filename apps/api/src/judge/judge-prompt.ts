@@ -53,7 +53,7 @@ function describeHistory(history: readonly QaEntry[]): string {
  */
 function languageRules(subject: string): string {
   return `First check the language. The game supports exactly three languages: Japanese, English, and Swedish. Input in any of these three is supported and must be classified as below; for example, "Är det ett djur?" is Swedish and is a supported question. If the input is written in any other language (for example Russian, Chinese, Korean, German, or French), set "kind" to "unsupported_language", even when it is a question about ${subject}. Do not answer it. Two cases are easy to miss:
-- Japanese always uses kana (hiragana or katakana). A sentence written only in Chinese characters with no kana, such as "这个词和天气有关吗？", is Chinese, not Japanese.
+- Japanese always uses kana (hiragana or katakana). A sentence written only in Chinese characters with no kana, such as "这个词和天气有关吗？", is Chinese, not Japanese. Characters such as 这, 吗, 么, 们, and 吧 belong to Chinese and never appear in Japanese. This holds even when the sentence uses words that also exist in Japanese, and even when the information below is written in Japanese.
 - English and Swedish are not the only languages in the Latin alphabet. A sentence such as "Hat es mit dem Wetter zu tun?" is German and "Est-ce lié à la météo ?" is French; both are unsupported. A guess that is just a single word or name is not judged by its language: treat it as "answer", because guesses are often loanwords or words from other languages.`;
 }
 

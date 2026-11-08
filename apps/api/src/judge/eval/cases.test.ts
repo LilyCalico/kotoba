@@ -20,6 +20,16 @@ describe("EVAL_CASES", () => {
     }
   });
 
+  it("意味の正誤のケースの入力は、判定基準の例と重ならない", () => {
+    for (const { category, wordId, input } of EVAL_CASES) {
+      if (category !== "meaning_judge") continue;
+      const word = words.find(({ id }) => id === wordId);
+      if (!word) throw new Error(`${wordId} が seed にない`);
+      const examples = [...word.meaning.accepts, ...word.meaning.rejects].map((example) => example.toLowerCase());
+      expect(examples, `${wordId} / ${input}`).not.toContain(input.toLowerCase());
+    }
+  });
+
   it("どの種類にもケースがあり、救済と意味の正誤には正解と誤答の両方がある", () => {
     const categories = new Set(EVAL_CASES.map(({ category }) => category));
     expect([...categories].sort()).toEqual(Object.keys(PASS_RATE).sort());
