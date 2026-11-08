@@ -48,7 +48,7 @@ const CHAT_INPUTS: Record<UiLocale, readonly string[]> = {
     "朝のこと？",
     "赤い？",
     "値段は高い？",
-    "どういう意味なのか、くわしく教えてもらえませんか",
+    "どういう意味？",
     "ヒュッゲ",
   ],
 };

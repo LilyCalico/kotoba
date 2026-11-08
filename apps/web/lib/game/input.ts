@@ -67,6 +67,12 @@ const YES_NO_STARTERS = [
 /** 答えを言葉で説明させる問いの先頭に立つ語。yes / no では答えられない。 */
 const OPEN_STARTERS = ["how", "what", "when", "where", "which", "who", "whom", "whose", "why"];
 
+/**
+ * 答えを言葉で説明させる日本語の問いに含まれる語。日本語では疑問詞が文頭に立たないため、文のどこにあっても見る。
+ * 「何か」のように yes / no の問いにも現れる形は含めない。
+ */
+const JA_OPEN_WORDS = ["どういう", "どんな", "どうして", "なぜ", "何を", "何が", "何の", "誰"];
+
 const QUESTION_MARKS = ["?", "？"];
 
 /** 疑問符を付けない日本語の問いの文末。「食べ物ですか」「金曜日のことかな」。 */
@@ -94,6 +100,7 @@ function isQuestionShaped(text: string): boolean {
 /** yes / no で答えられる問いの形をとっているか。 */
 function isYesNoQuestion(text: string): boolean {
   if (OPEN_STARTERS.includes(firstWord(text))) return false;
+  if (JA_OPEN_WORDS.some((word) => text.includes(word))) return false;
   return endsLikeQuestion(text) || YES_NO_STARTERS.includes(firstWord(text));
 }
 

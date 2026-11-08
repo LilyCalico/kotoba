@@ -113,6 +113,17 @@ describe("resolveMeaningInput", () => {
     expect(resolveMeaningInput(fredagsmys, text)).toEqual({ kind: "answer", correct: false });
   });
 
+  it("答えを言葉で説明させる日本語の問いには質問の形を促す", () => {
+    expect(resolveMeaningInput(fredagsmys, "どういう意味？")).toEqual({
+      kind: "question",
+      verdict: "not_a_question",
+    });
+    expect(resolveMeaningInput(fredagsmys, "何をする時間ですか")).toEqual({
+      kind: "question",
+      verdict: "not_a_question",
+    });
+  });
+
   it("疑問符のない日本語の問いを質問として扱う", () => {
     for (const text of ["食べ物ですか", "家で過ごしますか", "週末のことでしょうか", "金曜日のことかな"]) {
       expect(resolveMeaningInput(fredagsmys, text)).toMatchObject({ kind: "question" });
