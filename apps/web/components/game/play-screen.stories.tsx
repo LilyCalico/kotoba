@@ -6,9 +6,8 @@ import { toastQueue } from "@/components/ui/toast";
 import { type GameClient, GameClientError, type GameClientErrorCode } from "@/lib/game/client";
 import { fixtureWord } from "@/lib/game/fixtures";
 import { createMockGameClient } from "@/lib/game/mock-client";
-import { gameModeFor } from "@/lib/game/mode";
 import { messages } from "@/lib/i18n/messages";
-import { storyLocale } from "@/lib/i18n/story-locale";
+import { storyGameMode, storyLocale, storyMessages } from "@/lib/i18n/story-locale";
 
 /** 出題する単語。 */
 const fredagsmys = fixtureWord("fredagsmys");
@@ -17,13 +16,13 @@ const fredagsmys = fixtureWord("fredagsmys");
  * 正解の入力。単語当てでは単語そのもの、意味当てでは判定基準の正解の例。
  * モックは意味の言い換えを判定しないため、正解の例と同じ文を送る。
  */
-function answerFor(locale: UiLocale): string {
-  return gameModeFor(locale) === "guess_meaning" ? (fredagsmys.meaning.accepts[0] ?? "") : fredagsmys.word;
+function answerFor(globals: Record<string, unknown>): string {
+  return storyGameMode(globals) === "guess_meaning" ? (fredagsmys.meaning.accepts[0] ?? "") : fredagsmys.word;
 }
 
 /** ゲームの最初に見せるもの。単語当てでは設問、意味当てでは単語。 */
-function openingFor(locale: UiLocale): string {
-  return gameModeFor(locale) === "guess_meaning" ? fredagsmys.word : fredagsmys.teaser[locale];
+function openingFor(globals: Record<string, unknown>): string {
+  return storyGameMode(globals) === "guess_meaning" ? fredagsmys.word : fredagsmys.teaser[storyLocale(globals)];
 }
 
 /** 送信の失敗を確かめる Story で送る質問。 */
@@ -71,14 +70,19 @@ function fail(
   return () => Promise.reject(new GameClientError(code, "モックの失敗", { retryAfterSeconds }));
 }
 
-async function enterChat(locale: UiLocale) {
-  await screen.findByText(openingFor(locale));
-  await userEvent.click(document.body);
-  await screen.findByRole("textbox", { name: messages[locale].input.label[gameModeFor(locale)] });
+/** ツールバーで選んだ言語と遊び方の、入力欄の名前。 */
+function inputLabel(globals: Record<string, unknown>): string {
+  return storyMessages(globals).input.label[storyGameMode(globals)];
 }
 
-async function send(locale: UiLocale, text: string) {
-  const input = await screen.findByRole("textbox", { name: messages[locale].input.label[gameModeFor(locale)] });
+async function enterChat(globals: Record<string, unknown>) {
+  await screen.findByText(openingFor(globals));
+  await userEvent.click(document.body);
+  await screen.findByRole("textbox", { name: inputLabel(globals) });
+}
+
+async function send(globals: Record<string, unknown>, text: string) {
+  const input = await screen.findByRole("textbox", { name: inputLabel(globals) });
   await waitFor(() => expect(input).toBeEnabled());
   await userEvent.type(input, `${text}{Enter}`);
 }
@@ -111,9 +115,9 @@ export const Chat: Story = {
   play: async ({ globals }) => {
     const locale = storyLocale(globals);
     const t = messages[locale];
-    await enterChat(locale);
+    await enterChat(globals);
     for (const input of CHAT_INPUTS[locale]) {
-      await send(locale, input);
+      await send(globals, input);
     }
     await userEvent.click(await screen.findByRole("button", { name: t.hint.buttonLabel(MAX_HINTS) }));
 
@@ -127,10 +131,10 @@ export const Sending: Story = {
   play: async ({ globals }) => {
     const locale = storyLocale(globals);
     const t = messages[locale];
-    await enterChat(locale);
-    await send(locale, QUESTION[locale]);
+    await enterChat(globals);
+    await send(globals, QUESTION[locale]);
 
-    await expect(screen.getByRole("textbox", { name: t.input.label[gameModeFor(locale)] })).toBeDisabled();
+    await expect(screen.getByRole("textbox", { name: t.input.label[storyGameMode(globals)] })).toBeDisabled();
     await expect(screen.getByRole("button", { name: t.hint.buttonLabel(MAX_HINTS) })).toBeDisabled();
   },
 };
@@ -141,8 +145,8 @@ export const SendingSlow: Story = {
   play: async ({ globals }) => {
     const locale = storyLocale(globals);
     const t = messages[locale];
-    await enterChat(locale);
-    await send(locale, QUESTION[locale]);
+    await enterChat(globals);
+    await send(globals, QUESTION[locale]);
 
     await expect(screen.queryByText(t.pending.slow)).not.toBeInTheDocument();
     await expect(await screen.findByText(t.pending.slow, {}, { timeout: 4000 })).toBeVisible();
@@ -154,10 +158,10 @@ export const Cleared: Story = {
   play: async ({ globals }) => {
     const locale = storyLocale(globals);
     const t = messages[locale];
-    await enterChat(locale);
-    await send(locale, answerFor(locale));
+    await enterChat(globals);
+    await send(globals, answerFor(globals));
 
-    await screen.findByRole("heading", { name: t.result.heading.cleared[gameModeFor(locale)] });
+    await screen.findByRole("heading", { name: t.result.heading.cleared[storyGameMode(globals)] });
     await expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
     await expect(screen.getByRole("link", { name: t.play.playAgain })).toHaveAttribute("href", `/${locale}`);
   },
@@ -168,12 +172,12 @@ export const GaveUp: Story = {
   play: async ({ globals }) => {
     const locale = storyLocale(globals);
     const t = messages[locale];
-    await enterChat(locale);
+    await enterChat(globals);
     await userEvent.click(screen.getByRole("button", { name: t.header.giveUp }));
     const dialog = await screen.findByRole("dialog", { name: t.giveUpDialog.title });
     await userEvent.click(within(dialog).getByRole("button", { name: t.giveUpDialog.confirm }));
 
-    await screen.findByRole("heading", { name: t.result.heading.gave_up[gameModeFor(locale)] });
+    await screen.findByRole("heading", { name: t.result.heading.gave_up[storyGameMode(globals)] });
   },
 };
 
@@ -185,11 +189,11 @@ export const InputFailed: Story = {
   play: async ({ globals }) => {
     const locale = storyLocale(globals);
     const t = messages[locale];
-    await enterChat(locale);
-    await send(locale, QUESTION[locale]);
+    await enterChat(globals);
+    await send(globals, QUESTION[locale]);
 
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(t.error.generic));
-    const input = screen.getByRole("textbox", { name: t.input.label[gameModeFor(locale)] });
+    const input = screen.getByRole("textbox", { name: t.input.label[storyGameMode(globals)] });
     await expect(input).toHaveValue(QUESTION[locale]);
     await waitFor(() => expect(input).toHaveFocus());
   },
@@ -201,8 +205,8 @@ export const InputFailedByAi: Story = {
   play: async ({ globals }) => {
     const locale = storyLocale(globals);
     const t = messages[locale];
-    await enterChat(locale);
-    await send(locale, QUESTION[locale]);
+    await enterChat(globals);
+    await send(globals, QUESTION[locale]);
 
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(t.error.aiUnavailable));
   },
@@ -214,8 +218,8 @@ export const InputRateLimited: Story = {
   play: async ({ globals }) => {
     const locale = storyLocale(globals);
     const t = messages[locale];
-    await enterChat(locale);
-    await send(locale, QUESTION[locale]);
+    await enterChat(globals);
+    await send(globals, QUESTION[locale]);
 
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(t.error.aiLimit(37)));
   },
@@ -227,8 +231,8 @@ export const InputRateLimitExceeded: Story = {
   play: async ({ globals }) => {
     const locale = storyLocale(globals);
     const t = messages[locale];
-    await enterChat(locale);
-    await send(locale, QUESTION[locale]);
+    await enterChat(globals);
+    await send(globals, QUESTION[locale]);
 
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(t.error.rateLimit(45)));
   },
@@ -240,7 +244,7 @@ export const HintFailed: Story = {
   play: async ({ globals }) => {
     const locale = storyLocale(globals);
     const t = messages[locale];
-    await enterChat(locale);
+    await enterChat(globals);
     const hint = screen.getByRole("button", { name: t.hint.buttonLabel(MAX_HINTS) });
     await userEvent.click(hint);
 
@@ -274,7 +278,7 @@ export const GiveUpFailed: Story = {
   play: async ({ globals }) => {
     const locale = storyLocale(globals);
     const t = messages[locale];
-    await enterChat(locale);
+    await enterChat(globals);
     await userEvent.click(screen.getByRole("button", { name: t.header.giveUp }));
     const dialog = await screen.findByRole("dialog", { name: t.giveUpDialog.title });
     await userEvent.click(within(dialog).getByRole("button", { name: t.giveUpDialog.confirm }));
@@ -290,8 +294,8 @@ export const Expired: Story = {
   play: async ({ globals }) => {
     const locale = storyLocale(globals);
     const t = messages[locale];
-    await enterChat(locale);
-    await send(locale, QUESTION[locale]);
+    await enterChat(globals);
+    await send(globals, QUESTION[locale]);
 
     await waitFor(() => expect(screen.getByText(t.error.expired)).toHaveFocus());
     await expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
@@ -306,7 +310,7 @@ export const GiveUpExpired: Story = {
   play: async ({ globals }) => {
     const locale = storyLocale(globals);
     const t = messages[locale];
-    await enterChat(locale);
+    await enterChat(globals);
     await userEvent.click(screen.getByRole("button", { name: t.header.giveUp }));
     const dialog = await screen.findByRole("dialog", { name: t.giveUpDialog.title });
     await userEvent.click(within(dialog).getByRole("button", { name: t.giveUpDialog.confirm }));
@@ -323,7 +327,7 @@ export const IgnoredFailure: Story = {
   play: async ({ globals }) => {
     const locale = storyLocale(globals);
     const t = messages[locale];
-    await enterChat(locale);
+    await enterChat(globals);
     const hint = screen.getByRole("button", { name: t.hint.buttonLabel(MAX_HINTS) });
     await userEvent.click(hint);
 
@@ -340,12 +344,12 @@ export const UnsupportedLanguage: Story = {
   play: async ({ globals }) => {
     const locale = storyLocale(globals);
     const t = messages[locale];
-    await enterChat(locale);
-    await send(locale, "Är det mat? 这是食物吗");
+    await enterChat(globals);
+    await send(globals, "Är det mat? 这是食物吗");
 
     await waitFor(() =>
       expect(screen.getByRole("status")).toHaveTextContent(t.unsupportedLanguage),
     );
-    await expect(screen.getByRole("textbox", { name: t.input.label[gameModeFor(locale)] })).toBeEnabled();
+    await expect(screen.getByRole("textbox", { name: t.input.label[storyGameMode(globals)] })).toBeEnabled();
   },
 };
