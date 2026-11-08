@@ -1,6 +1,6 @@
 "use client";
 
-import type { GameStart, StartGameRequest } from "@kotoba/shared";
+import type { GameMode, GameStart, StartGameRequest } from "@kotoba/shared";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useReducer, useRef, useState } from "react";
@@ -44,7 +44,7 @@ import {
   remainingHints,
 } from "@/lib/game/state";
 import { localizedPath } from "@/lib/i18n/locale";
-import { useLocale, useMessages } from "@/lib/i18n/locale-context";
+import { useGameMode, useLocale, useMessages } from "@/lib/i18n/locale-context";
 import type { Messages } from "@/lib/i18n/messages";
 
 /** 最初に見せるカード（設問か単語）の提示から、チャットへ自動で移るまでの時間。 */
@@ -228,6 +228,7 @@ function Chat({
 }) {
   const locale = useLocale();
   const messages = useMessages();
+  const mode = useGameMode();
   const t = messages.play;
   const [text, setText] = useState("");
   const [giveUpOpen, setGiveUpOpen] = useState(false);
@@ -388,7 +389,7 @@ function Chat({
           </motion.div>
         )}
         <div className="sr-only" role="status">
-          {announcement && <p key={announcement.id}>{announcementText(messages, announcement)}</p>}
+          {announcement && <p key={announcement.id}>{announcementText(messages, mode, announcement)}</p>}
         </div>
       </main>
       <div className="shrink-0 pb-[env(safe-area-inset-bottom)]" />
@@ -415,14 +416,14 @@ function ChatItem({ children }: { children: React.ReactNode }) {
 }
 
 /** ライブリージョンで読み上げる文言。ログの要素が画面に出す文言と同じにする。 */
-function announcementText(t: Messages, entry: AnnouncedEntry): string {
+function announcementText(t: Messages, mode: GameMode, entry: AnnouncedEntry): string {
   switch (entry.kind) {
     case "verdict":
       return t.verdict[entry.verdict];
     case "unsupported-language":
       return t.unsupportedLanguage;
     case "answer-feedback":
-      return entry.correct ? t.answerFeedback.correct : t.answerFeedback.incorrect;
+      return (entry.correct ? t.answerFeedback.correct : t.answerFeedback.incorrect)[mode];
     case "error":
       return errorText(t.error, entry.code, entry.retryAfterSeconds);
   }

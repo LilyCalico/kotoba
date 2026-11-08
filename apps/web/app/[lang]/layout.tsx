@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { gameModeFor } from "@/lib/game/mode";
 import { LOCALES, isLocale } from "@/lib/i18n/locale";
 import { messages } from "@/lib/i18n/messages";
 import { crimsonText, japaneseFontVariables, pixelifySans, poppins } from "../fonts";
@@ -17,7 +18,7 @@ export async function generateMetadata({ params }: LayoutProps<"/[lang]">): Prom
       default: "kotoba",
       template: "%s | kotoba",
     },
-    description: messages[lang].metadata.description,
+    description: messages[lang].metadata.description[gameModeFor(lang)],
   };
 }
 

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { remainingLength, validateInput } from "@/lib/game/input";
-import { useMessages } from "@/lib/i18n/locale-context";
+import { useGameMode, useMessages } from "@/lib/i18n/locale-context";
 
 /**
  * 質問と解答を兼ねる単一の入力欄と、四角いキーキャップの送信。
@@ -32,6 +32,7 @@ export function InputForm({
   ref?: React.Ref<HTMLInputElement>;
 }) {
   const t = useMessages().input;
+  const mode = useGameMode();
   const inputId = useId();
   const counterId = useId();
   const canSubmit = !disabled && validateInput(value) === null;
@@ -46,7 +47,7 @@ export function InputForm({
     >
       <Field className="gap-3">
         <FieldLabel className="sr-only" htmlFor={inputId}>
-          {t.label}
+          {t.label[mode]}
         </FieldLabel>
         <div className="flex w-full items-stretch gap-2.5 pr-1">
           <Input
@@ -57,7 +58,7 @@ export function InputForm({
             id={inputId}
             maxLength={MAX_INPUT_LENGTH}
             onChange={(event) => onValueChange(event.target.value)}
-            placeholder={t.label}
+            placeholder={t.label[mode]}
             ref={ref}
             value={value}
           />

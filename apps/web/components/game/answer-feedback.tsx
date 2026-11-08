@@ -2,7 +2,7 @@
 
 import { CircleCheckIcon, CircleSlashIcon } from "lucide-react";
 
-import { useMessages } from "@/lib/i18n/locale-context";
+import { useGameMode, useMessages } from "@/lib/i18n/locale-context";
 
 /**
  * 解答の正誤。塗りも枠も持たない、アイコン付きの文字にする。
@@ -16,6 +16,7 @@ export function AnswerFeedback({
   ref?: React.Ref<HTMLParagraphElement>;
 }) {
   const t = useMessages().answerFeedback;
+  const mode = useGameMode();
   const Icon = correct ? CircleCheckIcon : CircleSlashIcon;
 
   return (
@@ -25,7 +26,7 @@ export function AnswerFeedback({
       tabIndex={-1}
     >
       <Icon aria-hidden className="size-4 shrink-0" />
-      {correct ? t.correct : t.incorrect}
+      {(correct ? t.correct : t.incorrect)[mode]}
     </p>
   );
 }

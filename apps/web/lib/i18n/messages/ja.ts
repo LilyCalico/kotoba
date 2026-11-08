@@ -1,6 +1,5 @@
 /**
  * 日本語の UI の文言。英語の辞書（`en.ts`）と同じ形で書き、キーの意味はそちらのコメントに従う。
- * 日本語の UI では意味当てで遊ぶため、遊び方の説明・入力欄・正誤のフィードバックは「意味を当てる」前提で書く。
  * 口調は砕けているけれど優しいトーンにし、回答のピルのように一目で読ませる文言は短く保つ。
  * E2E からも読み込むため、ほかのモジュールを読み込まない。
  */
@@ -9,14 +8,22 @@ const NBSP = "\u00a0";
 
 export const ja = {
   metadata: {
-    description:
-      "スウェーデン語の言葉を見て、はい・いいえで答えられる質問をしながら、その意味を探し当てるゲーム。",
+    description: {
+      guess_word: "はい・いいえで答えられる質問をして、名前のなかった気持ちを表すスウェーデン語の言葉を探し当てるゲーム。",
+      guess_meaning: "スウェーデン語の言葉を見て、はい・いいえで答えられる質問をしながら、その意味を探し当てるゲーム。",
+    },
     playTitle: "プレイ",
   },
   start: {
     skip: "スキップ",
-    heading: "その言葉が名づけた気持ちは？",
-    lead: "スウェーデン語の言葉がひとつ出てくるよ。はい・いいえで答えられる質問をして、その意味を当ててみよう。",
+    heading: {
+      guess_word: "名前のなかった気持ちを、ひとことで",
+      guess_meaning: "その言葉が名づけた気持ちは？",
+    },
+    lead: {
+      guess_word: "その言葉はスウェーデン語のどこかにある。はい・いいえで答えられる質問をして、探し当てよう。",
+      guess_meaning: "スウェーデン語の言葉がひとつ出てくるよ。はい・いいえで答えられる質問をして、その意味を当ててみよう。",
+    },
     startGame: "ゲームをはじめる",
   },
   header: {
@@ -24,12 +31,18 @@ export const ja = {
   },
   giveUpDialog: {
     title: "ギブアップする？",
-    description: "答えの意味が出て、このゲームはおしまいになるよ。",
+    description: {
+      guess_word: "答えの言葉と意味が出て、このゲームはおしまいになるよ。",
+      guess_meaning: "答えの意味が出て、このゲームはおしまいになるよ。",
+    },
     cancel: "やめておく",
     confirm: "ギブアップ",
   },
   input: {
-    label: "質問するか、意味を答えてみて",
+    label: {
+      guess_word: "質問するか、言葉を当ててみて",
+      guess_meaning: "質問するか、意味を答えてみて",
+    },
     send: "送信",
     remaining: (count: number) => `あと ${count}${NBSP}文字`,
   },
@@ -59,8 +72,14 @@ export const ja = {
   },
   unsupportedLanguage: "日本語・英語・スウェーデン語で聞いてね。",
   answerFeedback: {
-    correct: "正解、その意味だよ！",
-    incorrect: "惜しい、その意味じゃないみたい。",
+    correct: {
+      guess_word: "正解、その言葉だよ！",
+      guess_meaning: "正解、その意味だよ！",
+    },
+    incorrect: {
+      guess_word: "惜しい、その言葉じゃないみたい。",
+      guess_meaning: "惜しい、その意味じゃないみたい。",
+    },
   },
   pending: {
     title: "考え中…",
@@ -82,8 +101,14 @@ export const ja = {
   },
   result: {
     heading: {
-      cleared: "見つけたね！",
-      gave_up: "この言葉の意味は",
+      cleared: {
+        guess_word: "見つけたね！",
+        guess_meaning: "見つけたね！",
+      },
+      gave_up: {
+        guess_word: "答えはこの言葉",
+        guess_meaning: "この言葉の意味は",
+      },
     },
     partOfSpeech: {
       noun: "名詞",

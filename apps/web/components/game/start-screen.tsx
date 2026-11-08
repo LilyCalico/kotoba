@@ -19,7 +19,7 @@ import {
   markBootSeen,
 } from "@/lib/game/boot";
 import { localizedPath } from "@/lib/i18n/locale";
-import { useLocale, useMessages } from "@/lib/i18n/locale-context";
+import { useGameMode, useLocale, useMessages } from "@/lib/i18n/locale-context";
 
 /** 起動画面の記録先。省略時はブラウザの `sessionStorage`、`null` なら記録しない。 */
 function resolveStorage(storage: BootStorage | null | undefined): BootStorage | null {
@@ -93,6 +93,7 @@ export function StartScreen({
 }) {
   const locale = useLocale();
   const t = useMessages().start;
+  const mode = useGameMode();
   const seen = useSyncExternalStore(
     subscribeNothing,
     () => hasSeenBoot(resolveStorage(storage)),
@@ -194,9 +195,9 @@ export function StartScreen({
                       ref={headingRef}
                       tabIndex={-1}
                     >
-                      {t.heading}
+                      {t.heading[mode]}
                     </h1>
-                    <p className="max-w-[17rem] text-sm leading-relaxed text-muted-foreground">{t.lead}</p>
+                    <p className="max-w-[17rem] text-sm leading-relaxed text-muted-foreground">{t.lead[mode]}</p>
                     <div className="relative mt-2 mr-1 self-stretch">
                       <Link
                         className={buttonVariants({ size: "lg", className: "w-full" })}

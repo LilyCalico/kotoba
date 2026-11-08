@@ -74,11 +74,11 @@ function fail(
 async function enterChat(locale: UiLocale) {
   await screen.findByText(openingFor(locale));
   await userEvent.click(document.body);
-  await screen.findByRole("textbox", { name: messages[locale].input.label });
+  await screen.findByRole("textbox", { name: messages[locale].input.label[gameModeFor(locale)] });
 }
 
 async function send(locale: UiLocale, text: string) {
-  const input = await screen.findByRole("textbox", { name: messages[locale].input.label });
+  const input = await screen.findByRole("textbox", { name: messages[locale].input.label[gameModeFor(locale)] });
   await waitFor(() => expect(input).toBeEnabled());
   await userEvent.type(input, `${text}{Enter}`);
 }
@@ -130,7 +130,7 @@ export const Sending: Story = {
     await enterChat(locale);
     await send(locale, QUESTION[locale]);
 
-    await expect(screen.getByRole("textbox", { name: t.input.label })).toBeDisabled();
+    await expect(screen.getByRole("textbox", { name: t.input.label[gameModeFor(locale)] })).toBeDisabled();
     await expect(screen.getByRole("button", { name: t.hint.buttonLabel(MAX_HINTS) })).toBeDisabled();
   },
 };
@@ -157,7 +157,7 @@ export const Cleared: Story = {
     await enterChat(locale);
     await send(locale, answerFor(locale));
 
-    await screen.findByRole("heading", { name: t.result.heading.cleared });
+    await screen.findByRole("heading", { name: t.result.heading.cleared[gameModeFor(locale)] });
     await expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
     await expect(screen.getByRole("link", { name: t.play.playAgain })).toHaveAttribute("href", `/${locale}`);
   },
@@ -173,7 +173,7 @@ export const GaveUp: Story = {
     const dialog = await screen.findByRole("dialog", { name: t.giveUpDialog.title });
     await userEvent.click(within(dialog).getByRole("button", { name: t.giveUpDialog.confirm }));
 
-    await screen.findByRole("heading", { name: t.result.heading.gave_up });
+    await screen.findByRole("heading", { name: t.result.heading.gave_up[gameModeFor(locale)] });
   },
 };
 
@@ -189,7 +189,7 @@ export const InputFailed: Story = {
     await send(locale, QUESTION[locale]);
 
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(t.error.generic));
-    const input = screen.getByRole("textbox", { name: t.input.label });
+    const input = screen.getByRole("textbox", { name: t.input.label[gameModeFor(locale)] });
     await expect(input).toHaveValue(QUESTION[locale]);
     await waitFor(() => expect(input).toHaveFocus());
   },
@@ -346,6 +346,6 @@ export const UnsupportedLanguage: Story = {
     await waitFor(() =>
       expect(screen.getByRole("status")).toHaveTextContent(t.unsupportedLanguage),
     );
-    await expect(screen.getByRole("textbox", { name: t.input.label })).toBeEnabled();
+    await expect(screen.getByRole("textbox", { name: t.input.label[gameModeFor(locale)] })).toBeEnabled();
   },
 };
