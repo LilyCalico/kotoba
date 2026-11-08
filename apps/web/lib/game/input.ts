@@ -4,7 +4,7 @@ import {
   type Verdict,
   type Word,
   isAcceptedAnswer,
-  normalizeAnswer,
+  matchesNormalized,
 } from "@kotoba/shared";
 
 import { type QaRule, rulesFor } from "./fixtures";
@@ -146,8 +146,7 @@ export function resolveInput(word: Word, text: string): InputResult {
  * 言い換えを核心で判定する AI の代わりはしない。
  */
 export function resolveMeaningInput(word: Word, text: string): InputResult {
-  const normalized = normalizeAnswer(text);
-  if (normalized !== "" && word.meaning.accepts.some((accept) => normalizeAnswer(accept) === normalized)) {
+  if (matchesNormalized(word.meaning.accepts, text)) {
     return { kind: "answer", correct: true };
   }
   return resolveByShape(word, text, MAX_INPUT_LENGTH);
