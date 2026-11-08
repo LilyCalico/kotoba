@@ -17,6 +17,7 @@ const SERIF_CHAR_WIDTH_EM = 0.55;
  * `floating` はゲーム開始時に画面中央に浮かべる様式で、意味を問いかける一文を添える。
  * 単語は 3.5rem で出し、長い単語（Allemansrätten など）はカードの幅に収まるまで小さくする。
  * `pinned` はチャットでヘッダー直下に固定する様式で、単語と読みを 1 行に並べる。単語がカードの幅を超えるときは単語の中で折り返す。
+ * 読みはカタカナのため、UI の言語によらず `lang="ja"` を付ける。
  *
  * 2 つの様式に同じ `layoutId` を渡すと、設問カードと同じく、位置と大きさを保ったまま変形してつなぐ。
  * 文字の大きさは切り替わった時点で新しい様式に移し、位置だけを動かす。
@@ -77,7 +78,9 @@ export function WordCard({
         >
           {word}
         </p>
-        <p className={cn("text-muted-foreground", floating ? "text-base" : "text-sm")}>{reading}</p>
+        <p className={cn("text-muted-foreground", floating ? "text-base" : "text-sm")} lang="ja">
+          {reading}
+        </p>
         {floating && <p className="mt-3.5 font-serif text-xl text-phrase">{t.prompt}</p>}
       </motion.div>
     </motion.section>
