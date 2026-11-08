@@ -16,7 +16,7 @@ const SERIF_CHAR_WIDTH_EM = 0.55;
  * 明朝のスウェーデン語の単語と、その下にカタカナの読みを載せる。設問カードと同じ役割（読ませるもの）の見た目にする。
  * `floating` はゲーム開始時に画面中央に浮かべる様式で、意味を問いかける一文を添える。
  * 単語は 3.5rem で出し、長い単語（Allemansrätten など）はカードの幅に収まるまで小さくする。
- * `pinned` はチャットでヘッダー直下に固定する様式で、単語と読みを 1 行に並べる。
+ * `pinned` はチャットでヘッダー直下に固定する様式で、単語と読みを 1 行に並べる。単語がカードの幅を超えるときは単語の中で折り返す。
  *
  * 2 つの様式に同じ `layoutId` を渡すと、設問カードと同じく、位置と大きさを保ったまま変形してつなぐ。
  * 文字の大きさは切り替わった時点で新しい様式に移し、位置だけを動かす。
@@ -64,7 +64,10 @@ export function WordCard({
         transition={TEASER_LAYOUT_TRANSITION}
       >
         <p
-          className={cn("font-serif leading-none", !floating && "text-[2rem]")}
+          className={cn(
+            "font-serif leading-none",
+            !floating && "min-w-0 text-[2rem] hyphens-auto wrap-break-word",
+          )}
           lang="sv"
           style={
             floating
