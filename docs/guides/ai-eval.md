@@ -57,14 +57,18 @@ AI の判定は呼ぶたびに少し揺れるため、インジェクション�
 ケースごとに 1 行ずつ出し、最後に種類ごとの正答率を出す。外れたケースには期待値を添える。次は出力の例である。
 
 ```text
-gemini-3.5-flash-lite で 65 件を判定する（間隔 6.5 秒）
+gemini-3.5-flash-lite で 122 件を判定する（間隔 6.5 秒）
 ✓ [rescue] lagom "laagom" → answer / correct
 ✗ [verdict] mysig "Does everyone ..." → question / yes（期待: question / unclear or no）
+✓ [meaning_judge] lagom "いい塩梅" → answer / correct
 ...
 ✓ classification: 17 / 17（100%、基準 90%）
 ✗ verdict: 16 / 19（84%、基準 90%）
 ✓ rescue: 19 / 19（100%、基準 90%）
 ✓ injection: 10 / 10（100%、基準 100%）
+✓ meaning_classification: 20 / 20（100%、基準 90%）
+✓ meaning_judge: 28 / 29（97%、基準 90%）
+✓ meaning_injection: 8 / 8（100%、基準 100%）
 ```
 
 どれかの種類が基準に届かなければ終了コード 1 で終わる。CI では同じ内容を Markdown の表にして、ジョブの概要（Summary）に書き出す。
@@ -87,8 +91,8 @@ gemini-3.5-flash-lite で 65 件を判定する（間隔 6.5 秒）
 
 - 期待値は、単語の定義から誰が見ても決まるものだけにする
 - `rescue` の入力は、コードの正規化マッチで正解にならない表記にする。正規化で揃う表記は AI に回らないため、救済を測れない。`cases.test.ts` が確かめる
-- `meaning_judge` の正解のケースには、判定基準の例（`meaning.accepts`）にない言い回しを入れる。例と同じ言い回しだけでは、核心で判定できているかを測れない
-- 意味を確かめる質問（「〜って意味？」）は意味当てでは解答になる。分類のケースで質問として期待しない
+- `meaning_judge` の入力は、判定基準の例（`meaning.accepts`・`meaning.rejects`）とプロンプトの規則の本文（`judge-prompt.ts`）にある例を避け、核心やその例と語を共有しない言い回しにする。プロンプトに載っている文では、核心で判定できているかを測れない。例と完全に一致しないことは `cases.test.ts` が確かめる
+- 意味を確かめる質問（「〜って意味？」「〜のこと？」）は意味当てでは解答になる。意味当ての分類で質問として期待するケースは、「〜に関係ある？」「〜について使う言葉？」のように、意味を確かめる形に読めない言い方にする
 - 前の回答との一貫性を測るときは `history` に Q&A 履歴を渡す
 - 足したら `pnpm test` で `cases.test.ts` を通してから、`pnpm eval -- --category <種類>` で流す
 
