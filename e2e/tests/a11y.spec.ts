@@ -1,14 +1,10 @@
 import AxeBuilder from "@axe-core/playwright";
 import { type Page, expect, test } from "./fixtures.js";
 
-import { en } from "../../apps/web/lib/i18n/messages/en.js";
-import { ja } from "../../apps/web/lib/i18n/messages/ja.js";
+import { type Locale, dictionaries, openingTitle } from "./locales.js";
 
-/** 検証する UI 言語と、その言語の辞書。どの画面も両方の言語で確かめる。 */
-const LOCALES = [
-  ["en", en],
-  ["ja", ja],
-] as const;
+/** 検証する UI 言語。どの画面も両方の言語で確かめる。 */
+const LOCALES: readonly Locale[] = ["en", "ja"];
 
 /** 検証する WCAG の達成基準。2.2 の AA までを対象にする。 */
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
@@ -27,7 +23,9 @@ async function expectNoViolations(page: Page, include?: string) {
   expect(violations.map(({ id, nodes }) => ({ id, targets: nodes.map(({ target }) => target) }))).toEqual([]);
 }
 
-for (const [locale, t] of LOCALES) {
+for (const locale of LOCALES) {
+  const t = dictionaries[locale];
+
   test(`${locale}: 起動画面とスタート画面に axe の違反がない`, async ({ page }) => {
     await page.goto(`/${locale}`);
     await expect(page.getByRole("button", { name: t.start.skip })).toBeVisible();
@@ -38,16 +36,16 @@ for (const [locale, t] of LOCALES) {
     await expectNoViolations(page);
   });
 
-  test(`${locale}: 設問の提示に axe の違反がない`, async ({ page }) => {
+  test(`${locale}: 最初に見せるカードの提示に axe の違反がない`, async ({ page }) => {
     await page.goto(`/${locale}/play`);
-    await expect(page.getByRole("region", { name: t.teaser.title })).toBeVisible();
+    await expect(page.getByRole("region", { name: openingTitle(locale) })).toBeVisible();
 
     await expectNoViolations(page);
   });
 
   test(`${locale}: プレイ中・ギブアップの確認・結果に axe の違反がない`, async ({ page }) => {
     await page.goto(`/${locale}/play`);
-    await expect(page.getByRole("region", { name: t.teaser.title })).toBeVisible();
+    await expect(page.getByRole("region", { name: openingTitle(locale) })).toBeVisible();
     await page.keyboard.press("Enter");
 
     const input = page.getByRole("textbox", { name: t.input.label });

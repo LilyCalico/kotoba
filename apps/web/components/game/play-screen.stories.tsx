@@ -6,11 +6,25 @@ import { toastQueue } from "@/components/ui/toast";
 import { type GameClient, GameClientError, type GameClientErrorCode } from "@/lib/game/client";
 import { fixtureWord } from "@/lib/game/fixtures";
 import { createMockGameClient } from "@/lib/game/mock-client";
+import { gameModeFor } from "@/lib/game/mode";
 import { messages } from "@/lib/i18n/messages";
 import { storyLocale } from "@/lib/i18n/story-locale";
 
 /** 出題する単語。 */
 const fredagsmys = fixtureWord("fredagsmys");
+
+/**
+ * 正解の入力。単語当てでは単語そのもの、意味当てでは判定基準の正解の例。
+ * モックは意味の言い換えを判定しないため、正解の例と同じ文を送る。
+ */
+function answerFor(locale: UiLocale): string {
+  return gameModeFor(locale) === "guess_meaning" ? (fredagsmys.meaning.accepts[0] ?? "") : fredagsmys.word;
+}
+
+/** ゲームの最初に見せるもの。単語当てでは設問、意味当てでは単語。 */
+function openingFor(locale: UiLocale): string {
+  return gameModeFor(locale) === "guess_meaning" ? fredagsmys.word : fredagsmys.teaser[locale];
+}
 
 /** 送信の失敗を確かめる Story で送る質問。 */
 const QUESTION: Record<UiLocale, string> = {
@@ -33,7 +47,7 @@ const CHAT_INPUTS: Record<UiLocale, readonly string[]> = {
     "朝のこと？",
     "赤い？",
     "値段は高い？",
-    "どういう意味なのか、くわしく教えてもらえませんか",
+    "どういう意味？",
     "ヒュッゲ",
   ],
 };
@@ -58,7 +72,7 @@ function fail(
 }
 
 async function enterChat(locale: UiLocale) {
-  await screen.findByText(fredagsmys.teaser[locale]);
+  await screen.findByText(openingFor(locale));
   await userEvent.click(document.body);
   await screen.findByRole("textbox", { name: messages[locale].input.label });
 }
@@ -89,7 +103,7 @@ export const Starting: Story = {
   args: { client: mockClient({ startGame: never }) },
 };
 
-/** 設問の提示。3 秒で、または Enter / Space / クリックでチャットへ移る。 */
+/** 最初に見せるもの（英語は設問、日本語は単語）の提示。3 秒で、または Enter / Space / クリックでチャットへ移る。 */
 export const Teaser: Story = {};
 
 /** 5 値の回答、誤答、ヒントを 1 つずつ積んだチャット。 */
@@ -141,7 +155,7 @@ export const Cleared: Story = {
     const locale = storyLocale(globals);
     const t = messages[locale];
     await enterChat(locale);
-    await send(locale, fredagsmys.word);
+    await send(locale, answerFor(locale));
 
     await screen.findByRole("heading", { name: t.result.heading.cleared });
     await expect(screen.queryByRole("textbox")).not.toBeInTheDocument();

@@ -18,9 +18,11 @@ import { PlayerMessage } from "@/components/game/player-message";
 import { ResultCard } from "@/components/game/result-card";
 import { TeaserCard } from "@/components/game/teaser-card";
 import { UnsupportedLanguageMessage, VerdictMessage } from "@/components/game/verdict-message";
+import { WordCard } from "@/components/game/word-card";
 import { buttonVariants } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { createApiGameClient } from "@/lib/game/api-client";
+import { gameModeFor } from "@/lib/game/mode";
 import { type GameClient, GameClientError } from "@/lib/game/client";
 import {
   type PlayedWordsStorage,
@@ -32,6 +34,7 @@ import {
   type AnnouncedEntry,
   type ChatEntry,
   type GameAction,
+  type GameOpening,
   type GameState,
   createGameState,
   failureKind,
@@ -44,20 +47,34 @@ import { localizedPath } from "@/lib/i18n/locale";
 import { useLocale, useMessages } from "@/lib/i18n/locale-context";
 import type { Messages } from "@/lib/i18n/messages";
 
-/** 設問の提示からチャットへ自動で移るまでの時間。 */
+/** 最初に見せるカード（設問か単語）の提示から、チャットへ自動で移るまでの時間。 */
 export const TEASER_DURATION_MS = 3000;
 
 /** 入力欄の置き場所。skip link の飛び先になる。 */
 const PLAYER_INPUT_ID = "player-input";
 
-/** 設問の提示とチャットの設問カードをつなぐ共有レイアウトの名前。 */
-const TEASER_LAYOUT_ID = "teaser";
+/** 最初に見せるカード（設問か単語）の提示と、チャットのそのカードをつなぐ共有レイアウトの名前。 */
+const OPENING_LAYOUT_ID = "opening";
 
 type PlayAction = GameAction | { type: "started"; start: GameStart };
 
 /** 出題済み単語の記録先。省略時はブラウザの `localStorage`、`null` なら記録しない。 */
 function resolveStorage(storage: PlayedWordsStorage | null | undefined): PlayedWordsStorage | null {
   return storage === undefined ? getBrowserStorage() : storage;
+}
+
+/** 最初に見せるカード。単語当ては設問カード、意味当ては単語カード。 */
+function OpeningCard({ opening, variant }: { opening: GameOpening; variant: "floating" | "pinned" }) {
+  return opening.mode === "guess_meaning" ? (
+    <WordCard
+      layoutId={OPENING_LAYOUT_ID}
+      reading={opening.reading}
+      variant={variant}
+      word={opening.word}
+    />
+  ) : (
+    <TeaserCard layoutId={OPENING_LAYOUT_ID} teaser={opening.teaser} variant={variant} />
+  );
 }
 
 /** `startGame` の応答を待つ間は `null`。応答が届いたら `gameReducer` に委ねる。 */
@@ -74,7 +91,8 @@ export function PlayScreen() {
 
 /**
  * ゲーム 1 周の画面。描画した時点で新しいゲームを始め、画面を離れるとゲームは破棄される。
- * 設問の提示とチャットの 2 状態をとり、設問の提示は 3 秒で、または Enter / Space / クリックで即座にチャットへ移る。
+ * 最初に見せるカード（単語当ては設問、意味当ては単語）の提示とチャットの 2 状態をとり、
+ * 提示は 3 秒で、または Enter / Space / クリックで即座にチャットへ移る。
  *
  * 答えを見た単語（クリアかギブアップで届いた `wordId`）を `storage` に記録し、次のゲームの開始で
  * `excludeWordIds` として送る。`storage` を省略するとブラウザの `localStorage` を使い、`null` なら記録しない。
@@ -101,6 +119,7 @@ export function GameScreen({
     const request: StartGameRequest = {
       language: "sv",
       locale,
+      mode: gameModeFor(locale),
       excludeWordIds: excludedWordIds(resolveStorage(storage)),
     };
     client.startGame(request).then(
@@ -144,7 +163,7 @@ export function GameScreen({
 
     // 自動で移るときも操作で移るときも、フォーカスは動かさない。
     const enterChat = () => dispatch({ type: "chat-entered" });
-    // Tab やスクリーンリーダーの操作キーで、設問を読む前に進まないよう Enter と Space に絞る。
+    // Tab やスクリーンリーダーの操作キーで、カードを読む前に進まないよう Enter と Space に絞る。
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.repeat || (event.key !== "Enter" && event.key !== " ")) return;
       event.preventDefault();
@@ -171,7 +190,7 @@ export function GameScreen({
             <h1 className="sr-only">kotoba</h1>
             {game ? (
               <>
-                <TeaserCard layoutId={TEASER_LAYOUT_ID} teaser={game.teaser} variant="floating" />
+                <OpeningCard opening={game.opening} variant="floating" />
                 <p className="sr-only">{t.teaserInstruction}</p>
               </>
             ) : (
@@ -189,7 +208,7 @@ export function GameScreen({
 }
 
 /**
- * チャット。上からヘッダー、設問、ログ、ヒントボタンと入力欄を積み、ログだけをスクロールさせる。
+ * チャット。上からヘッダー、最初に見せたカード（設問か単語）、ログ、ヒントボタンと入力欄を積み、ログだけをスクロールさせる。
  * 送信中は入力欄とヒントボタンを押せなくし、終了後は両方を畳む。
  *
  * 新しく確定した回答・正誤フィードバック・失敗はライブリージョンで読み上げる。
@@ -308,10 +327,10 @@ function Chat({
       </motion.div>
       <main className="flex min-h-0 flex-1 flex-col pt-1">
         <div className="shrink-0 px-5">
-          <TeaserCard layoutId={TEASER_LAYOUT_ID} teaser={state.teaser} variant="pinned" />
+          <OpeningCard opening={state.opening} variant="pinned" />
         </div>
         <div
-          // 上端をぼかし、スクロールした要素が設問カードの下へ消えていくように見せる。
+          // 上端をぼかし、スクロールした要素が上のカードの下へ消えていくように見せる。
           className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-5 pt-6 pb-6 [mask-image:linear-gradient(to_bottom,transparent,black_1.5rem)]"
           ref={logRef}
         >

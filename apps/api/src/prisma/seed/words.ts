@@ -38,6 +38,16 @@ const source: Word[] = [
         "It is said to capture this country's own value of never overdoing anything",
       ],
     },
+    meaning: {
+      core: "量や程度が多すぎも少なすぎもせず、ちょうどいいこと。",
+      accepts: ["ちょうどいい", "ほどほど", "過不足ない", "just right"],
+      rejects: ["少なめ", "普通", "控えめ"],
+      hints: [
+        "量や程度について言う言葉で、褒めるときにも使うよ",
+        "コーヒーの量、お風呂の湯加減、部屋の暖かさ——「これがいい」と言いたいときに出てくる",
+        "足りないのでも、やりすぎでもない。そのあいだのいいところ",
+      ],
+    },
     example: {
       sv: "Precis lagom!",
       translations: { ja: "ちょうどいい！", en: "Just right!" },
@@ -73,6 +83,16 @@ const source: Word[] = [
         "An everyday word for time spent in someone else's company",
         "Workplaces schedule it, and colleagues leave their desks to do it together",
         "Coffee and something sweet are essential, and the word doubles as a verb",
+      ],
+    },
+    meaning: {
+      core: "コーヒーやお茶と甘いものを囲んで、人と一緒にとる休憩。",
+      accepts: ["お茶の時間", "コーヒーブレイク", "おやつ休憩", "coffee break"],
+      rejects: ["コーヒー", "お菓子", "ランチ"],
+      hints: [
+        "何かをする時間のことで、名詞にも動詞にもなるよ",
+        "職場でも家でも、午後になると「そろそろしよう」と声がかかる",
+        "飲み物と甘いものを囲んで、手を止めておしゃべりするひととき",
       ],
     },
     example: {
@@ -115,6 +135,16 @@ const source: Word[] = [
         "English has a near equivalent in \"cozy\", but this one leans further toward how it felt inside",
       ],
     },
+    meaning: {
+      core: "温かくて居心地がよく、心がくつろぐ雰囲気であること。",
+      accepts: ["居心地がいい", "心地よい", "ほっこりする", "cozy"],
+      rejects: ["暖かい", "かわいい", "楽しい"],
+      hints: [
+        "場所や時間の雰囲気を言う形容詞だよ",
+        "キャンドルを灯した部屋、雨の日の毛布、友だちと過ごす冬の夜",
+        "ぬくもりがあって、そこにいると気持ちがほどける感じ",
+      ],
+    },
     example: {
       sv: "Vi hade en mysig kväll i soffan.",
       translations: {
@@ -149,6 +179,16 @@ const source: Word[] = [
         "A word for something you do, and it usually happens indoors",
         "It names the act of sinking into the sofa with a warm drink",
         "It is a verb sharing its root with the adjective for a snug atmosphere",
+      ],
+    },
+    meaning: {
+      core: "ぬくぬくと心地よく、くつろいで過ごすこと。",
+      accepts: ["くつろぐ", "まったりする", "ぬくぬく過ごす", "chill"],
+      rejects: ["寝る", "休む", "遊ぶ"],
+      hints: [
+        "何かをすることを表す動詞だよ",
+        "寒い日にブランケットにくるまって、温かい飲み物を手にソファで",
+        "居心地のいい場所で、ぬくぬくとゆっくり過ごすこと",
       ],
     },
     example: {
@@ -186,6 +226,16 @@ const source: Word[] = [
         "The word is tied to one particular day of the week",
         "It means staying in with family or a partner, with snacks bought for the occasion",
         "It is a compound of the name of a day and a word meaning coziness",
+      ],
+    },
+    meaning: {
+      core: "金曜日の夜に、家族や恋人と家でスナックを囲んでくつろいで過ごす習慣。",
+      accepts: ["金曜の夜に家でまったりすること", "金曜の夜のくつろぎタイム", "金曜日に家族と家でのんびり過ごすこと"],
+      rejects: ["週末", "金曜日", "飲み会", "夜更かし"],
+      hints: [
+        "週に一度の、決まった時間の過ごし方のことだよ",
+        "仕事や学校が終わった週末の入り口に、テレビの前にスナックやタコスが並ぶ",
+        "その曜日の夜、家族と家でのんびりくつろぐこと",
       ],
     },
     example: {
@@ -228,6 +278,16 @@ const source: Word[] = [
         "The first half of the word is the name of a small red fruit found in the forest",
       ],
     },
+    meaning: {
+      core: "自分だけ（や親しい人だけ）が知っている、お気に入りの特別な場所。",
+      accepts: ["穴場", "秘密の場所", "とっておきの場所", "隠れ家"],
+      rejects: ["野いちご畑", "公園", "観光地"],
+      hints: [
+        "場所のことを言う言葉だよ",
+        "人に教えたいような、教えたくないような——森の奥のベンチや路地裏の小さなカフェ",
+        "人にあまり知られていない、自分にとってとっておきの場所",
+      ],
+    },
     example: {
       sv: "Jag kan visa dig mitt smultronställe för blåbär.",
       translations: {
@@ -263,6 +323,16 @@ const source: Word[] = [
         "A noun for a sight that appears out in nature",
         "You see it beside a lake or the sea at night, and the weather and the phase of the moon decide whether it is there",
         "It is a compound of something in the sky and the word for a road",
+      ],
+    },
+    meaning: {
+      core: "月の光が水面に映って、道のように伸びて見える光の帯。",
+      accepts: ["水面に映る月の光の道", "月の光の道", "moonlight reflected on water"],
+      rejects: ["月", "月明かり", "夕日"],
+      hints: [
+        "自然の中で見られる光景のことだよ",
+        "晴れた夜、湖や海のほとりに立つと見える",
+        "夜空の明かりが水の上に映って、まっすぐな道みたいに伸びたもの",
       ],
     },
     example: {
@@ -302,6 +372,16 @@ const source: Word[] = [
         "It literally means \"the sun's ___\", likening the flickering to a certain animal",
       ],
     },
+    meaning: {
+      core: "鏡や時計などが日の光を反射して、壁や天井に映る揺れる光の点。",
+      accepts: ["反射した光の点", "光の反射", "鏡で反射した日の光が壁に映ったもの"],
+      rejects: ["猫", "日なた", "木漏れ日"],
+      hints: [
+        "目に見えるけれど、さわれないもののことだよ",
+        "晴れた日の窓辺で、腕時計やスマートフォンを動かすと現れる",
+        "何かに跳ね返された日の光が、壁の上でちらちら動くもの",
+      ],
+    },
     example: {
       sv: "Det dansar en solkatt på väggen från min mobil.",
       translations: {
@@ -339,6 +419,16 @@ const source: Word[] = [
         "A word meaning daybreak is preceded by the name of a bird heard in early summer",
       ],
     },
+    meaning: {
+      core: "早朝に外へ出かけて、鳥のさえずりを聞いて過ごすこと。",
+      accepts: ["早起きして鳥の声を聞きに行くこと", "朝の鳥のさえずりを楽しむこと", "going out at dawn to hear the birds"],
+      rejects: ["早起き", "散歩", "バードウォッチング"],
+      hints: [
+        "何かをしに出かけること、またその習慣のことだよ",
+        "春から初夏の、まだ人の少ない朝の森や公園で",
+        "朝早く外へ出て、耳をすませて楽しむこと",
+      ],
+    },
     example: {
       sv: "Han gav sig av till skogen för gökotta.",
       translations: {
@@ -373,6 +463,16 @@ const source: Word[] = [
         "It describes how you spend one particular stretch at the end of the day",
         "You stay in a room as it grows dark, leaving the lamps off",
         "It is two words: a verb meaning to huddle, and a noun meaning twilight",
+      ],
+    },
+    meaning: {
+      core: "夕暮れどきに明かりをつけないまま、薄暗い中で静かに過ごすこと。",
+      accepts: ["夕暮れに電気をつけずにぼんやりすること", "日暮れの薄闇の中でくつろぐこと", "sitting in the twilight without lights"],
+      rejects: ["夕焼け", "昼寝", "停電"],
+      hints: [
+        "何かをして過ごすことを表す言い回しだよ",
+        "日が落ちていく時間、窓の外がだんだん暗くなっていく部屋で",
+        "暗くなっていくのに、あえて明かりをつけずにじっと過ごすこと",
       ],
     },
     example: {
@@ -416,6 +516,16 @@ const source: Word[] = [
         "It joins a preposition meaning \"on\" with a word for a small drop",
       ],
     },
+    meaning: {
+      core: "コーヒーのおかわり（2 杯目のコーヒー）。",
+      accepts: ["おかわり", "2 杯目のコーヒー", "refill"],
+      rejects: ["コーヒー", "3 杯目のコーヒー", "お茶"],
+      hints: [
+        "飲み物にかかわる言葉だよ",
+        "カフェで 1 杯飲み終わったあと、カップを差し出して",
+        "同じ飲み物を、もう 1 杯",
+      ],
+    },
     example: {
       sv: "Är det någon som vill ha påtår?",
       translations: {
@@ -451,6 +561,16 @@ const source: Word[] = [
         "A noun about a drink, tied to a particular number",
         "You use it when a long meeting or chat calls for yet another top-up of coffee",
         "It joins the number three with a word for a small drop",
+      ],
+    },
+    meaning: {
+      core: "コーヒーのおかわりのさらにおかわり。3 杯目のコーヒー。",
+      accepts: ["3 杯目のコーヒー", "おかわりのおかわり", "second refill"],
+      rejects: ["おかわり", "2 杯目のコーヒー", "コーヒー"],
+      hints: [
+        "飲み物にかかわる言葉だよ",
+        "長いおしゃべりが続いて、カップが空くたびに注ぎ足して",
+        "1 杯目でも 2 杯目でもない、そのもう 1 杯",
       ],
     },
     example: {
@@ -494,6 +614,16 @@ const source: Word[] = [
         "It is a compound of the name of a weekend day and a word for sweets",
       ],
     },
+    meaning: {
+      core: "土曜日にだけ食べるお菓子。また、お菓子を土曜日まで取っておく習慣。",
+      accepts: ["土曜日のお菓子", "週に一度だけ食べるお菓子", "土曜日にお菓子を食べる習慣"],
+      rejects: ["お菓子", "週末", "ご褒美"],
+      hints: [
+        "食べもの、またそれにまつわる習慣のことだよ",
+        "スーパーの量り売りの棚の前で、子どもたちが袋を手に真剣に選んでいる",
+        "平日はがまんして、週に一度の決まった日にだけ楽しむ甘いもの",
+      ],
+    },
     example: {
       sv: "Mitt bästa lördagsgodis är lösgodiset som man väger upp själv på ICA.",
       translations: {
@@ -529,6 +659,16 @@ const source: Word[] = [
         "A noun for a particular day on the calendar",
         "It is the excuse for dinner out or a drink, even though it is a weekday",
         "It joins a word meaning \"little\" with the name of a weekend day",
+      ],
+    },
+    meaning: {
+      core: "週の真ん中の水曜日を、少しだけ週末気分で楽しむ日として呼ぶ言い方。",
+      accepts: ["水曜日", "小さな週末", "週の真ん中のちょっとしたお楽しみの日"],
+      rejects: ["週末", "土曜日", "休日"],
+      hints: [
+        "曜日や日にまつわる言葉だよ",
+        "週末はまだ遠いけれど、ちょっといいご飯やお酒を楽しむ人がいる",
+        "週の真ん中にある、小さな週末みたいな日",
       ],
     },
     example: {
@@ -572,6 +712,16 @@ const source: Word[] = [
         "It shortens and joins words meaning \"together\" and \"to live\"",
       ],
     },
+    meaning: {
+      core: "結婚せずに一緒に暮らしているパートナー。",
+      accepts: ["同棲相手", "事実婚のパートナー", "内縁の相手", "cohabiting partner"],
+      rejects: ["夫", "妻", "恋人", "ルームメイト"],
+      hints: [
+        "人を指す言葉だよ",
+        "書類や役所の手続きにも出てくる、正式な呼び名でもある",
+        "指輪は交わしていないけれど、同じ家で暮らしている相手",
+      ],
+    },
     example: {
       sv: "Man behöver inte gifta sig – även som sambo har man rättigheter enligt lag.",
       translations: {
@@ -607,6 +757,16 @@ const source: Word[] = [
         "A noun for someone you are in a relationship with",
         "You use it for a partner who lives far away, or when neither wants to give up their own home",
         "It shortens and joins words meaning \"apart\" and \"to live\"",
+      ],
+    },
+    meaning: {
+      core: "恋人同士でありながら、別々の家に暮らしているパートナー。",
+      accepts: ["別々に暮らす恋人", "別居しているパートナー", "遠距離の恋人"],
+      rejects: ["恋人", "元恋人", "同棲相手"],
+      hints: [
+        "人を指す言葉だよ",
+        "どちらも自分の家を手放さず、週末だけ行き来する二人もいる",
+        "付き合っているけれど、一緒には住んでいない相手",
       ],
     },
     example: {
@@ -649,6 +809,16 @@ const source: Word[] = [
         "It turns the initials of the allowance for caring for a sick child into a verb",
       ],
     },
+    meaning: {
+      core: "子どもの看病のために、手当を受けて仕事を休むこと。",
+      accepts: ["子どもの看病で仕事を休む", "看護休暇をとる", "子どもが病気で会社を休む"],
+      rejects: ["仕事を休む", "育児休暇", "在宅勤務"],
+      hints: [
+        "何かをすることを表す動詞だよ",
+        "朝、子どもが熱を出したとき、職場にこの一語だけ送れば事情が伝わる",
+        "家族の具合が悪くて、そのために仕事を休むこと",
+      ],
+    },
     example: {
       sv: "Jag måste vabba i dag, min dotter har feber.",
       translations: {
@@ -687,6 +857,16 @@ const source: Word[] = [
         "A verb about a way of working",
         "You use it when your child is ill but there is work you simply cannot drop",
         "It blends the verb for staying home with a sick child and the verb meaning \"to work\"",
+      ],
+    },
+    meaning: {
+      core: "子どもの看病をしながら、家で仕事をすること。",
+      accepts: ["看病しながら在宅勤務する", "子どもを看ながらリモートワークする"],
+      rejects: ["在宅勤務", "子どもの看病で仕事を休む", "育児"],
+      hints: [
+        "何かをすることを表す動詞で、2 つの語を混ぜた造語だよ",
+        "熱を出した子どもの横で、ノートパソコンを開いて",
+        "休むわけでも、出社するわけでもない。家で 2 つのことを同時にこなす",
       ],
     },
     example: {
@@ -730,6 +910,16 @@ const source: Word[] = [
         "It is a compound of the name of a season and a word for a cottage",
       ],
     },
+    meaning: {
+      core: "夏を過ごすための、湖畔や森にある小さな別荘。",
+      accepts: ["夏の別荘", "サマーハウス", "夏用のコテージ"],
+      rejects: ["別荘", "家", "キャンプ場"],
+      hints: [
+        "建物にまつわる言葉だよ",
+        "赤い壁に白い窓枠で、湖のそばや森の中に建っていることが多い",
+        "一年の決まった季節に、家族で長く過ごすための小さな家",
+      ],
+    },
     example: {
       sv: "När jag var liten älskade jag att vara i farfars sommarstuga på sommarlovet.",
       translations: {
@@ -769,6 +959,16 @@ const source: Word[] = [
         "A noun to do with law and how society works",
         "It is the reason you can camp in someone else's forest, or pick the berries and mushrooms there",
         "It is a compound of words meaning \"everyone\" and \"right\"",
+      ],
+    },
+    meaning: {
+      core: "誰でも他人の土地の森や湖に立ち入り、歩いたりキャンプしたり、ベリーを摘んだりできる権利。",
+      accepts: ["自然享受権", "誰でも自然を自由に利用できる権利", "他人の土地でも森を歩ける権利", "right to roam"],
+      rejects: ["人権", "土地の所有権", "キャンプ"],
+      hints: [
+        "決まりや権利にまつわる言葉だよ",
+        "柵のない森でテントを張ったり、湖で泳いだり、ベリーを摘んだりするときに",
+        "持ち主でなくても、みんなが自然の中に入って楽しんでいいこと",
       ],
     },
     example: {
@@ -812,6 +1012,16 @@ const source: Word[] = [
         "It literally means \"a ___'s nap\", naming a bird known for crowing at dawn",
       ],
     },
+    meaning: {
+      core: "短くて気持ちのいいうたた寝。時間帯は問わない。",
+      accepts: ["うたた寝", "仮眠", "ちょっとした昼寝", "nap"],
+      rejects: ["睡眠", "夜ふかし", "目を閉じること"],
+      hints: [
+        "何かをすること、またはその時間のことだよ",
+        "ソファで、電車の中で、ランチのあとの少しのあいだに",
+        "深く眠るほどではない、短くて気持ちのいい眠り",
+      ],
+    },
     example: {
       sv: "Jag är trött, så jag vill ta en tupplur när jag kommer hem.",
       translations: {
@@ -848,6 +1058,16 @@ const source: Word[] = [
         "Where English needs \"close\" plus \"eyes\", this does it in one word",
       ],
     },
+    meaning: {
+      core: "目を閉じること。",
+      accepts: ["目をつぶる", "目を閉じる", "まぶたを閉じる", "close one's eyes"],
+      rejects: ["まばたき", "見る", "ウインク"],
+      hints: [
+        "体を使ってすることを表す動詞だよ",
+        "かくれんぼで数を数えるとき、まぶしいとき、ちょっとひと休みするとき",
+        "顔のある部分を動かすだけの、ほんの小さな動作",
+      ],
+    },
     example: {
       sv: "Blunda en sekund.",
       translations: {
@@ -882,6 +1102,16 @@ const source: Word[] = [
         "A verb to do with time",
         "You use it when asking whether you'll catch the train or finish before the deadline",
         "It covers both \"to make it in time\" and \"to have time to do\" in one word",
+      ],
+    },
+    meaning: {
+      core: "時間内に間に合うこと。また、何かをするだけの時間があること。",
+      accepts: ["間に合う", "時間がある", "時間内にできる", "make it in time"],
+      rejects: ["急ぐ", "遅れる", "暇"],
+      hints: [
+        "何かができるかどうかを言う動詞だよ",
+        "電車の発車時刻や締め切りの前に、時計を見ながら",
+        "決まった時までに、やりおおせられること",
       ],
     },
     example: {
@@ -924,6 +1154,16 @@ const source: Word[] = [
         "Where English needs \"have the energy to\", this needs one word",
       ],
     },
+    meaning: {
+      core: "何かをするだけの気力や体力があること。",
+      accepts: ["気力がある", "やる気がある", "元気が残っている", "have the energy"],
+      rejects: ["疲れる", "がんばる", "強い"],
+      hints: [
+        "何かができるかどうかを言う動詞で、否定の形でよく使うよ",
+        "仕事のあと、料理するか、出かけるか、迷ったときに",
+        "それをするだけの力が、体と心に残っていること",
+      ],
+    },
     example: {
       sv: "Jag orkar inte laga mat.",
       translations: {
@@ -958,6 +1198,16 @@ const source: Word[] = [
         "A verb about a feeling, used of places and of the people around you",
         "You use it in reply when asked how you're getting on in a new job or a new town",
         "Its ending looks passive, but it means you yourself feel at ease",
+      ],
+    },
+    meaning: {
+      core: "場所や環境、人間関係になじんで、心地よく感じること。",
+      accepts: ["居心地がいいと感じる", "なじんでいる", "楽しく過ごせている", "feel at home"],
+      rejects: ["好き", "慣れる", "楽しい"],
+      hints: [
+        "気持ちを表す動詞だよ",
+        "新しい職場、引っ越した街、留学先の学校について聞かれたときに",
+        "その場所や人のなかで、ここにいていいと思えること",
       ],
     },
     example: {
@@ -996,6 +1246,16 @@ const source: Word[] = [
         "It means both free of sleepiness and full of energy, in one word",
       ],
     },
+    meaning: {
+      core: "元気ではつらつとしていて、目がしっかり覚めている様子。",
+      accepts: ["元気", "はつらつとした", "目がさえている", "alert"],
+      rejects: ["眠い", "朝型", "うれしい"],
+      hints: [
+        "体や心の状態を言う形容詞だよ",
+        "ぐっすり眠った朝や、コーヒーを飲んだあとに",
+        "眠気がなくて、しゃきっとしている感じ",
+      ],
+    },
     example: {
       sv: "Jag är så pigg i morse!",
       translations: {
@@ -1031,6 +1291,16 @@ const source: Word[] = [
         "An adjective describing someone's nature",
         "You use it for someone who finds early rising easy and is cheerful from the first minute",
         "It is a compound of a time of day and an adjective meaning lively",
+      ],
+    },
+    meaning: {
+      core: "朝から元気な、朝型の。",
+      accepts: ["朝型", "朝に強い", "早起きが得意", "a morning person"],
+      rejects: ["元気", "朝", "眠い"],
+      hints: [
+        "人の様子を言う形容詞で、2 つの語を合わせた言葉だよ",
+        "目覚ましが鳴る前に起きて、もう朝ごはんの支度をしている人",
+        "一日のはじめの時間から、しゃきっとしていること",
       ],
     },
     example: {
@@ -1073,6 +1343,16 @@ const source: Word[] = [
         "It attaches to other words to make new ones meaning \"in the mood for ___\"",
       ],
     },
+    meaning: {
+      core: "何かを食べたい、したいという気分になっていること。",
+      accepts: ["〜したい気分", "食べたい気分", "欲しくなっている", "craving"],
+      rejects: ["お腹が空いた", "好き", "おいしい"],
+      hints: [
+        "気分を表す形容詞だよ",
+        "甘いものが目に入ったとき、ほかの語とつなげて「〜したい」と言う",
+        "あれが欲しい、あれをしたい、と心が向いている状態",
+      ],
+    },
     example: {
       sv: "Jag är sugen på godis.",
       translations: {
@@ -1107,6 +1387,16 @@ const source: Word[] = [
         "A noun for a length of time",
         "You use it for a shop open round the clock, or a body clock thrown off by jet lag",
         "English needs \"twenty-four hours\" for it; this language has a single word",
+      ],
+    },
+    meaning: {
+      core: "昼と夜を合わせた、まる一日（24 時間）。",
+      accepts: ["24 時間", "まる一日", "一昼夜"],
+      rejects: ["昼間", "夜", "一週間"],
+      hints: [
+        "時間の長さを表す言葉だよ",
+        "旅行の日数や、薬を飲む間隔を数えるときに",
+        "朝から次の朝まで、夜もまるごと含めた長さ",
       ],
     },
     example: {
@@ -1148,6 +1438,16 @@ const source: Word[] = [
         "A noun for a gathering of people",
         "You use it when friends meet and each brings a home-cooked dish",
         "It is a compound of words meaning \"bundle\" and \"party\"",
+      ],
+    },
+    meaning: {
+      core: "参加者がそれぞれ料理を持ち寄って開くパーティー。",
+      accepts: ["持ち寄りパーティー", "ポットラック", "potluck"],
+      rejects: ["パーティー", "バーベキュー", "誕生日会"],
+      hints: [
+        "集まりのことを言う言葉だよ",
+        "友だちの家に、手づくりのサラダやケーキを抱えて集まる",
+        "主催者がごちそうするのではなく、みんなが一品ずつ持ってくる会",
       ],
     },
     example: {

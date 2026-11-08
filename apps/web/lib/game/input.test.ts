@@ -6,6 +6,7 @@ import {
   lookupVerdict,
   remainingLength,
   resolveInput,
+  resolveMeaningInput,
   validateInput,
 } from "./input";
 
@@ -82,6 +83,51 @@ describe("lookupVerdict", () => {
         "Is it about the moon?",
       ),
     ).toBe("no");
+  });
+});
+
+describe("resolveMeaningInput", () => {
+  it("判定基準の正解の例と同じ意味を正解にする", () => {
+    const [accept = ""] = fredagsmys.meaning.accepts;
+
+    expect(resolveMeaningInput(fredagsmys, accept)).toEqual({ kind: "answer", correct: true });
+  });
+
+  it("単語の綴りと、誤りの例は誤答にする", () => {
+    const [reject = ""] = fredagsmys.meaning.rejects;
+
+    expect(resolveMeaningInput(fredagsmys, fredagsmys.word)).toEqual({ kind: "answer", correct: false });
+    expect(resolveMeaningInput(fredagsmys, reject)).toEqual({ kind: "answer", correct: false });
+  });
+
+  it("質問は単語当てと同じく想定 Q&A で答える", () => {
+    expect(resolveMeaningInput(fredagsmys, "Is it about Friday?")).toEqual(
+      resolveInput(fredagsmys, "Is it about Friday?"),
+    );
+  });
+
+  it("問いの形をとらない入力は、長くても誤答にする", () => {
+    const text = "金曜日の夜に家族や恋人とソファでお菓子を食べてくつろぐ習慣";
+
+    expect(text.length).toBeGreaterThan(SHORT_ANSWER_LENGTH);
+    expect(resolveMeaningInput(fredagsmys, text)).toEqual({ kind: "answer", correct: false });
+  });
+
+  it("答えを言葉で説明させる日本語の問いには質問の形を促す", () => {
+    expect(resolveMeaningInput(fredagsmys, "どういう意味？")).toEqual({
+      kind: "question",
+      verdict: "not_a_question",
+    });
+    expect(resolveMeaningInput(fredagsmys, "何をする時間ですか")).toEqual({
+      kind: "question",
+      verdict: "not_a_question",
+    });
+  });
+
+  it("疑問符のない日本語の問いを質問として扱う", () => {
+    for (const text of ["食べ物ですか", "家で過ごしますか", "週末のことでしょうか", "金曜日のことかな"]) {
+      expect(resolveMeaningInput(fredagsmys, text)).toMatchObject({ kind: "question" });
+    }
   });
 });
 

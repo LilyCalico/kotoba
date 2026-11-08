@@ -18,6 +18,7 @@ const lagom = words.find((word) => word.id === "lagom");
 if (!lagom) throw new Error("lagom が見つからない");
 
 const input: JudgeInput = {
+  mode: "guess_word",
   word: lagom,
   history: [{ text: "Is it food?", result: { kind: "question", verdict: "no" } }],
   text: "Is it about balance?",

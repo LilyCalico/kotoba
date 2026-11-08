@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import {
+  type GameMode,
   type GameResult,
   type GameStart,
   type Hint,
@@ -32,18 +33,22 @@ export class GamesService {
   async start({
     language,
     locale,
+    mode,
     excludeWordIds,
   }: {
     language: Language;
     locale: UiLocale;
+    mode: GameMode;
     excludeWordIds: readonly string[];
   }): Promise<GameStart> {
     const word = await this.words.pick({ language, excludeWordIds });
     if (!word) throw new ApiError("validation_error", `No words are available for "${language}".`);
 
-    const game: Game = { id: randomUUID(), wordId: word.id, locale, hintsRevealed: 0, history: [] };
+    const game: Game = { id: randomUUID(), wordId: word.id, locale, mode, hintsRevealed: 0, history: [] };
     await this.store.create(game);
-    return { gameId: game.id, language: word.language, teaser: word.teaser[locale] };
+    return mode === "guess_meaning"
+      ? { gameId: game.id, language: word.language, mode, word: word.word, reading: word.reading }
+      : { gameId: game.id, language: word.language, mode, teaser: word.teaser[locale] };
   }
 
   /**
@@ -68,7 +73,8 @@ export class GamesService {
   }
 
   /**
-   * `index` 番目のヒントを返す。開示済みの番号には同じヒントを返し、数を進めない。
+   * `index` 番目のヒントを返す。単語当てには `locale` の言語の単語当てのヒントを、意味当てには意味当てのヒントを返す。
+   * 開示済みの番号には同じヒントを返し、数を進めない。
    * 番号を送らせるのは、応答を受け取り損ねた再送で次のヒントが開示されないようにするためである。
    */
   async revealHint(gameId: string, index: number): Promise<Hint> {
@@ -82,7 +88,8 @@ export class GamesService {
       game.hintsRevealed = index;
       await this.store.save(game);
     }
-    return { index, text: word.hints[game.locale][index - 1] };
+    const hints = game.mode === "guess_meaning" ? word.meaning.hints : word.hints[game.locale];
+    return { index, text: hints[index - 1] };
   }
 
   /** ギブアップを確定して正解を返す。終了済みのゲームには、終了時の結果をそのまま返す。 */
@@ -97,10 +104,10 @@ export class GamesService {
   }
 
   /**
-   * 入力を判定する。コードの正規化マッチで正解なら、AI を呼ばずにクリアにする。
-   * 外れた入力だけを AI に回し、質問か解答か対応外の言語かを分類させる。
-   * 解答と分類した入力は、AI がスペルミス・音写ゆれとして救えば正解、救わなければ誤答にする。
-   * 救った正解も、正規化マッチの正解と同じ応答にする。
+   * 入力を判定する。単語当てでは、コードの正規化マッチで正解なら AI を呼ばずにクリアにし、
+   * 外れた入力だけを AI に回す。AI がスペルミス・音写ゆれとして救った正解も、正規化マッチの正解と同じ応答にする。
+   * 意味当てでは、意味の言い回しが無数にあるため正規化マッチを通さず、入力をすべて AI に回す。
+   * AI は質問か解答か対応外の言語かを分類し、解答には正誤を添える。
    */
   private async classify(game: Game, word: Word, text: string): Promise<InputResult> {
     const cleared = (): InputResult => ({
@@ -108,9 +115,9 @@ export class GamesService {
       correct: true,
       result: gameResultOf(word, "cleared", game.locale),
     });
-    if (isAcceptedAnswer(word, text)) return cleared();
+    if (game.mode === "guess_word" && isAcceptedAnswer(word, text)) return cleared();
 
-    const judgement = await this.judge.judge({ word, history: game.history, text });
+    const judgement = await this.judge.judge({ mode: game.mode, word, history: game.history, text });
     switch (judgement.kind) {
       case "question":
         return { kind: "question", verdict: judgement.verdict };

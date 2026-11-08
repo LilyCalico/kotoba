@@ -39,6 +39,7 @@ describe("createMockGameClient", () => {
     expect(start).toEqual({
       gameId: expect.any(String),
       language: "sv",
+      mode: "guess_word",
       teaser: fredagsmys.teaser.en,
     });
 
@@ -64,9 +65,10 @@ describe("createMockGameClient", () => {
   it("locale の言語で設問・ヒント・定義を返し、日本語ではカタカナの読みも返す", async () => {
     const client = clientFor("fredagsmys");
 
-    const { gameId, teaser } = await client.startGame({ language: "sv", locale: "ja" });
+    const start = await client.startGame({ language: "sv", locale: "ja" });
+    const { gameId } = start;
 
-    expect(teaser).toBe(fredagsmys.teaser.ja);
+    expect(start).toMatchObject({ teaser: fredagsmys.teaser.ja });
     await expect(client.revealHint(gameId, 1)).resolves.toEqual({
       index: 1,
       text: fredagsmys.hints.ja[0],
@@ -74,6 +76,35 @@ describe("createMockGameClient", () => {
     await expect(client.giveUp(gameId)).resolves.toMatchObject({
       reading: fredagsmys.reading,
       definition: fredagsmys.definition.ja,
+    });
+  });
+
+  it("意味当ては単語と読みを返し、意味当てのヒントと判定を返す", async () => {
+    const client = clientFor("fredagsmys");
+
+    const start = await client.startGame({ language: "sv", locale: "ja", mode: "guess_meaning" });
+
+    expect(start).toEqual({
+      gameId: expect.any(String),
+      language: "sv",
+      mode: "guess_meaning",
+      word: fredagsmys.word,
+      reading: fredagsmys.reading,
+    });
+    await expect(client.revealHint(start.gameId, 1)).resolves.toEqual({
+      index: 1,
+      text: fredagsmys.meaning.hints[0],
+    });
+    await expect(client.sendInput(start.gameId, { text: fredagsmys.word })).resolves.toEqual({
+      kind: "answer",
+      correct: false,
+    });
+    await expect(
+      client.sendInput(start.gameId, { text: fredagsmys.meaning.accepts[0] ?? "" }),
+    ).resolves.toEqual({
+      kind: "answer",
+      correct: true,
+      result: gameResultOf(fredagsmys, "cleared", "ja"),
     });
   });
 
@@ -156,15 +187,21 @@ describe("wordId", () => {
   it("未知の id はランダム選出にフォールバックする", async () => {
     const teasers = words.map((word) => word.teaser.en);
 
-    const { teaser } = await clientFor("unknown-word").startGame({ language: "sv" });
+    const start = await clientFor("unknown-word").startGame({ language: "sv" });
 
-    expect(teasers).toContain(teaser);
+    expect(start.mode === "guess_word" && teasers.includes(start.teaser)).toBe(true);
   });
 });
 
 describe("失敗", () => {
   it("単語の無い言語では validation_error", async () => {
     expect(await codeOf(clientFor().startGame({ language: "ja" }))).toBe("validation_error");
+  });
+
+  it("英語の UI の意味当ては validation_error", async () => {
+    expect(
+      await codeOf(clientFor().startGame({ language: "sv", locale: "en", mode: "guess_meaning" })),
+    ).toBe("validation_error");
   });
 
   it("未知の gameId では game_not_found", async () => {

@@ -1,4 +1,4 @@
-import type { Word } from "@kotoba/shared";
+import type { GameMode, Word } from "@kotoba/shared";
 import { describe, expect, it } from "vitest";
 import { ApiError } from "../common/api-error.js";
 import type { InputJudge, JudgeInput, Judgement } from "../judge/input-judge.js";
@@ -41,8 +41,9 @@ function createService({
   return { service: new GamesService(wordsService, store, judge), store };
 }
 
-async function start(service: GamesService): Promise<string> {
-  const { gameId } = await service.start({ language: "sv", locale: "en", excludeWordIds: [] });
+async function start(service: GamesService, mode: GameMode = "guess_word"): Promise<string> {
+  const locale = mode === "guess_meaning" ? "ja" : "en";
+  const { gameId } = await service.start({ language: "sv", locale, mode, excludeWordIds: [] });
   return gameId;
 }
 
@@ -99,6 +100,26 @@ describe("GamesService", () => {
 
     expect(result).toMatchObject({ kind: "answer", correct: true, result: { outcome: "cleared" } });
     expect(calls).toHaveLength(0);
+  });
+
+  it("意味当てでは単語の綴りを送っても正規化マッチで正解にせず、AI に遊び方とともに渡す", async () => {
+    const { judge, calls } = fakeJudge();
+    const { service } = createService({ judge });
+    const gameId = await start(service, "guess_meaning");
+
+    await expect(service.input(gameId, "Lagom")).resolves.toEqual({ kind: "answer", correct: false });
+    expect(calls.map(({ mode, text }) => ({ mode, text }))).toEqual([{ mode: "guess_meaning", text: "Lagom" }]);
+  });
+
+  it("意味当てで AI が核心を捉えたと判定した解答はクリアにする", async () => {
+    const { judge } = fakeJudge(({ text }) => ({ kind: "answer", correct: text === "ちょうどいいこと" }));
+    const { service, store } = createService({ judge });
+    const gameId = await start(service, "guess_meaning");
+
+    const result = await service.input(gameId, "ちょうどいいこと");
+
+    expect(result).toMatchObject({ kind: "answer", correct: true, result: { outcome: "cleared", reading: lagom.reading } });
+    expect((await store.get(gameId))?.result).toMatchObject({ outcome: "cleared" });
   });
 
   it("AI の分類を InputResult にする", async () => {

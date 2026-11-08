@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { type Word, gameResultOf, isAcceptedAnswer, normalizeAnswer, wordSchema } from "./word.js";
+import {
+  type Word,
+  gameResultOf,
+  isAcceptedAnswer,
+  matchesNormalized,
+  normalizeAnswer,
+  wordSchema,
+} from "./word.js";
 
 const word: Word = {
   id: "kura-skymning",
@@ -21,6 +28,12 @@ const word: Word = {
     ja: ["方向性", "使われる場面", "語の成り立ち"],
     en: ["direction", "occasion", "origin"],
   },
+  meaning: {
+    core: "夕暮れどきに明かりをつけないまま、薄暗い中で静かに過ごすこと。",
+    accepts: ["日暮れの薄闇の中でくつろぐこと"],
+    rejects: ["夕焼け"],
+    hints: ["種類", "使われる場面", "核心に近い言い換え"],
+  },
 };
 
 describe("normalizeAnswer", () => {
@@ -32,6 +45,18 @@ describe("normalizeAnswer", () => {
   it("区切り文字と長音符を無視する", () => {
     expect(normalizeAnswer("クーラ・シムニング")).toBe(normalizeAnswer("クラシムニング"));
     expect(normalizeAnswer("ラーゴム")).toBe(normalizeAnswer("ラゴム"));
+  });
+});
+
+describe("matchesNormalized", () => {
+  it("表記の揺れを吸収して候補と照合する", () => {
+    expect(matchesNormalized(["Smultronställe"], "smultronstalle")).toBe(true);
+    expect(matchesNormalized(["ラーゴム"], "ラゴム")).toBe(true);
+    expect(matchesNormalized(["lagom"], "fika")).toBe(false);
+  });
+
+  it("正規化して空になる入力は、空になる候補とも一致させない", () => {
+    expect(matchesNormalized(["・"], "  ")).toBe(false);
   });
 });
 
@@ -58,6 +83,16 @@ describe("wordSchema", () => {
     expect(
       wordSchema.safeParse({ ...word, hints: { ...word.hints, en: ["one"] } }).success,
     ).toBe(false);
+  });
+
+  it("意味当ての判定基準とヒントを欠いたデータを弾く", () => {
+    const { meaning: _dropped, ...withoutMeaning } = word;
+
+    expect(wordSchema.safeParse(withoutMeaning).success).toBe(false);
+    expect(
+      wordSchema.safeParse({ ...word, meaning: { ...word.meaning, hints: ["one"] } }).success,
+    ).toBe(false);
+    expect(wordSchema.safeParse({ ...word, meaning: { ...word.meaning, rejects: [] } }).success).toBe(false);
   });
 
   it("使用頻度の範囲外を弾く", () => {

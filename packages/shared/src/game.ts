@@ -16,6 +16,13 @@ export type Language = z.infer<typeof languageSchema>;
 export const uiLocaleSchema = z.enum(["ja", "en"]);
 export type UiLocale = z.infer<typeof uiLocaleSchema>;
 
+/**
+ * 遊び方。`guess_word` は設問からスウェーデン語の単語を当て、`guess_meaning` は単語と読みを見て意味を当てる。
+ * UI 言語（`uiLocaleSchema`）とは別の軸で受け、web が UI 言語から決めて送る（ADR 0012）。
+ */
+export const gameModeSchema = z.enum(["guess_word", "guess_meaning"]);
+export type GameMode = z.infer<typeof gameModeSchema>;
+
 /** 単語の品詞。ヒントの書き分けと終了の画面の表示に使う。 */
 export const partOfSpeechSchema = z.enum(["noun", "verb", "adjective", "phrase"]);
 export type PartOfSpeech = z.infer<typeof partOfSpeechSchema>;
@@ -42,12 +49,20 @@ export const MAX_EXCLUDE_WORD_IDS = 100;
 /**
  * ゲーム開始のリクエスト。
  * `excludeWordIds` はクライアントが記録した、答えを見た単語の id。新しいものから最大 100 件を送る。
+ * 意味当ては、ヒントを日本語でだけ持つため `locale: "ja"` のときだけ受ける。
  */
-export const startGameRequestSchema = z.object({
-  language: languageSchema,
-  locale: uiLocaleSchema.default("en"),
-  excludeWordIds: z.array(z.string()).max(MAX_EXCLUDE_WORD_IDS).default([]),
-}).meta({ id: "StartGameRequest" });
+export const startGameRequestSchema = z
+  .object({
+    language: languageSchema,
+    locale: uiLocaleSchema.default("en"),
+    mode: gameModeSchema.default("guess_word"),
+    excludeWordIds: z.array(z.string()).max(MAX_EXCLUDE_WORD_IDS).default([]),
+  })
+  .refine(({ mode, locale }) => mode !== "guess_meaning" || locale === "ja", {
+    message: "guess_meaning は locale が ja のときだけ受ける",
+    path: ["mode"],
+  })
+  .meta({ id: "StartGameRequest" });
 export type StartGameRequest = z.input<typeof startGameRequestSchema>;
 
 /**
@@ -128,12 +143,28 @@ export const hintSchema = z.object({
 }).meta({ id: "Hint" });
 export type Hint = z.infer<typeof hintSchema>;
 
-/** ゲーム開始時にクライアントへ渡す初期情報。秘密の単語は含まない。 */
-export const gameStartSchema = z.object({
-  gameId: z.uuid(),
-  language: languageSchema,
-  teaser: z.string(),
-}).meta({ id: "GameStart" });
+/**
+ * ゲーム開始時にクライアントへ渡す初期情報。遊び方（`mode`）で 2 つの形に分かれ、最初に見せるものだけを持つ。
+ * 単語当ては `locale` の言語の設問だけを持ち、単語は含まない。意味当ては単語とカタカナの読みを持ち、定義は含まない。
+ * どちらも単語の id は含まない。
+ */
+export const gameStartSchema = z
+  .discriminatedUnion("mode", [
+    z.object({
+      gameId: z.uuid(),
+      language: languageSchema,
+      mode: z.literal("guess_word"),
+      teaser: z.string(),
+    }),
+    z.object({
+      gameId: z.uuid(),
+      language: languageSchema,
+      mode: z.literal("guess_meaning"),
+      word: z.string(),
+      reading: z.string(),
+    }),
+  ])
+  .meta({ id: "GameStart" });
 export type GameStart = z.infer<typeof gameStartSchema>;
 
 /** サーバーが返すエラーの `code`。画面はこれで分岐し、`title` と `detail` は表示に使わない。 */

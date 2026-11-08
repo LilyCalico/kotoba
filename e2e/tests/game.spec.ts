@@ -3,9 +3,7 @@ import { type Page, expect, test } from "./fixtures.js";
 import { words } from "../../apps/api/src/prisma/seed/words.js";
 import { en } from "../../apps/web/lib/i18n/messages/en.js";
 import { ja } from "../../apps/web/lib/i18n/messages/ja.js";
-
-/** 辞書の形。画面の言語の辞書を、操作の関数に渡す。 */
-type Messages = typeof en;
+import { type Locale, type Messages, dictionaries, openingTitle } from "./locales.js";
 
 /** web が出題済み単語を記録する `localStorage` のキー。`apps/web/lib/game/played-words.ts` と揃える。 */
 const PLAYED_WORDS_KEY = "kotoba:played-words";
@@ -64,13 +62,13 @@ function input(page: Page, t: Messages = en) {
 }
 
 /**
- * 設問の提示をクリックで進め、3 秒の自動遷移を待たずにチャットへ移る。
+ * 最初に見せるカードの提示をクリックで進め、3 秒の自動遷移を待たずにチャットへ移る。
  * 画面の中央はチャットに移ってもログの空き領域なので、自動遷移とクリックが重なっても操作には当たらない。
  */
-async function enterChat(page: Page, t: Messages = en) {
-  await expect(page.getByRole("region", { name: t.teaser.title })).toBeVisible();
+async function enterChat(page: Page, locale: Locale = "en") {
+  await expect(page.getByRole("region", { name: openingTitle(locale) })).toBeVisible();
   await page.locator("main").click();
-  await expect(input(page, t)).toBeVisible();
+  await expect(input(page, dictionaries[locale])).toBeVisible();
 }
 
 /** 入力欄から送信し、応答が届いて入力欄が再び使えるようになるまで待つ。 */
@@ -129,26 +127,31 @@ test("対応外の言語で送ると、対応言語で聞き直すよう案内�
   await expect(input(page)).toBeEnabled();
 });
 
-test("/ja では日本語の設問・回答・ヒント・判定で遊べ、結果カードに読みが出る", async ({ page }) => {
+test("/ja では単語と読みを見て、質問・ヒント・意味の解答で遊べ、結果カードに読みが出る", async ({ page }) => {
   await playWithOnly(page, fredagsmys.id);
   await page.goto("/ja");
   await startFromHome(page, ja);
 
   await expect(page).toHaveURL("/ja/play");
-  await expect(page.getByText(fredagsmys.teaser.ja)).toBeVisible();
-  await enterChat(page, ja);
+  const card = page.getByRole("region", { name: ja.wordCard.title });
+  await expect(card.getByText(fredagsmys.word, { exact: true })).toBeVisible();
+  await expect(card.getByText(fredagsmys.reading, { exact: true })).toBeVisible();
+  await expect(page.getByText(fredagsmys.teaser.ja)).toHaveCount(0);
+  await enterChat(page, "ja");
 
   await send(page, "名詞？", ja);
   await expect(bubble(page, new RegExp(`^${ja.verdict.yes}$`))).toBeVisible();
 
   await page.getByRole("button", { name: new RegExp(`^${ja.hint.button}`) }).click();
-  const hint = page.getByRole("region", { name: ja.hint.title(1, fredagsmys.hints.ja.length) });
-  await expect(hint.getByText(fredagsmys.hints.ja[0] ?? "")).toBeVisible();
+  const hint = page.getByRole("region", { name: ja.hint.title(1, fredagsmys.meaning.hints.length) });
+  await expect(hint.getByText(fredagsmys.meaning.hints[0] ?? "")).toBeVisible();
 
-  await send(page, "ヒュッゲ", ja);
+  // 意味当てでは、見えている単語の綴りを送っても正解にならない。
+  await send(page, fredagsmys.word, ja);
   await expect(bubble(page, ja.answerFeedback.incorrect)).toBeVisible();
 
-  await send(page, fredagsmys.reading, ja);
+  // E2E の Gemini のスタブは、判定基準の正解の例と同じ入力を正解にする。
+  await send(page, fredagsmys.meaning.accepts[0] ?? "", ja);
   await expect(bubble(page, ja.answerFeedback.correct)).toBeVisible();
   const result = page.getByRole("region", { name: ja.result.heading.cleared });
   await expect(result.getByText(fredagsmys.word, { exact: true })).toBeVisible();

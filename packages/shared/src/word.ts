@@ -15,9 +15,24 @@ export const HINT_COUNT = 3;
 const hintsSchema = z.tuple([z.string().min(1), z.string().min(1), z.string().min(1)]);
 
 /**
+ * 意味当てで使う、単語ごとの判定基準とヒント。
+ * 意味当ては日本語の UI でだけ遊ぶため、UI 言語で書き分けず日本語だけで書く。
+ */
+const meaningSchema = z.object({
+  /** 正解とみなす核心。1〜2 文で書く。AI に渡すだけで、画面には出さない */
+  core: z.string().min(1),
+  /** 正解にする言い換えの例 */
+  accepts: z.array(z.string().min(1)).min(1),
+  /** 近いが誤りにする解答の例 */
+  rejects: z.array(z.string().min(1)).min(1),
+  /** 段階ヒント。1 がどんな種類の意味か、2 が使われる場面、3 が核心に近い言い換え */
+  hints: hintsSchema,
+});
+
+/**
  * 出題する単語 1 件。
- * 開始時にクライアントへ送るのは teaser のみ、ヒントは開示操作のたびに 1 つずつ送り、
- * word と definition はゲームが終わるまで送らない。
+ * 開始時にクライアントへ送るのは、単語当てでは teaser だけ、意味当てでは word と reading だけである。
+ * ヒントは開示操作のたびに 1 つずつ送り、definition と意味当ての判定基準はゲームが終わるまで送らない。
  * データ本体は API 側の DB（seed の入力は `apps/api/src/prisma/seed/words.ts`）にのみ置き、web にはバンドルしない。
  */
 export const wordSchema = z.object({
@@ -40,10 +55,12 @@ export const wordSchema = z.object({
   acceptedAnswers: z.array(z.string().min(1)).min(1),
   /** 終了カードに載せる定義。一文で言い切る */
   definition: localized(z.string().min(1)),
-  /** ゲーム開始時に唯一クライアントへ渡す、謎めいた一行 */
+  /** 単語当てのゲーム開始時にクライアントへ渡す、謎めいた一行 */
   teaser: localized(z.string().min(1)),
-  /** 段階ヒント。1 が方向性、2 が使われる場面、3 が語の成り立ち */
+  /** 単語当ての段階ヒント。1 が方向性、2 が使われる場面、3 が語の成り立ち */
   hints: localized(hintsSchema),
+  /** 意味当ての判定基準とヒント */
+  meaning: meaningSchema,
   /** 直訳。合成語で、語の成り立ちが答えの核心になる語だけが持つ */
   literal: localized(z.string().min(1)).optional(),
   /** 定義に畳むと冗長になる文化的な補足 */
@@ -77,14 +94,17 @@ export function normalizeAnswer(text: string): string {
     .replace(SEPARATORS, "");
 }
 
-/** コードによる正規化マッチ。ここで外れた入力だけを AI の救済判定に回す。 */
-export function isAcceptedAnswer(word: Word, input: string): boolean {
+/** 正規化した入力が、正規化した候補のどれかと一致するか。正規化して空になる入力は一致させない。 */
+export function matchesNormalized(candidates: readonly string[], input: string): boolean {
   const normalized = normalizeAnswer(input);
   if (normalized === "") return false;
 
-  return [word.word, ...word.acceptedAnswers].some(
-    (candidate) => normalizeAnswer(candidate) === normalized,
-  );
+  return candidates.some((candidate) => normalizeAnswer(candidate) === normalized);
+}
+
+/** コードによる正規化マッチ。ここで外れた入力だけを AI の救済判定に回す。 */
+export function isAcceptedAnswer(word: Word, input: string): boolean {
+  return matchesNormalized([word.word, ...word.acceptedAnswers], input);
 }
 
 /**

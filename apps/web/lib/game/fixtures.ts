@@ -75,6 +75,16 @@ const source: Word[] = [
         "It is a compound of the name of a day and a word meaning coziness",
       ],
     },
+    meaning: {
+      core: "金曜日の夜に、家族や恋人と家でスナックを囲んでくつろいで過ごす習慣。",
+      accepts: ["金曜の夜に家でまったりすること", "金曜の夜のくつろぎタイム", "金曜日に家族と家でのんびり過ごすこと"],
+      rejects: ["週末", "金曜日", "飲み会", "夜更かし"],
+      hints: [
+        "週に一度の、決まった時間の過ごし方のことだよ",
+        "仕事や学校が終わった週末の入り口に、テレビの前にスナックやタコスが並ぶ",
+        "その曜日の夜、家族と家でのんびりくつろぐこと",
+      ],
+    },
     example: {
       sv: "Vad ska vi ha till fredagsmyset?",
       translations: {
@@ -112,6 +122,16 @@ const source: Word[] = [
         "It is a compound of something in the sky and the word for a road",
       ],
     },
+    meaning: {
+      core: "月の光が水面に映って、道のように伸びて見える光の帯。",
+      accepts: ["水面に映る月の光の道", "月の光の道", "moonlight reflected on water"],
+      rejects: ["月", "月明かり", "夕日"],
+      hints: [
+        "自然の中で見られる光景のことだよ",
+        "晴れた夜、湖や海のほとりに立つと見える",
+        "夜空の明かりが水の上に映って、まっすぐな道みたいに伸びたもの",
+      ],
+    },
   },
   {
     id: "lagom",
@@ -143,6 +163,16 @@ const source: Word[] = [
         "It describes quantity or degree, and people use it as praise",
         "Volume, water temperature, the size of a portion — anything that feels neither excessive nor lacking",
         "It is said to capture this country's own value of never overdoing anything",
+      ],
+    },
+    meaning: {
+      core: "量や程度が多すぎも少なすぎもせず、ちょうどいいこと。",
+      accepts: ["ちょうどいい", "ほどほど", "過不足ない", "just right"],
+      rejects: ["少なめ", "普通", "控えめ"],
+      hints: [
+        "量や程度について言う言葉で、褒めるときにも使うよ",
+        "コーヒーの量、お風呂の湯加減、部屋の暖かさ——「これがいい」と言いたいときに出てくる",
+        "足りないのでも、やりすぎでもない。そのあいだのいいところ",
       ],
     },
     example: {

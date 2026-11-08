@@ -1,4 +1,4 @@
-import type { GameResult, InputResult, UiLocale } from "@kotoba/shared";
+import type { GameMode, GameResult, InputResult, UiLocale } from "@kotoba/shared";
 
 /** 判定が成功した入力と、返した結果の組。AI の判定の一貫性のためにサーバーだけが使う。 */
 export type QaEntry = { text: string; result: InputResult };
@@ -9,6 +9,8 @@ export type Game = {
   wordId: string;
   /** 設問・ヒント・定義を返す言語。ゲームの間は変わらない */
   locale: UiLocale;
+  /** 遊び方。ヒントの出どころと入力の判定を分ける */
+  mode: GameMode;
   /** 開示済みのヒントの数 */
   hintsRevealed: number;
   history: QaEntry[];
