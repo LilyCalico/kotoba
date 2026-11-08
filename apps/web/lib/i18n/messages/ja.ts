@@ -45,6 +45,10 @@ export const ja = {
   teaser: {
     title: "お題",
   },
+  wordCard: {
+    title: "ことば",
+    prompt: "この言葉、どういう意味？",
+  },
   verdict: {
     yes: "はい",
     no: "いいえ",
