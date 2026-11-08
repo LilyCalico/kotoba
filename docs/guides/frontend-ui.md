@@ -420,7 +420,7 @@ UI の文言は `lib/i18n/messages/` の言語ごとの辞書に置き、コン�
 
 1. `lib/i18n/messages/en.ts` の、その文言を出すコンポーネントの節に足す。新しいコンポーネントなら節を作る。値を取る文言（数・待つ時間・単語）は、文の全体を返す関数にする。言語ごとに語順が変わるため、言い回しの一部だけを関数にして文の残りと連結しない
 2. `lib/i18n/messages/ja.ts` の同じ位置に日本語を書く。`index.ts` の `messages` が `Record<UiLocale, Messages>` のため、抜けると `pnpm typecheck` が落ちる。数と単位の間（「1 分」）は、改行しない空白（`NBSP`）にする
-3. クライアントコンポーネントは `useMessages()` で今の言語の辞書を引く。辞書は関数を持ち、サーバーからクライアントへ props で渡せないため、クライアントで言語から引く。サーバーで使う場所（`generateMetadata` など）は `messages[lang]` を引く。遊び方で変わる文言は、`useGameMode()`（サーバーでは `gameModeFor(lang)`）で引く（下の「UI 言語ごとの遊び方」）
+3. クライアントコンポーネントは `useMessages()` で今の言語の辞書を引く。辞書は関数を持ち、サーバーからクライアントへ props で渡せないため、クライアントで言語から引く。サーバーで使う場所（`generateMetadata` など）は `messages[lang]` を引く。遊び方で変わる文言は、`useGameMode()` の遊び方（サーバーでは `gameModeFor(lang)`）で引く（下の「UI 言語ごとの遊び方」）
 4. Story と E2E は、文言を辞書から引いて確かめる。Story の play 関数は `storyMessages(globals)` で、Storybook のツールバーで選んだ言語の辞書を引く。E2E は `e2e/` から辞書を相対パスで読み込む（`import { ja } from "../../apps/web/lib/i18n/messages/ja.js"`）。このため辞書のファイルは、ほかのモジュールを読み込まない
 
 ### UI 言語を足す
@@ -440,24 +440,27 @@ UI の文言は `lib/i18n/messages/` の言語ごとの辞書に置き、コン�
 
 | 場所 | 分けるもの |
 | --- | --- |
-| `lib/game/mode.ts` の `gameModeFor` | UI 言語から遊び方を決める唯一の場所。プレイ画面はゲーム開始の `mode` にこれを送る |
+| `lib/game/mode.ts` の `gameModeFor` | UI 言語から遊び方を決める唯一の場所。クライアントでは `useGameMode()`、サーバーではページの説明（`generateMetadata`）がこれを呼ぶ |
+| `lib/game/mode-context.tsx` の `useGameMode()` | 部品が文言を引く遊び方。ゲームの画面の中では、`GameModeProvider` が配る、始まったゲームの遊び方（開始の応答の `mode`）を返す。それ以外（スタート画面とゲーム開始のリクエスト）では `gameModeFor` で決める |
 | `lib/game/state.ts` の `GameState.opening` | 開始の応答（`GameStart`）の遊び方ごとの形を、最初に見せるもの（設問か、単語と読み）として持つ |
-| `components/game/play-screen.tsx` の `OpeningCard` | 単語当ては `TeaserCard`、意味当ては `WordCard` を、提示とチャットの両方に出す |
+| `components/game/play-screen.tsx` | ゲーム開始の `mode` に `useGameMode()` を送り、始まったゲームの遊び方を `GameModeProvider` で配る。`OpeningCard` は、単語当ては `TeaserCard`、意味当ては `WordCard` を、提示とチャットの両方に出す |
 | `lib/game/mock-client.ts` | 開始の応答・ヒント・入力の判定を遊び方で分け、api と同じ形を返す |
 | `lib/i18n/messages/` の辞書 | 遊び方で変わる文言を、`GameMode` の値をキーにして持つ |
 
-遊び方で変わる文言（ページの説明・スタート画面の見出しと説明・ギブアップの確認・入力欄の名前・正誤のフィードバック・結果の見出し）は、どの言語の辞書にも両方の遊び方の文言を書き、その場所で遊び方をキーにして持つ。
+遊び方で変わる文言（ページの説明・スタート画面の見出しと説明・ギブアップの確認・入力欄の名前・正誤のフィードバック・結果の見出し）は、どの言語の辞書にも両方の遊び方の文言を書き、その場所で遊び方をキーにして持つ。辞書は各値に `satisfies ByMode`（`Record<GameMode, string>`）を付け、遊び方が増えたときの抜けを辞書の型検査で見つける。
 
 ```ts
 input: {
   label: {
     guess_word: "Ask a question or guess the word",
     guess_meaning: "Ask a question or guess the meaning",
-  },
+  } satisfies ByMode,
 },
 ```
 
-コンポーネントは `useGameMode()` で今の遊び方を受け取り、`t.label[mode]` のように引く。`useGameMode()` は `gameModeFor` で UI 言語から遊び方を決めるため、遊び方を UI 言語と別に選べるようにするときは、`useGameMode()` の中身を置き換えれば文言も切り替わる。Story は `storyGameMode(globals)`、E2E は `e2e/tests/locales.ts` の `modeOf(locale)` で、同じく遊び方を引く。
+部品は `useGameMode()` で今の遊び方を受け取り、`t.label[mode]` のように引く。ゲームの画面の中は始まったゲームの遊び方で引くため、最初に見せるカードと文言は常に同じ遊び方に従う。Story は `storyGameMode(globals)`、E2E は `gameModeFor(locale)` で、同じく遊び方を引く。
+
+遊び方を UI 言語と別に選べるようにするときは、`gameModeFor` を呼んでいる 2 か所（`useGameMode()` と `generateMetadata`）を、選んだ遊び方を返すよう置き換える。ゲーム開始のリクエストは `useGameMode()` を送るため、始まるゲームと文言の遊び方もそろう。
 
 ## つまずきポイント
 
