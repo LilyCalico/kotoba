@@ -47,6 +47,8 @@ model Word {
   teaser          Json
   /// { ja: [3 つ], en: [3 つ] }
   hints           Json
+  /// { core, accepts, rejects, hints: [3 つ] }。意味当ての判定基準とヒントで、日本語だけで書く
+  meaning         Json
   /// { ja, en }
   literal         Json?
   /// { ja, en }

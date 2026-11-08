@@ -21,6 +21,12 @@ const word: Word = {
     ja: ["方向性", "使われる場面", "語の成り立ち"],
     en: ["direction", "occasion", "origin"],
   },
+  meaning: {
+    core: "夕暮れどきに明かりをつけないまま、薄暗い中で静かに過ごすこと。",
+    accepts: ["日暮れの薄闇の中でくつろぐこと"],
+    rejects: ["夕焼け"],
+    hints: ["種類", "使われる場面", "核心に近い言い換え"],
+  },
 };
 
 describe("normalizeAnswer", () => {
@@ -58,6 +64,16 @@ describe("wordSchema", () => {
     expect(
       wordSchema.safeParse({ ...word, hints: { ...word.hints, en: ["one"] } }).success,
     ).toBe(false);
+  });
+
+  it("意味当ての判定基準とヒントを欠いたデータを弾く", () => {
+    const { meaning: _dropped, ...withoutMeaning } = word;
+
+    expect(wordSchema.safeParse(withoutMeaning).success).toBe(false);
+    expect(
+      wordSchema.safeParse({ ...word, meaning: { ...word.meaning, hints: ["one"] } }).success,
+    ).toBe(false);
+    expect(wordSchema.safeParse({ ...word, meaning: { ...word.meaning, rejects: [] } }).success).toBe(false);
   });
 
   it("使用頻度の範囲外を弾く", () => {
