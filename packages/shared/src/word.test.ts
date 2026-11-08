@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { type Word, gameResultOf, isAcceptedAnswer, normalizeAnswer, wordSchema } from "./word.js";
+import {
+  type Word,
+  gameResultOf,
+  isAcceptedAnswer,
+  matchesNormalized,
+  normalizeAnswer,
+  wordSchema,
+} from "./word.js";
 
 const word: Word = {
   id: "kura-skymning",
@@ -38,6 +45,18 @@ describe("normalizeAnswer", () => {
   it("区切り文字と長音符を無視する", () => {
     expect(normalizeAnswer("クーラ・シムニング")).toBe(normalizeAnswer("クラシムニング"));
     expect(normalizeAnswer("ラーゴム")).toBe(normalizeAnswer("ラゴム"));
+  });
+});
+
+describe("matchesNormalized", () => {
+  it("表記の揺れを吸収して候補と照合する", () => {
+    expect(matchesNormalized(["Smultronställe"], "smultronstalle")).toBe(true);
+    expect(matchesNormalized(["ラーゴム"], "ラゴム")).toBe(true);
+    expect(matchesNormalized(["lagom"], "fika")).toBe(false);
+  });
+
+  it("正規化して空になる入力は、空になる候補とも一致させない", () => {
+    expect(matchesNormalized(["・"], "  ")).toBe(false);
   });
 });
 

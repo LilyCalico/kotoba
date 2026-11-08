@@ -79,7 +79,7 @@ describe("createMockGameClient", () => {
     });
   });
 
-  it("意味当ては単語と読みを返し、意味当てのヒントを返す", async () => {
+  it("意味当ては単語と読みを返し、意味当てのヒントと判定を返す", async () => {
     const client = clientFor("fredagsmys");
 
     const start = await client.startGame({ language: "sv", locale: "ja", mode: "guess_meaning" });
@@ -94,6 +94,17 @@ describe("createMockGameClient", () => {
     await expect(client.revealHint(start.gameId, 1)).resolves.toEqual({
       index: 1,
       text: fredagsmys.meaning.hints[0],
+    });
+    await expect(client.sendInput(start.gameId, { text: fredagsmys.word })).resolves.toEqual({
+      kind: "answer",
+      correct: false,
+    });
+    await expect(
+      client.sendInput(start.gameId, { text: fredagsmys.meaning.accepts[0] ?? "" }),
+    ).resolves.toEqual({
+      kind: "answer",
+      correct: true,
+      result: gameResultOf(fredagsmys, "cleared", "ja"),
     });
   });
 

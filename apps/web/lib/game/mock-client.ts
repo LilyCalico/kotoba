@@ -2,7 +2,7 @@ import { type GameMode, MAX_HINTS, type UiLocale, type Word, gameResultOf } from
 
 import { type GameClient, GameClientError } from "./client";
 import { findWordById, words } from "./fixtures";
-import { resolveInput } from "./input";
+import { resolveInput, resolveMeaningInput } from "./input";
 
 /** 応答の既定の遅延。送信中・応答待ちの UI 状態を実画面で目視できる長さにとる。 */
 export const DEFAULT_DELAY_MS = 500;
@@ -95,7 +95,10 @@ export function createMockGameClient(options: MockGameClientOptions = {}): GameC
       await wait(delayMs);
 
       const game = gameOf(gameId);
-      const result = resolveInput(game.word, text);
+      const result =
+        game.mode === "guess_meaning"
+          ? resolveMeaningInput(game.word, text)
+          : resolveInput(game.word, text);
       if (result.kind === "answer" && result.correct) {
         return { ...result, result: gameResultOf(game.word, "cleared", game.locale) };
       }

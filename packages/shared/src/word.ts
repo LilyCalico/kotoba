@@ -94,14 +94,17 @@ export function normalizeAnswer(text: string): string {
     .replace(SEPARATORS, "");
 }
 
-/** コードによる正規化マッチ。ここで外れた入力だけを AI の救済判定に回す。 */
-export function isAcceptedAnswer(word: Word, input: string): boolean {
+/** 正規化した入力が、正規化した候補のどれかと一致するか。正規化して空になる入力は一致させない。 */
+export function matchesNormalized(candidates: readonly string[], input: string): boolean {
   const normalized = normalizeAnswer(input);
   if (normalized === "") return false;
 
-  return [word.word, ...word.acceptedAnswers].some(
-    (candidate) => normalizeAnswer(candidate) === normalized,
-  );
+  return candidates.some((candidate) => normalizeAnswer(candidate) === normalized);
+}
+
+/** コードによる正規化マッチ。ここで外れた入力だけを AI の救済判定に回す。 */
+export function isAcceptedAnswer(word: Word, input: string): boolean {
+  return matchesNormalized([word.word, ...word.acceptedAnswers], input);
 }
 
 /**
