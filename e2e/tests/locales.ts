@@ -9,8 +9,13 @@ export const dictionaries = { en, ja } satisfies Record<string, Messages>;
 
 export type Locale = keyof typeof dictionaries;
 
-/** 最初に見せるカードの名前。遊び方は web と同じく `gameModeFor` で UI 言語から決める。 */
+/** UI 言語で遊ぶ遊び方。web と同じく `gameModeFor` で決める。辞書の遊び方で変わる文言は、これで引く。 */
+export function modeOf(locale: Locale) {
+  return gameModeFor(locale);
+}
+
+/** 最初に見せるカードの名前。 */
 export function openingTitle(locale: Locale): string {
   const t = dictionaries[locale];
-  return gameModeFor(locale) === "guess_meaning" ? t.wordCard.title : t.teaser.title;
+  return modeOf(locale) === "guess_meaning" ? t.wordCard.title : t.teaser.title;
 }

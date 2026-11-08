@@ -1,8 +1,9 @@
 "use client";
 
-import type { UiLocale } from "@kotoba/shared";
+import type { GameMode, UiLocale } from "@kotoba/shared";
 import { createContext, use } from "react";
 
+import { gameModeFor } from "@/lib/game/mode";
 import { DEFAULT_LOCALE } from "@/lib/i18n/locale";
 import { type Messages, messages } from "@/lib/i18n/messages";
 
@@ -24,4 +25,9 @@ export function useLocale(): UiLocale {
  */
 export function useMessages(): Messages {
   return messages[useLocale()];
+}
+
+/** 今の UI 言語で遊ぶ遊び方。辞書の遊び方で変わる文言は、これで引く。 */
+export function useGameMode(): GameMode {
+  return gameModeFor(useLocale());
 }
