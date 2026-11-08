@@ -12,7 +12,10 @@ import { type QaRule, rulesFor } from "./fixtures";
 /** 送信を止める理由。 */
 export type InputError = "empty" | "too-long";
 
-/** 疑問文の形をとらない入力のうち、ここまでの長さを解答とみなす。 */
+/**
+ * 単語当てで、疑問文の形をとらない入力のうち、ここまでの長さを解答とみなす。
+ * 意味当ての解答は文で書くため、入力できる長さ（`MAX_INPUT_LENGTH`）まで解答とみなす。
+ */
 export const SHORT_ANSWER_LENGTH = 20;
 
 /**
@@ -66,20 +69,23 @@ const OPEN_STARTERS = ["how", "what", "when", "where", "which", "who", "whom", "
 
 const QUESTION_MARKS = ["?", "？"];
 
+/** 疑問符を付けない日本語の問いの文末。「食べ物ですか」「金曜日のことかな」。 */
+const JA_QUESTION_ENDINGS = ["ですか", "ますか", "でしょうか", "かな"];
+
 function firstWord(text: string): string {
   return text.trim().toLowerCase().split(/[\s,.:;!?]+/u)[0] ?? "";
 }
 
-function endsWithQuestionMark(text: string): boolean {
+function endsLikeQuestion(text: string): boolean {
   const trimmed = text.trim();
-  return QUESTION_MARKS.some((mark) => trimmed.endsWith(mark));
+  return [...QUESTION_MARKS, ...JA_QUESTION_ENDINGS].some((ending) => trimmed.endsWith(ending));
 }
 
 /** 問いの形をとっているか。yes / no で答えられるかは問わない。 */
 function isQuestionShaped(text: string): boolean {
   const head = firstWord(text);
   return (
-    endsWithQuestionMark(text) ||
+    endsLikeQuestion(text) ||
     YES_NO_STARTERS.includes(head) ||
     OPEN_STARTERS.includes(head)
   );
@@ -88,7 +94,7 @@ function isQuestionShaped(text: string): boolean {
 /** yes / no で答えられる問いの形をとっているか。 */
 function isYesNoQuestion(text: string): boolean {
   if (OPEN_STARTERS.includes(firstWord(text))) return false;
-  return endsWithQuestionMark(text) || YES_NO_STARTERS.includes(firstWord(text));
+  return endsLikeQuestion(text) || YES_NO_STARTERS.includes(firstWord(text));
 }
 
 /**
@@ -131,27 +137,31 @@ export function resolveInput(word: Word, text: string): InputResult {
   if (isAcceptedAnswer(word, text)) {
     return { kind: "answer", correct: true };
   }
-  return resolveByShape(word, text);
+  return resolveByShape(word, text, SHORT_ANSWER_LENGTH);
 }
 
 /**
  * 意味当ての入力を分類する。判定基準の正解の例（`meaning.accepts`）と同じ入力を正解にし、
- * それ以外は単語当てと同じく入力の形で分ける。言い換えを核心で判定する AI の代わりはしない。
+ * それ以外は単語当てと同じく入力の形で分ける。問いの形をとらない入力は、長さによらず解答とみなす。
+ * 言い換えを核心で判定する AI の代わりはしない。
  */
 export function resolveMeaningInput(word: Word, text: string): InputResult {
   const normalized = normalizeAnswer(text);
   if (normalized !== "" && word.meaning.accepts.some((accept) => normalizeAnswer(accept) === normalized)) {
     return { kind: "answer", correct: true };
   }
-  return resolveByShape(word, text);
+  return resolveByShape(word, text, MAX_INPUT_LENGTH);
 }
 
-/** 正解でなかった入力を、形から質問・誤答・質問になっていない入力に分ける。 */
-function resolveByShape(word: Word, text: string): InputResult {
+/**
+ * 正解でなかった入力を、形から質問・誤答・質問になっていない入力に分ける。
+ * 問いの形をとらない入力は、`maxAnswerLength` 文字までを誤答、それより長ければ質問になっていない入力とする。
+ */
+function resolveByShape(word: Word, text: string, maxAnswerLength: number): InputResult {
   if (isYesNoQuestion(text)) {
     return { kind: "question", verdict: lookupVerdict(rulesFor(word.id), text) };
   }
-  if (!isQuestionShaped(text) && text.trim().length <= SHORT_ANSWER_LENGTH) {
+  if (!isQuestionShaped(text) && text.trim().length <= maxAnswerLength) {
     return { kind: "answer", correct: false };
   }
   return { kind: "question", verdict: "not_a_question" };

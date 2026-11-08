@@ -105,6 +105,19 @@ describe("resolveMeaningInput", () => {
       resolveInput(fredagsmys, "Is it about Friday?"),
     );
   });
+
+  it("問いの形をとらない入力は、長くても誤答にする", () => {
+    const text = "金曜日の夜に家族や恋人とソファでお菓子を食べてくつろぐ習慣";
+
+    expect(text.length).toBeGreaterThan(SHORT_ANSWER_LENGTH);
+    expect(resolveMeaningInput(fredagsmys, text)).toEqual({ kind: "answer", correct: false });
+  });
+
+  it("疑問符のない日本語の問いを質問として扱う", () => {
+    for (const text of ["食べ物ですか", "家で過ごしますか", "週末のことでしょうか", "金曜日のことかな"]) {
+      expect(resolveMeaningInput(fredagsmys, text)).toMatchObject({ kind: "question" });
+    }
+  });
 });
 
 describe("resolveInput", () => {
