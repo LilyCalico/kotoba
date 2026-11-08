@@ -102,9 +102,20 @@ gemini-3.5-flash-lite で 122 件を判定する（間隔 6.5 秒）
 
 | きっかけ | 対象 |
 | --- | --- |
-| PR | 判定のプロンプトと eval（`apps/api/src/judge/**`）・単語のデータ（`apps/api/src/prisma/seed/words.ts`）・正規化マッチ（`packages/shared/src/word.ts`）・このワークフローを変える PR |
+| PR | 判定のプロンプトと eval（`apps/api/src/judge/**`）・単語のデータ（`apps/api/src/prisma/seed/words.ts`）・このワークフローを変える PR。Draft の間は流さず、Ready for review にしたときと、その後の push で流す |
 | 毎晩 | 03:00（日本時間）。デフォルトブランチのコードで全件を流す |
-| 手動 | Actions の画面の「Run workflow」 |
+| 手動 | Actions の画面の「Run workflow」。Draft の PR を確かめたいときは、ブランチを選んで流す |
+
+PR で流すきっかけは、eval 専用のキーの無料枠に合わせて決めている。
+
+| 決めたこと | 理由 |
+| --- | --- |
+| Draft の間は流さない | 全件は 122 件で、無料枠は 1 日 500 件（`gemini-3.5-flash-lite`）。毎晩の実行が 122 件を使い、PR への push ごとに流すと数回で上限に届き、途中で打ち切られる。PR は Draft で作り、マージの直前に Ready for review にするため、多くの PR では 1 回で済む |
+| 流す種類は絞らない | 判定のプロンプト（`judge-prompt.ts`）と単語のデータは単語当てと意味当ての両方に関わり、変えたパスから種類を絞っても多くの PR で全件になる |
+| 無料枠のキーのまま | 流す回数を減らせば無料枠に収まり、請求の設定を持たずに済む |
+| 正規化マッチ（`packages/shared/src/word.ts`）は対象にしない | eval は正規化マッチを通さず、判定を直接呼ぶ。単語の形を変えるときは seed も変わるため、そちらで流れる |
+
+Ready for review にしてから eval が通るまで、20 分ほどかかる（122 件を 6.5 秒間隔で呼ぶ）。判定に関わる PR は、その結果を見てからマージする。
 
 キーは Secrets の `GEMINI_API_KEY_TEST` を `GEMINI_API_KEY` として渡す。
 
