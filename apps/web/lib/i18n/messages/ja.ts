@@ -1,7 +1,13 @@
+// E2E の型検査ではこのファイルが CommonJS として扱われるため、ESM の shared を ESM として解決させる。
+import type { GameMode } from "@kotoba/shared" with { "resolution-mode": "import" };
+
+/** 遊び方で変わる文言。遊び方が増えたら、ここで抜けを型検査が見つける。 */
+type ByMode = Record<GameMode, string>;
+
 /**
  * 日本語の UI の文言。英語の辞書（`en.ts`）と同じ形で書き、キーの意味はそちらのコメントに従う。
  * 口調は砕けているけれど優しいトーンにし、回答のピルのように一目で読ませる文言は短く保つ。
- * E2E からも読み込むため、ほかのモジュールを読み込まない。
+ * E2E からも読み込むため、ほかのモジュールは型だけを読み込む。
  */
 /** 数と単位（「1 分」）の間に置く、改行しない空白。数と単位が行をまたいで分かれないようにする。 */
 const NBSP = "\u00a0";
@@ -11,7 +17,7 @@ export const ja = {
     description: {
       guess_word: "はい・いいえで答えられる質問をして、名前のなかった気持ちを表すスウェーデン語の言葉を探し当てるゲーム。",
       guess_meaning: "スウェーデン語の言葉を見て、はい・いいえで答えられる質問をしながら、その意味を探し当てるゲーム。",
-    },
+    } satisfies ByMode,
     playTitle: "プレイ",
   },
   start: {
@@ -19,11 +25,11 @@ export const ja = {
     heading: {
       guess_word: "名前のなかった気持ちを、ひとことで",
       guess_meaning: "その言葉が名づけた気持ちは？",
-    },
+    } satisfies ByMode,
     lead: {
       guess_word: "その言葉はスウェーデン語のどこかにある。はい・いいえで答えられる質問をして、探し当てよう。",
       guess_meaning: "スウェーデン語の言葉がひとつ出てくるよ。はい・いいえで答えられる質問をして、その意味を当ててみよう。",
-    },
+    } satisfies ByMode,
     startGame: "ゲームをはじめる",
   },
   header: {
@@ -34,7 +40,7 @@ export const ja = {
     description: {
       guess_word: "答えの言葉と意味が出て、このゲームはおしまいになるよ。",
       guess_meaning: "答えの意味が出て、このゲームはおしまいになるよ。",
-    },
+    } satisfies ByMode,
     cancel: "やめておく",
     confirm: "ギブアップ",
   },
@@ -42,7 +48,7 @@ export const ja = {
     label: {
       guess_word: "質問するか、言葉を当ててみて",
       guess_meaning: "質問するか、意味を答えてみて",
-    },
+    } satisfies ByMode,
     send: "送信",
     remaining: (count: number) => `あと ${count}${NBSP}文字`,
   },
@@ -75,11 +81,11 @@ export const ja = {
     correct: {
       guess_word: "正解、その言葉だよ！",
       guess_meaning: "正解、その意味だよ！",
-    },
+    } satisfies ByMode,
     incorrect: {
       guess_word: "惜しい、その言葉じゃないみたい。",
       guess_meaning: "惜しい、その意味じゃないみたい。",
-    },
+    } satisfies ByMode,
   },
   pending: {
     title: "考え中…",
@@ -104,11 +110,11 @@ export const ja = {
       cleared: {
         guess_word: "見つけたね！",
         guess_meaning: "見つけたね！",
-      },
+      } satisfies ByMode,
       gave_up: {
         guess_word: "答えはこの言葉",
         guess_meaning: "この言葉の意味は",
-      },
+      } satisfies ByMode,
     },
     partOfSpeech: {
       noun: "名詞",
