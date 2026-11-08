@@ -36,11 +36,14 @@
 | --- | --- | --- | --- |
 | `language` | `"sv"` | ○ | 出題言語。単語プールを持つ言語だけを受け付け、`languageSchema` にあってもプールのない言語（`ja`）は `validation_error` にする |
 | `locale` | `"ja"` \| `"en"` | | 設問・ヒント・定義を返す言語。省略時は `"en"`。ゲームの間は変わらない |
+| `mode` | `"guess_word"` \| `"guess_meaning"` | | 遊び方。`guess_word` は単語当て、`guess_meaning` は意味当て。省略時は `"guess_word"`。`guess_meaning` は `locale: "ja"` のときだけ受け、`en` では `validation_error` にする（意味当てのヒントを日本語でだけ持つため） |
 | `excludeWordIds` | `string[]` | | 出題から除く単語の id。クライアントがローカルストレージに記録した、答えを見た単語。最大 100 件で、超えると `validation_error`。プールにない id は無視する |
 
 ```json
-{ "language": "sv", "locale": "en", "excludeWordIds": ["fredagsmys"] }
+{ "language": "sv", "locale": "en", "mode": "guess_word", "excludeWordIds": ["fredagsmys"] }
 ```
+
+遊び方は UI 言語と別の軸として受ける。どちらの遊び方で始めるかは web が UI 言語から決める（日本語は意味当て、英語は単語当て）。理由は `docs/adr/0012-game-mode-as-separate-axis-from-locale.md` に置く。
 
 選び方:
 
@@ -52,10 +55,16 @@
 - 記録は答えを見た順に追記し、新しいものから最大 100 件だけを残す。`excludeWordIds` には記録を新しいものから送る。プールが 100 語を超えても、直近 100 語との重複は避けられる
 - 終了時に届いた `GameResult` の `wordId` が記録に既にあれば、記録をその 1 件だけに戻す。プールを一巡したことをサーバーに問い合わせずに知り、次の一巡の重複除外をやり直せる
 
-レスポンス（201）: `GameStart`
+レスポンス（201）: `GameStart`。`mode` で 2 つの形に分かれ、最初に見せるものだけを返す。
+
+| `mode` | 形 | 最初に見せるもの |
+| --- | --- | --- |
+| `guess_word` | `{ gameId, language, mode, teaser }` | `locale` の言語の設問 |
+| `guess_meaning` | `{ gameId, language, mode, word, reading }` | 単語とカタカナの読み |
 
 ```json
-{ "gameId": "4f0e…", "language": "sv", "teaser": "On Friday night, this word lives on the sofa" }
+{ "gameId": "4f0e…", "language": "sv", "mode": "guess_word", "teaser": "On Friday night, this word lives on the sofa" }
+{ "gameId": "9b2c…", "language": "sv", "mode": "guess_meaning", "word": "Lagom", "reading": "ラーゴム" }
 ```
 
 ゲーム開始はレートリミットの対象にする（「レートリミット」節）。
@@ -85,6 +94,7 @@
 { "kind": "unsupported_language" }
 ```
 
+- 意味当てのゲームでは、`answer` は意味の解答を指し、`correct` は単語ごとの判定基準に照らした AI の判定である。意味の書き方は無数にあるため正規化マッチを通さず、解答はすべて AI に回す。画面に出ている単語の綴りを送っても正解にならない。理由は `docs/adr/0013-meaning-judged-by-ai-with-per-word-criteria.md` に置く
 - `unsupported_language` を 5 値の `verdict` に足さないのは、`verdict` が AI の出力を縛る enum だからである。対応言語の判定は分類の段で行い、回答の enum を広げない
 - 判定が成功した入力は、返した `InputResult` と組にして Q&A 履歴としてセッションに積む。コードの正規化マッチで判定した解答も含む。履歴は AI の判定の一貫性のためにサーバーだけが使い、どの応答にも含めない
 - エラーで終わった入力（`validation_error` / `rate_limited` / `ai_unavailable` / `ai_rate_limited` など）は履歴に積まない。履歴はプレイヤーが画面で見たやり取りと一致する
@@ -95,7 +105,7 @@
 
 ### ヒント開示 `POST /api/v1/games/{gameId}/hints`
 
-`index` 番目のヒントを返す。
+`index` 番目のヒントを返す。ヒントは遊び方ごとに別に持ち、単語当てのゲームには単語当てのヒントを `locale` の言語で、意味当てのゲームには意味当てのヒント（日本語）を返す。
 
 リクエスト本文:
 
@@ -151,8 +161,8 @@
 
 | スキーマ | 形 | 使う場所 |
 | --- | --- | --- |
-| `startGameRequestSchema` | `{ language, locale?, excludeWordIds? }`。`locale` は `uiLocaleSchema`（既定 `en`）、`excludeWordIds` は最大 100 件 | 開始のリクエスト |
-| `gameStartSchema` | `{ gameId, language, teaser }` | 開始のレスポンス |
+| `startGameRequestSchema` | `{ language, locale?, mode?, excludeWordIds? }`。`locale` は `uiLocaleSchema`（既定 `en`）、`mode` は `gameModeSchema`（既定 `guess_word`）、`excludeWordIds` は最大 100 件 | 開始のリクエスト |
+| `gameStartSchema` | `{ gameId, language, mode, teaser }` と `{ gameId, language, mode, word, reading }` の判別共用体（`mode`） | 開始のレスポンス |
 | `playerInputSchema` | `{ text }` | 入力のリクエスト |
 | `inputResultSchema` | `questionResultSchema` / `answerResultSchema` / `unsupportedLanguageResultSchema` の判別共用体（`kind`） | 入力のレスポンス |
 | `hintRequestSchema` | `{ index }`（1 以上の整数） | ヒントのリクエスト |
@@ -173,13 +183,15 @@
 | `note` | `locale` の言語の文化的な補足。持つ語だけ |
 | `example` | 例文。`sv` はスウェーデン語の原文、`translation` は `locale` の言語の訳。持つ語だけ |
 
-`gameResultSchema` が `wordId` を持つのは、クライアントが出題済みの単語を記録するためである。`GameStart` は単語の id を返さず（id は多くの場合単語そのものなので答えが漏れる）、終了後に届く `GameResult` が id を知る唯一の機会になる。
+`gameResultSchema` が `wordId` を持つのは、クライアントが出題済みの単語を記録するためである。`GameStart` はどちらの遊び方でも単語の id を返さず（id は多くの場合単語そのものなので、単語当てでは答えが漏れる）、終了後に届く `GameResult` が id を知る唯一の機会になる。
 
 ## 秘密の情報
 
 ゲームが終わる（クリアかギブアップ）まで、どの応答にも次を含めない。
 
-- 単語そのもの（`word`）・単語の id（`wordId`）・読み・品詞・定義・直訳・補足・例文
+- 単語の id（`wordId`）・品詞・定義・直訳・補足・例文
+- 単語当てのゲームでは、単語そのもの（`word`）と読み。意味当てのゲームでは開始の応答で見せる
+- 意味当ての判定基準
 - 開示していないヒント
 - Q&A 履歴と、AI に渡したプロンプト
 
@@ -236,7 +248,7 @@
 
 | 項目 | 内容 |
 | --- | --- |
-| 保持する内容 | 単語の id・`locale`・開示済みヒントの数・Q&A 履歴（判定が成功した入力と返した結果の組）・終了状態と結果 |
+| 保持する内容 | 単語の id・`locale`・遊び方（`mode`）・開示済みヒントの数・Q&A 履歴（判定が成功した入力と返した結果の組）・終了状態と結果 |
 | 保持の口 | `GameStore` インターフェース。API のほかのコードは保存先を知らない |
 | 期限 | 最後の操作から 1 時間で破棄し、以降は `game_not_found` を返す |
 | 保存先 | Supabase の PostgreSQL の `games` テーブル。Vercel では関数のインスタンスが複数立つため、どのインスタンスからも同じゲームを読み書きできる保存先に置く |
