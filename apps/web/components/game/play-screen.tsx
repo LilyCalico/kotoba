@@ -47,7 +47,7 @@ import { localizedPath } from "@/lib/i18n/locale";
 import { useLocale, useMessages } from "@/lib/i18n/locale-context";
 import type { Messages } from "@/lib/i18n/messages";
 
-/** 設問の提示からチャットへ自動で移るまでの時間。 */
+/** 最初に見せるカード（設問か単語）の提示から、チャットへ自動で移るまでの時間。 */
 export const TEASER_DURATION_MS = 3000;
 
 /** 入力欄の置き場所。skip link の飛び先になる。 */
@@ -91,7 +91,8 @@ export function PlayScreen() {
 
 /**
  * ゲーム 1 周の画面。描画した時点で新しいゲームを始め、画面を離れるとゲームは破棄される。
- * 設問の提示とチャットの 2 状態をとり、設問の提示は 3 秒で、または Enter / Space / クリックで即座にチャットへ移る。
+ * 最初に見せるカード（単語当ては設問、意味当ては単語）の提示とチャットの 2 状態をとり、
+ * 提示は 3 秒で、または Enter / Space / クリックで即座にチャットへ移る。
  *
  * 答えを見た単語（クリアかギブアップで届いた `wordId`）を `storage` に記録し、次のゲームの開始で
  * `excludeWordIds` として送る。`storage` を省略するとブラウザの `localStorage` を使い、`null` なら記録しない。
@@ -162,7 +163,7 @@ export function GameScreen({
 
     // 自動で移るときも操作で移るときも、フォーカスは動かさない。
     const enterChat = () => dispatch({ type: "chat-entered" });
-    // Tab やスクリーンリーダーの操作キーで、設問を読む前に進まないよう Enter と Space に絞る。
+    // Tab やスクリーンリーダーの操作キーで、カードを読む前に進まないよう Enter と Space に絞る。
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.repeat || (event.key !== "Enter" && event.key !== " ")) return;
       event.preventDefault();
@@ -207,7 +208,7 @@ export function GameScreen({
 }
 
 /**
- * チャット。上からヘッダー、設問、ログ、ヒントボタンと入力欄を積み、ログだけをスクロールさせる。
+ * チャット。上からヘッダー、最初に見せたカード（設問か単語）、ログ、ヒントボタンと入力欄を積み、ログだけをスクロールさせる。
  * 送信中は入力欄とヒントボタンを押せなくし、終了後は両方を畳む。
  *
  * 新しく確定した回答・正誤フィードバック・失敗はライブリージョンで読み上げる。
@@ -329,7 +330,7 @@ function Chat({
           <OpeningCard opening={state.opening} variant="pinned" />
         </div>
         <div
-          // 上端をぼかし、スクロールした要素が設問カードの下へ消えていくように見せる。
+          // 上端をぼかし、スクロールした要素が上のカードの下へ消えていくように見せる。
           className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-5 pt-6 pb-6 [mask-image:linear-gradient(to_bottom,transparent,black_1.5rem)]"
           ref={logRef}
         >
