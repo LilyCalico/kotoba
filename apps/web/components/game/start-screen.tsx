@@ -19,7 +19,8 @@ import {
   markBootSeen,
 } from "@/lib/game/boot";
 import { localizedPath } from "@/lib/i18n/locale";
-import { useGameMode, useLocale, useMessages } from "@/lib/i18n/locale-context";
+import { useGameMode } from "@/lib/game/mode-context";
+import { useLocale, useMessages } from "@/lib/i18n/locale-context";
 
 /** 起動画面の記録先。省略時はブラウザの `sessionStorage`、`null` なら記録しない。 */
 function resolveStorage(storage: BootStorage | null | undefined): BootStorage | null {

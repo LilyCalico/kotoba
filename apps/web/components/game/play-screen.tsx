@@ -22,7 +22,6 @@ import { WordCard } from "@/components/game/word-card";
 import { buttonVariants } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { createApiGameClient } from "@/lib/game/api-client";
-import { gameModeFor } from "@/lib/game/mode";
 import { type GameClient, GameClientError } from "@/lib/game/client";
 import {
   type PlayedWordsStorage,
@@ -44,7 +43,8 @@ import {
   remainingHints,
 } from "@/lib/game/state";
 import { localizedPath } from "@/lib/i18n/locale";
-import { useGameMode, useLocale, useMessages } from "@/lib/i18n/locale-context";
+import { GameModeProvider, useGameMode } from "@/lib/game/mode-context";
+import { useLocale, useMessages } from "@/lib/i18n/locale-context";
 import type { Messages } from "@/lib/i18n/messages";
 
 /** 最初に見せるカード（設問か単語）の提示から、チャットへ自動で移るまでの時間。 */
@@ -91,6 +91,7 @@ export function PlayScreen() {
 
 /**
  * ゲーム 1 周の画面。描画した時点で新しいゲームを始め、画面を離れるとゲームは破棄される。
+ * 始まったゲームの遊び方を `GameModeProvider` で配り、画面の文言をその遊び方で引く。
  * 最初に見せるカード（単語当ては設問、意味当ては単語）の提示とチャットの 2 状態をとり、
  * 提示は 3 秒で、または Enter / Space / クリックで即座にチャットへ移る。
  *
@@ -107,6 +108,7 @@ export function GameScreen({
   storage?: PlayedWordsStorage | null;
 }) {
   const locale = useLocale();
+  const mode = useGameMode();
   const t = useMessages().play;
   const [game, dispatch] = useReducer(playReducer, null);
   const [attempt, setAttempt] = useState(0);
@@ -119,7 +121,7 @@ export function GameScreen({
     const request: StartGameRequest = {
       language: "sv",
       locale,
-      mode: gameModeFor(locale),
+      mode,
       excludeWordIds: excludedWordIds(resolveStorage(storage)),
     };
     client.startGame(request).then(
@@ -147,7 +149,7 @@ export function GameScreen({
     return () => {
       cancelled = true;
     };
-  }, [client, storage, locale, t, attempt]);
+  }, [client, storage, locale, mode, t, attempt]);
 
   const gameId = game?.gameId;
   const finishedWordId = game && finishedResult(game)?.wordId;
@@ -181,29 +183,31 @@ export function GameScreen({
   }, [phase]);
 
   return (
-    <div className="flex h-dvh justify-center overflow-hidden">
-      <div className="relative flex w-full max-w-[42rem] flex-col">
-        {game?.phase === "chat" ? (
-          <Chat client={client} dispatch={dispatch} state={game} />
-        ) : (
-          <main className="flex flex-1 flex-col items-center justify-center px-5">
-            <h1 className="sr-only">kotoba</h1>
-            {game ? (
-              <>
-                <OpeningCard opening={game.opening} variant="floating" />
-                <p className="sr-only">{t.teaserInstruction}</p>
-              </>
-            ) : (
-              !startFailed && (
-                <div>
-                  <PendingIndicator />
-                </div>
-              )
-            )}
-          </main>
-        )}
+    <GameModeProvider mode={game?.opening.mode ?? mode}>
+      <div className="flex h-dvh justify-center overflow-hidden">
+        <div className="relative flex w-full max-w-[42rem] flex-col">
+          {game?.phase === "chat" ? (
+            <Chat client={client} dispatch={dispatch} state={game} />
+          ) : (
+            <main className="flex flex-1 flex-col items-center justify-center px-5">
+              <h1 className="sr-only">kotoba</h1>
+              {game ? (
+                <>
+                  <OpeningCard opening={game.opening} variant="floating" />
+                  <p className="sr-only">{t.teaserInstruction}</p>
+                </>
+              ) : (
+                !startFailed && (
+                  <div>
+                    <PendingIndicator />
+                  </div>
+                )
+              )}
+            </main>
+          )}
+        </div>
       </div>
-    </div>
+    </GameModeProvider>
   );
 }
 

@@ -8,7 +8,8 @@ import { useId } from "react";
 import { LabelPill } from "@/components/game/label-pill";
 import { cardAppear, stickerStick } from "@/components/game/motion";
 import { WINDOW_TITLE_CLASS, WindowStack, WindowTitleBar } from "@/components/ui/window";
-import { useGameMode, useMessages } from "@/lib/i18n/locale-context";
+import { useGameMode } from "@/lib/game/mode-context";
+import { useMessages } from "@/lib/i18n/locale-context";
 
 /**
  * 正解の単語を辞書の一項目として見せるウィンドウ。ピンクのタイトルバーに見出しを置き、

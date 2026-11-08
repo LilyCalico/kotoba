@@ -2,7 +2,8 @@
 
 import { CircleCheckIcon, CircleSlashIcon } from "lucide-react";
 
-import { useGameMode, useMessages } from "@/lib/i18n/locale-context";
+import { useGameMode } from "@/lib/game/mode-context";
+import { useMessages } from "@/lib/i18n/locale-context";
 
 /**
  * 解答の正誤。塗りも枠も持たない、アイコン付きの文字にする。

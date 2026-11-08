@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { remainingLength, validateInput } from "@/lib/game/input";
-import { useGameMode, useMessages } from "@/lib/i18n/locale-context";
+import { useGameMode } from "@/lib/game/mode-context";
+import { useMessages } from "@/lib/i18n/locale-context";
 
 /**
  * 質問と解答を兼ねる単一の入力欄と、四角いキーキャップの送信。

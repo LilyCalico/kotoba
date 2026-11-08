@@ -11,7 +11,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useGameMode, useMessages } from "@/lib/i18n/locale-context";
+import { useGameMode } from "@/lib/game/mode-context";
+import { useMessages } from "@/lib/i18n/locale-context";
 
 /**
  * ギブアップの確認。Give up は確定の操作なので主ボタンのキーキャップにし、旗のアイコンを添える。Cancel は副ボタン。
