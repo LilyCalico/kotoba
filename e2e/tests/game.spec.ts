@@ -1,9 +1,10 @@
 import { type Page, expect, test } from "./fixtures.js";
 
 import { words } from "../../apps/api/src/prisma/seed/words.js";
+import { gameModeFor } from "../../apps/web/lib/game/mode.js";
 import { en } from "../../apps/web/lib/i18n/messages/en.js";
 import { ja } from "../../apps/web/lib/i18n/messages/ja.js";
-import { type Locale, dictionaries, modeOf, openingTitle } from "./locales.js";
+import { type Locale, dictionaries, openingTitle } from "./locales.js";
 
 /** web が出題済み単語を記録する `localStorage` のキー。`apps/web/lib/game/played-words.ts` と揃える。 */
 const PLAYED_WORDS_KEY = "kotoba:played-words";
@@ -59,7 +60,7 @@ async function startFromHome(page: Page, locale: Locale = "en") {
 }
 
 function input(page: Page, locale: Locale = "en") {
-  return page.getByRole("textbox", { name: dictionaries[locale].input.label[modeOf(locale)] });
+  return page.getByRole("textbox", { name: dictionaries[locale].input.label[gameModeFor(locale)] });
 }
 
 /**
@@ -103,7 +104,7 @@ test("Skip を押すとスタート画面の見出しへフォーカスが移る
   await page.goto("/en");
   await page.getByRole("button", { name: en.start.skip }).click();
 
-  await expect(page.getByRole("heading", { level: 1, name: en.start.heading[modeOf("en")] })).toBeFocused();
+  await expect(page.getByRole("heading", { level: 1, name: en.start.heading[gameModeFor("en")] })).toBeFocused();
 });
 
 test("START から設問の提示を経て、質問に回答が返る", async ({ page }) => {
@@ -149,12 +150,12 @@ test("/ja では単語と読みを見て、質問・ヒント・意味の解答�
 
   // 意味当てでは、見えている単語の綴りを送っても正解にならない。
   await send(page, fredagsmys.word, "ja");
-  await expect(bubble(page, ja.answerFeedback.incorrect[modeOf("ja")])).toBeVisible();
+  await expect(bubble(page, ja.answerFeedback.incorrect[gameModeFor("ja")])).toBeVisible();
 
   // E2E の Gemini のスタブは、判定基準の正解の例と同じ入力を正解にする。
   await send(page, fredagsmys.meaning.accepts[0] ?? "", "ja");
-  await expect(bubble(page, ja.answerFeedback.correct[modeOf("ja")])).toBeVisible();
-  const result = page.getByRole("region", { name: ja.result.heading.cleared[modeOf("ja")] });
+  await expect(bubble(page, ja.answerFeedback.correct[gameModeFor("ja")])).toBeVisible();
+  const result = page.getByRole("region", { name: ja.result.heading.cleared[gameModeFor("ja")] });
   await expect(result.getByText(fredagsmys.word, { exact: true })).toBeVisible();
   await expect(result.getByText(fredagsmys.reading, { exact: true })).toBeVisible();
   await expect(result.getByText(fredagsmys.definition.ja)).toBeVisible();
@@ -168,10 +169,10 @@ test("誤答のフィードバックのあと、同じ入力欄から再び解�
   await enterChat(page);
 
   await send(page, "hygge");
-  await expect(bubble(page, en.answerFeedback.incorrect[modeOf("en")])).toBeVisible();
+  await expect(bubble(page, en.answerFeedback.incorrect[gameModeFor("en")])).toBeVisible();
 
   await send(page, "fredagsmys");
-  await expect(bubble(page, en.answerFeedback.correct[modeOf("en")])).toBeVisible();
+  await expect(bubble(page, en.answerFeedback.correct[gameModeFor("en")])).toBeVisible();
 });
 
 test("ヒントを 3 回開示すると、ヒントボタンが無効になる", async ({ page }) => {
@@ -198,7 +199,7 @@ test("正解すると結果カードに単語と定義が出て、単語が記�
 
   await send(page, "fredagsmys");
 
-  const result = page.getByRole("region", { name: en.result.heading.cleared[modeOf("en")] });
+  const result = page.getByRole("region", { name: en.result.heading.cleared[gameModeFor("en")] });
   await expect(result).toBeVisible();
   await expect(result.getByText(fredagsmys.word, { exact: true })).toBeVisible();
   await expect(result.getByText(fredagsmys.definition.en)).toBeVisible();
@@ -214,7 +215,7 @@ test("確認ダイアログを経てギブアップすると、結果カード�
 
   await giveUp(page);
 
-  const result = page.getByRole("region", { name: en.result.heading.gave_up[modeOf("en")] });
+  const result = page.getByRole("region", { name: en.result.heading.gave_up[gameModeFor("en")] });
   await expect(result).toBeVisible();
   await expect(result.getByText(fredagsmys.word, { exact: true })).toBeVisible();
   await expect(result.getByText(fredagsmys.definition.en)).toBeVisible();
@@ -283,6 +284,6 @@ test("正解の送信中にギブアップしても、答えを見た単語を 1
   releaseInput();
   await inputResponse;
 
-  await expect(page.getByRole("region", { name: en.result.heading.cleared[modeOf("en")] })).toBeVisible();
+  await expect(page.getByRole("region", { name: en.result.heading.cleared[gameModeFor("en")] })).toBeVisible();
   await expect.poll(() => playedWords(page)).toEqual([...before, fredagsmys.id]);
 });
